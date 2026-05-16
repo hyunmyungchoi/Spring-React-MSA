@@ -1,0 +1,121 @@
+# =========================
+# OS
+# =========================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# =========================
+# IDE / Editor
+# =========================
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# =========================
+# Java / Spring / Gradle
+# =========================
+.gradle/
+build/
+out/
+target/
+
+# Gradle wrapper는 보통 커밋함
+!gradle/wrapper/gradle-wrapper.jar
+
+# =========================
+# Logs
+# =========================
+*.log
+logs/
+log/
+
+# =========================
+# Environment / Secrets
+# =========================
+.env
+.env.*
+!.env.example
+
+application-local.yml
+application-local.yaml
+application-dev-local.yml
+application-dev-local.yaml
+application-prod-local.yml
+application-prod-local.yaml
+
+# =========================
+# Frontend / Node / pnpm
+# =========================
+node_modules/
+.pnpm-store/
+dist/
+dist-ssr/
+coverage/
+
+# pnpm lockfile은 커밋해야 함
+!pnpm-lock.yaml
+
+# npm/yarn lockfile은 pnpm 사용 시 금지
+package-lock.json
+yarn.lock
+
+# =========================
+# Vite
+# =========================
+.vite/
+.vite-temp/
+
+# =========================
+# TypeScript
+# =========================
+*.tsbuildinfo
+
+# =========================
+# Test / Coverage
+# =========================
+coverage/
+.nyc_output/
+
+# =========================
+# Docker / Runtime volumes
+# =========================
+docker-data/
+data/
+tmp/
+temp/
+
+# =========================
+# Upload / Generated files
+# =========================
+uploads/
+download/
+downloads/
+generated/
+generated-files/
+
+# =========================
+# Certificates / Keys
+# =========================
+*.pem
+*.key
+*.crt
+*.p12
+*.jks
+
+# =========================
+# Database
+# =========================
+*.db
+*.sqlite
+*.sqlite3
+
+# =========================
+# Backup files
+# =========================
+*.bak
+*.backup
+*.old
+*.tmp

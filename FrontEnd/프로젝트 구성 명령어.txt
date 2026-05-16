@@ -1,0 +1,14 @@
+pnpm create vite spring-msa-front --template react-ts
+cd spring-msa-front
+
+
+pnpm create vite . --template react-ts
+
+-----------------------------------------------------------------
+
+
+
+
+pnpm add react@19.2.6 react-dom@19.2.6 react-router@7.15.0 @reduxjs/toolkit@2.11.2 react-redux@9.3.0 axios@1.16.1
+
+pnpm add -D typescript@6.0.3 vite@8.0.13 @vitejs/plugin-react@6.0.2 tailwindcss@4.3.0 @tailwindcss/vite@4.3.0 @types/react@19.2.14 @types/react-dom@19.2.3

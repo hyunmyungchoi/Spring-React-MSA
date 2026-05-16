@@ -1,0 +1,10 @@
+spring-authorization-server
+= 인증/인가 서버
+
+로그인 처리
+Access Token 발급
+Refresh Token 발급
+JWT 서명
+OAuth2 / OIDC 처리
+토큰 재발급
+로그아웃 처리
