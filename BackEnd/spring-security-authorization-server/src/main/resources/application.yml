@@ -1,0 +1,38 @@
+server:
+  port: 9000
+
+spring:
+  application:
+    name: spring-security-authorization-server
+
+  security:
+    oauth2:
+      authorizationserver:
+        client:
+          shell-client:
+            registration:
+              client-id: "shell-client"
+              client-authentication-methods:
+                - "none"
+              authorization-grant-types:
+                - "authorization_code"
+              redirect-uris:
+                - "http://127.0.0.1:5173/login/oauth2/code/shell-client"
+              post-logout-redirect-uris:
+                - "http://127.0.0.1:5173/"
+              scopes:
+                - "openid"
+                - "profile"
+            require-authorization-consent: true
+            require-proof-key: true
+
+app:
+  user-service:
+    base-url: "http://localhost:8081"
+
+logging:
+  charset:
+    console: UTF-8
+  level:
+    com.springmsa.authserver: debug
+    org.springframework.security: trace
