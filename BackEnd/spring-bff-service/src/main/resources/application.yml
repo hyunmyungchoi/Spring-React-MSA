@@ -1,9 +1,23 @@
 server:
   port: 8079
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        same-site: lax
 
 spring:
   application:
     name: spring-bff-service
+
+bff:
+  oauth2:
+    authorization-uri: http://localhost:8080/oauth2/authorize
+    token-uri: http://localhost:8080/oauth2/token
+    client-id: bff-client
+    client-secret: bff-secret
+    redirect-uri: http://localhost:8080/bff/auth/callback
+    scope: openid profile
 
 management:
   endpoints:

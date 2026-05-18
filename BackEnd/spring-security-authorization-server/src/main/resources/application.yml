@@ -26,6 +26,24 @@ spring:
                 - "profile"
             require-authorization-consent: true
             require-proof-key: true
+          bff-client:
+            registration:
+              client-id: bff-client
+              client-secret: "$2a$10$BDeXFNHccQiu0ef5vYr/Bu0fAjSQzCgKc5NBppHdETy1G.W4KJzbS"
+              client-authentication-methods:
+                - client_secret_basic
+              authorization-grant-types:
+                - authorization_code
+                - refresh_token
+              redirect-uris:
+                - http://localhost:8080/bff/auth/callback
+              post-logout-redirect-uris:
+                - http://localhost:8080/
+              scopes:
+                - openid
+                - profile
+            require-authorization-consent: false
+            require-proof-key: false
 
 app:
   user-service:
