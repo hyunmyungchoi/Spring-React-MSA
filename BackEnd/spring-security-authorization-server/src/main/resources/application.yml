@@ -8,6 +8,7 @@ spring:
   security:
     oauth2:
       authorizationserver:
+        issuer: http://localhost:8080 # Gateway
         client:
           shell-client:
             registration:

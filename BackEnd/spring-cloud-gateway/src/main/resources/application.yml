@@ -1,0 +1,39 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: spring-cloud-gateway
+
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: bff-service
+              uri: http://localhost:8079
+              predicates:
+                - Path=/bff/**
+
+            - id: community-service
+              uri: http://localhost:8083
+              predicates:
+                - Path=/api/community/**
+                -
+            - id: authorization-server
+              uri: http://localhost:9000
+              predicates:
+                - Path=/oauth2/**,/.well-known/**,/userinfo,/login,/logout
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+
+logging:
+  charset:
+    console: UTF-8
+  level:
+    com.springmsa.gateway: debug
+    org.springframework.cloud.gateway: debug

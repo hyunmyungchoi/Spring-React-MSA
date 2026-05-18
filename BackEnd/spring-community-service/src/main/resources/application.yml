@@ -1,0 +1,19 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: spring-community-service
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080 # Gateway
+
+logging:
+  charset:
+    console: UTF-8
+  level:
+    com.springmsa.communityservice: debug
+    org.springframework.security: debug

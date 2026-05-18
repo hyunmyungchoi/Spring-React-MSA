@@ -6,7 +6,7 @@ plugins {
 
 group = 'com.springmsa'
 version = '0.0.1-SNAPSHOT'
-description = 'Spring MSA Authorization Server'
+description = 'Spring MSA Community Service'
 
 java {
     toolchain {
@@ -16,7 +16,10 @@ java {
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
-    implementation 'org.springframework.boot:spring-boot-starter-oauth2-authorization-server'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
