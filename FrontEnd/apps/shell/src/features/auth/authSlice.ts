@@ -1,43 +1,75 @@
-import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
-
-type User = {
-    id: string
-    email: string
-    name: string
-    roles: string[]
-}
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { fetchAuthMe, logout as requestLogout } from "./authApi";
 
 type AuthState = {
-    isAuthenticated: boolean
-    accessToken: string | null
-    user: User | null
-}
+    user: unknown | null;
+    authenticated: boolean;
+    loading: boolean;
+    error: string | null;
+};
 
 const initialState: AuthState = {
-    isAuthenticated: false,
-    accessToken: null,
     user: null,
-}
+    authenticated: false,
+    loading: true,
+    error: null,
+};
+
+export const loadCurrentUser = createAsyncThunk(
+    "auth/loadCurrentUser",
+    async () => {
+        return await fetchAuthMe();
+    }
+);
+
+export const logoutCurrentUser = createAsyncThunk(
+    "auth/logoutCurrentUser",
+    async () => {
+        await requestLogout();
+    }
+);
 
 const authSlice = createSlice({
-    name: 'auth',
+    name: "auth",
     initialState,
     reducers: {
-        loginSuccess: (
-            state,
-            action: PayloadAction<{ accessToken: string; user: User }>
-        ) => {
-            state.isAuthenticated = true
-            state.accessToken = action.payload.accessToken
-            state.user = action.payload.user
-        },
-        logout: (state) => {
-            state.isAuthenticated = false
-            state.accessToken = null
-            state.user = null
+        clearAuth(state) {
+            state.user = null;
+            state.authenticated = false;
+            state.loading = false;
+            state.error = null;
         },
     },
-})
+    extraReducers: (builder) => {
+        builder
+            .addCase(loadCurrentUser.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(loadCurrentUser.fulfilled, (state, action) => {
+                console.log("[loadCurrentUser.fulfilled]", action.payload);
 
-export const { loginSuccess, logout } = authSlice.actions
-export default authSlice.reducer
+                state.user = action.payload;
+                state.authenticated = true;
+                state.loading = false;
+                state.error = null;
+            })
+            .addCase(loadCurrentUser.rejected, (state, action) => {
+                console.log("[loadCurrentUser.rejected]", action.error);
+
+                state.user = null;
+                state.authenticated = false;
+                state.loading = false;
+                state.error = "Not authenticated";
+            })
+            .addCase(logoutCurrentUser.fulfilled, (state) => {
+                state.user = null;
+                state.authenticated = false;
+                state.loading = false;
+                state.error = null;
+            });
+    },
+});
+
+export const { clearAuth } = authSlice.actions;
+export default authSlice.reducer;

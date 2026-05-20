@@ -3,6 +3,7 @@ server:
   servlet:
     session:
       cookie:
+        name: BFFSESSIONID
         http-only: true
         same-site: lax
 
@@ -11,13 +12,21 @@ spring:
     name: spring-bff-service
 
 bff:
+  frontend:
+    redirect-uri: http://localhost:5173
+
   oauth2:
     authorization-uri: http://localhost:8080/oauth2/authorize
     token-uri: http://localhost:8080/oauth2/token
+    userinfo-uri: http://localhost:8080/userinfo
     client-id: bff-client
     client-secret: bff-secret
     redirect-uri: http://localhost:8080/bff/auth/callback
     scope: openid profile
+
+  api:
+    community-me-uri: http://localhost:8080/api/community/me
+    user-me-uri: http://localhost:8080/api/user/me
 
 management:
   endpoints:
