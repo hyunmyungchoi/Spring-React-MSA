@@ -109,9 +109,7 @@ public class User {
         return phoneNumber;
     }
 
-    public String getWhatsappNumber() {
-        return whatsappNumber;
-    }
+    public String getWhatsappNumber() { return whatsappNumber; }
 
     public boolean isEnabled() {
         return enabled;

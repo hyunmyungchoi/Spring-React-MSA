@@ -5,6 +5,11 @@ spring:
   application:
     name: spring-security-authorization-server
 
+  data:
+    redis:
+      host: localhost
+      port: 16379
+
   security:
     oauth2:
       authorizationserver:

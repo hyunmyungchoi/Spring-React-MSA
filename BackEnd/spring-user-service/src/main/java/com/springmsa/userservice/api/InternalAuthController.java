@@ -30,6 +30,26 @@ public class InternalAuthController {
                 user.getLoginId(),
                 user.getEmail(),
                 user.getUsername(),
+                user.getPhoneNumber(),
+                user.getWhatsappNumber(),
+                user.getPassword(),
+                user.isEnabled(),
+                user.getRoles()
+        );
+    }
+
+    @GetMapping("/users/whatsapp/{whatsappNumber}")
+    public AuthUserResponse getUserByWhatsappNumber(@PathVariable String whatsappNumber) {
+        User user = userRepository.findByWhatsappNumber(whatsappNumber)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found by WhatsApp number"));
+
+        return new AuthUserResponse(
+                user.getUserId(),
+                user.getLoginId(),
+                user.getEmail(),
+                user.getUsername(),
+                user.getPhoneNumber(),
+                user.getWhatsappNumber(),
                 user.getPassword(),
                 user.isEnabled(),
                 user.getRoles()

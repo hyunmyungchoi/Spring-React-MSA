@@ -8,3 +8,11 @@ spring-user-service
 권한/역할 관리
 프로필 관리
 계정 상태 관리
+
+
+docker run --name spring-msa-postgres `
+  -e POSTGRES_DB=spring_msa_user `
+  -e POSTGRES_USER=root `
+  -e POSTGRES_PASSWORD=root `
+  -p 15432:5432 `
+  -d postgres:16
