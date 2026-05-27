@@ -1,70 +1,31 @@
 package com.springmsa.authserver.otp;
 
-import org.springframework.data.redis.core.StringRedisTemplate;
+import com.springmsa.authserver.otp.common.OtpCodeService;
 import org.springframework.stereotype.Service;
 
-import java.security.SecureRandom;
 import java.time.Duration;
 
 @Service
 public class WhatsAppOtpService {
 
-    private static final Duration OTP_TTL = Duration.ofMinutes(3);
-    private static final String OTP_KEY_PREFIX = "auth:otp:whatsapp:";
+    private static final String WHATSAPP_OTP_KEY_PREFIX = "auth:otp:whatsapp:";
+    private static final Duration WHATSAPP_OTP_TTL = Duration.ofMinutes(3);
 
-    private final StringRedisTemplate redisTemplate;
-    private final SecureRandom secureRandom = new SecureRandom();
+    private final OtpCodeService otpCodeService;
 
-    public WhatsAppOtpService(StringRedisTemplate redisTemplate) {
-        this.redisTemplate = redisTemplate;
+    public WhatsAppOtpService(OtpCodeService otpCodeService) {
+        this.otpCodeService = otpCodeService;
     }
 
     public String issueOtp(String whatsappNumber) {
-        String normalizedNumber = normalizeWhatsappNumber(whatsappNumber);
-        String otp = generateSixDigitOtp();
-
-        redisTemplate.opsForValue().set(
-                buildOtpKey(normalizedNumber),
-                otp,
-                OTP_TTL
-        );
-
-        return otp;
+        return otpCodeService.issueOtp(buildKey(whatsappNumber), WHATSAPP_OTP_TTL);
     }
 
     public boolean verifyOtp(String whatsappNumber, String otp) {
-        String normalizedNumber = normalizeWhatsappNumber(whatsappNumber);
-        String key = buildOtpKey(normalizedNumber);
-
-        String savedOtp = redisTemplate.opsForValue().get(key);
-
-        if (savedOtp == null) {
-            return false;
-        }
-
-        boolean matched = savedOtp.equals(otp);
-
-        if (matched) {
-            redisTemplate.delete(key);
-        }
-
-        return matched;
+        return otpCodeService.verifyOtp(buildKey(whatsappNumber), otp);
     }
 
-    private String generateSixDigitOtp() {
-        int number = secureRandom.nextInt(1_000_000);
-        return String.format("%06d", number);
-    }
-
-    private String buildOtpKey(String whatsappNumber) {
-        return OTP_KEY_PREFIX + whatsappNumber;
-    }
-
-    private String normalizeWhatsappNumber(String whatsappNumber) {
-        if (whatsappNumber == null || whatsappNumber.isBlank()) {
-            throw new IllegalArgumentException("WhatsApp number is required");
-        }
-
-        return whatsappNumber.trim();
+    private String buildKey(String whatsappNumber) {
+        return WHATSAPP_OTP_KEY_PREFIX + whatsappNumber;
     }
 }

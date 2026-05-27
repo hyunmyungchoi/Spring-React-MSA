@@ -62,6 +62,31 @@ public class LoginPageController {
 
                         <pre id="result"></pre>
                     </section>
+                    
+                    <section>
+                    
+                        <h3>Email OTP Login</h3>
+                    
+                        <div>
+                            <label>Email</label>
+                            <input type="email" id="emailOtpEmail" value="user@test.com"/>
+                        </div>
+                    
+                        <div>
+                            <button type="button" onclick="sendEmailOtp()">Send Email OTP</button>
+                        </div>
+                    
+                        <div>
+                            <label>Email OTP</label>
+                            <input type="text" id="emailOtpCode" placeholder="Enter OTP"/>
+                        </div>
+                    
+                        <div>
+                            <button type="button" onclick="verifyEmailOtp()">Verify Email OTP</button>
+                        </div>
+                    
+                        <pre id="emailOtpResult"></pre>
+                    </section>
 
                     <script>
                         async function sendOtp() {
@@ -99,6 +124,54 @@ public class LoginPageController {
                             document.getElementById("result").textContent = JSON.stringify(data, null, 2);
 
                             if (data.verified && data.authenticated && data.redirectUrl) {
+                                window.location.href = data.redirectUrl;
+                            }
+                        }
+                        
+                        async function sendEmailOtp() {
+                            const email = document.getElementById("emailOtpEmail").value;
+                
+                            const response = await fetch("/login/email/send-otp", {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json"
+                                },
+                                body: JSON.stringify({
+                                    email: email
+                                })
+                            });
+                
+                            const data = await response.json();
+                
+                            document.getElementById("emailOtpResult").textContent =
+                                JSON.stringify(data, null, 2);
+                
+                            if (data.devOtp) {
+                                document.getElementById("emailOtpCode").value = data.devOtp;
+                            }
+                        }
+                
+                        async function verifyEmailOtp() {
+                            const email = document.getElementById("emailOtpEmail").value;
+                            const otp = document.getElementById("emailOtpCode").value;
+                
+                            const response = await fetch("/login/email/verify", {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json"
+                                },
+                                body: JSON.stringify({
+                                    email: email,
+                                    otp: otp
+                                })
+                            });
+                
+                            const data = await response.json();
+                
+                            document.getElementById("emailOtpResult").textContent =
+                                JSON.stringify(data, null, 2);
+                
+                            if (data.redirectUrl) {
                                 window.location.href = data.redirectUrl;
                             }
                         }

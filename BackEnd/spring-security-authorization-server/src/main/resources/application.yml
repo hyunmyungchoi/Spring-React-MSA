@@ -49,10 +49,36 @@ spring:
                 - profile
             require-authorization-consent: false
             require-proof-key: false
+  mail:
+    host: smtp.example.com
+    port: 587
+#  mail:
+#    host: smtp.example.com
+#    port: 587
+#    username: your-email@example.com
+#    password: your-password
+#    properties:
+#      mail:
+#        smtp:
+#          auth: true
+#          starttls:
+#            enable: true
 
 app:
   user-service:
     base-url: "http://localhost:8081"
+  otp:
+    expose-dev-otp: true
+    email:
+      sender: dev
+#  otp:
+#    expose-dev-otp: false
+#    email:
+#      sender: smtp
+#      from: "your-email@example.com"
+
+
+
 
 logging:
   charset:

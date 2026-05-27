@@ -48,13 +48,13 @@ public class SecurityConfig {
     SecurityFilterChain appSecurityFilterChain(HttpSecurity http, SecurityContextRepository securityContextRepository) throws Exception {
         http
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/login/whatsapp/**")
+                        .ignoringRequestMatchers("/login/whatsapp/**", "/login/email/**")
                 )
                 .securityContext(securityContext -> securityContext
                         .securityContextRepository(securityContextRepository)
                 )
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/login/whatsapp/**").permitAll()
+                        .requestMatchers("/login/whatsapp/**", "/login/email/**").permitAll()
                         .requestMatchers("/login", "/error").permitAll()
                         .anyRequest().authenticated()
                 )

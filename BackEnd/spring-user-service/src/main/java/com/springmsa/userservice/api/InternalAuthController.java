@@ -55,4 +55,22 @@ public class InternalAuthController {
                 user.getRoles()
         );
     }
+
+    @GetMapping("/users/email/{email}")
+    public AuthUserResponse getUserByEmail(@PathVariable String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found by email"));
+
+        return new AuthUserResponse(
+                user.getUserId(),
+                user.getLoginId(),
+                user.getEmail(),
+                user.getUsername(),
+                user.getPhoneNumber(),
+                user.getWhatsappNumber(),
+                user.getPassword(),
+                user.isEnabled(),
+                user.getRoles()
+        );
+    }
 }

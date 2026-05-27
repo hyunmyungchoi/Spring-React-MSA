@@ -2,42 +2,52 @@ package com.springmsa.authserver.otp;
 
 import com.springmsa.authserver.client.UserServiceClient;
 import com.springmsa.authserver.client.dto.AuthUserResponse;
-import com.springmsa.authserver.otp.common.OtpAuthenticationFactory;
 import com.springmsa.authserver.otp.common.OtpLoginSessionService;
+import com.springmsa.authserver.otp.email.EmailOtpSender;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @NullMarked
 @RestController
-@RequestMapping("/login/whatsapp")
-public class WhatsAppOtpController {
+@RequestMapping("/login/email")
+public class EmailOtpController {
 
-    private final WhatsAppOtpService whatsAppOtpService;
+    private final EmailOtpService emailOtpService;
     private final UserServiceClient userServiceClient;
     private final OtpLoginSessionService otpLoginSessionService;
+    private final EmailOtpSender emailOtpSender;
 
     @Value("${app.otp.expose-dev-otp:false}")
     private boolean exposeDevOtp;
 
-    public WhatsAppOtpController(
-            WhatsAppOtpService whatsAppOtpService,
+    public EmailOtpController(
+            EmailOtpService emailOtpService,
             UserServiceClient userServiceClient,
-             OtpLoginSessionService otpLoginSessionService
+            OtpLoginSessionService otpLoginSessionService, EmailOtpSender emailOtpSender
     ) {
-        this.whatsAppOtpService = whatsAppOtpService;
+        this.emailOtpService = emailOtpService;
         this.userServiceClient = userServiceClient;
         this.otpLoginSessionService = otpLoginSessionService;
+        this.emailOtpSender = emailOtpSender;
     }
 
     @PostMapping("/send-otp")
-    public ResponseEntity<Map<String, Object>> sendOtp(@RequestBody WhatsAppOtpSendRequest request) {
-        String otp = whatsAppOtpService.issueOtp(request.whatsappNumber());
+    public ResponseEntity<Map<String, Object>> sendOtp(@Valid @RequestBody EmailOtpSendRequest request) {
+        String otp = emailOtpService.issueOtp(request.email());
+
+        emailOtpSender.sendOtp(request.email(), otp);
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("sent", true);
@@ -52,24 +62,21 @@ public class WhatsAppOtpController {
 
     @PostMapping("/verify")
     public ResponseEntity<Map<String, Object>> verify(
-            @RequestBody WhatsAppOtpVerifyRequest request,
+            @Valid @RequestBody EmailOtpVerifyRequest request,
             HttpServletRequest httpRequest,
             HttpServletResponse httpResponse
     ) {
-        boolean verified = whatsAppOtpService.verifyOtp(
-                request.whatsappNumber(),
-                request.otp()
-        );
+        boolean verified = emailOtpService.verifyOtp(request.email(), request.otp());
 
         if (!verified) {
-            return ResponseEntity.ok(Map.of(
-                    "verified", false
-            ));
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("verified", false);
+            response.put("message", "Invalid or expired OTP");
+
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
 
-        AuthUserResponse user = userServiceClient.findAuthUserByWhatsappNumber(
-                request.whatsappNumber()
-        );
+        AuthUserResponse user = userServiceClient.findAuthUserByEmail(request.email());
 
         String redirectUrl = otpLoginSessionService.login(user, httpRequest, httpResponse);
 

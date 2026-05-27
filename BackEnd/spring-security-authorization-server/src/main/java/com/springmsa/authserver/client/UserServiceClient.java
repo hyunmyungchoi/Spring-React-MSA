@@ -46,4 +46,17 @@ public class UserServiceClient {
                 })
                 .body(AuthUserResponse.class);
     }
+
+    public AuthUserResponse findAuthUserByEmail(String email) {
+        return restClient.get()
+                .uri("/internal/auth/users/email/{email}", email)
+                .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, (request, response) -> {
+                    throw new ResponseStatusException(response.getStatusCode(), "User not found by email");
+                })
+                .onStatus(HttpStatusCode::is5xxServerError, (request, response) -> {
+                    throw new ResponseStatusException(response.getStatusCode(), "User service error");
+                })
+                .body(AuthUserResponse.class);
+    }
 }
