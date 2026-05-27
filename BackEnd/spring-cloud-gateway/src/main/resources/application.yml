@@ -44,7 +44,7 @@ spring:
             - id: authorization-server
               uri: http://localhost:9000
               predicates:
-                - Path=/oauth2/**,/.well-known/**,/userinfo,/login,/login/**,/logout
+                - Path=/oauth2/**,/.well-known/**,/userinfo,/login,/login/**,/logout,/webhooks/whatsapp
 
 management:
   endpoints:

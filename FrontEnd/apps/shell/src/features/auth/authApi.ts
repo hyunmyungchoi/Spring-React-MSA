@@ -14,3 +14,4 @@ export function redirectToLogin() {
 export async function logout() {
     return bffPost<void>("/bff/auth/logout");
 }
+

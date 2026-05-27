@@ -2,7 +2,7 @@ import { createBrowserRouter } from "react-router-dom";
 import App from "./App";
 import LoginPage from "../pages/auth/LoginPage";
 import HomePage from "../pages/home/HomePage";
-import ProtectedRoute from "../common/components/ProtectedRoute.tsx";
+import ProtectedRoute from "../common/components/ProtectedRoute";
 
 export const router = createBrowserRouter([
     {

@@ -1,4 +1,4 @@
-import { redirectToLogin } from "../../features/auth/authApi";
+import { redirectToLogin } from "../../features/auth/authApi.ts";
 
 function LoginPage() {
     return (

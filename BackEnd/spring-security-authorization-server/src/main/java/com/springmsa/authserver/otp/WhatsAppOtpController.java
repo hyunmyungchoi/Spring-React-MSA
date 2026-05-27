@@ -2,14 +2,19 @@ package com.springmsa.authserver.otp;
 
 import com.springmsa.authserver.client.UserServiceClient;
 import com.springmsa.authserver.client.dto.AuthUserResponse;
-import com.springmsa.authserver.otp.common.OtpAuthenticationFactory;
 import com.springmsa.authserver.otp.common.OtpLoginSessionService;
+import com.springmsa.authserver.otp.dto.OtpSendResponse;
+import com.springmsa.authserver.otp.dto.OtpUserResponse;
+import com.springmsa.authserver.otp.dto.OtpVerifyResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 
@@ -36,23 +41,19 @@ public class WhatsAppOtpController {
     }
 
     @PostMapping("/send-otp")
-    public ResponseEntity<Map<String, Object>> sendOtp(@RequestBody WhatsAppOtpSendRequest request) {
+    public ResponseEntity<OtpSendResponse> sendOtp(@Valid @RequestBody WhatsAppOtpSendRequest request) {
         String otp = whatsAppOtpService.issueOtp(request.whatsappNumber());
 
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("sent", true);
-        response.put("expiresInSeconds", 180);
-
-        if (exposeDevOtp) {
-            response.put("devOtp", otp);
-        }
+        OtpSendResponse response = exposeDevOtp
+                ? OtpSendResponse.withDevOtp(whatsAppOtpService.getExpiresInSeconds(), otp)
+                : OtpSendResponse.withoutDevOtp(whatsAppOtpService.getExpiresInSeconds());
 
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/verify")
-    public ResponseEntity<Map<String, Object>> verify(
-            @RequestBody WhatsAppOtpVerifyRequest request,
+    public ResponseEntity<OtpVerifyResponse> verify(
+            @Valid @RequestBody WhatsAppOtpVerifyRequest request,
             HttpServletRequest httpRequest,
             HttpServletResponse httpResponse
     ) {
@@ -62,9 +63,10 @@ public class WhatsAppOtpController {
         );
 
         if (!verified) {
-            return ResponseEntity.ok(Map.of(
-                    "verified", false
-            ));
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Invalid or expired OTP"
+            );
         }
 
         AuthUserResponse user = userServiceClient.findAuthUserByWhatsappNumber(
@@ -73,21 +75,12 @@ public class WhatsAppOtpController {
 
         String redirectUrl = otpLoginSessionService.login(user, httpRequest, httpResponse);
 
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("verified", true);
-        response.put("authenticated", true);
-
-        if (redirectUrl != null) {
-            response.put("redirectUrl", redirectUrl);
-        }
-
-        response.put("user", Map.of(
-                "userId", user.userId(),
-                "loginId", user.loginId(),
-                "email", user.email(),
-                "username", user.username(),
-                "roles", user.roles()
-        ));
+        OtpVerifyResponse response = new OtpVerifyResponse(
+                true,
+                true,
+                redirectUrl,
+                OtpUserResponse.from(user)
+        );
 
         return ResponseEntity.ok(response);
     }

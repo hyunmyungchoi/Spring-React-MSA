@@ -1,6 +1,7 @@
 package com.springmsa.authserver.otp.common;
 
 import com.springmsa.authserver.client.dto.AuthUserResponse;
+import com.springmsa.authserver.security.CustomUserPrincipal;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -35,14 +36,15 @@ public class OtpAuthenticationFactory {
                 FactorGrantedAuthority.fromAuthority(FactorGrantedAuthority.OTT_AUTHORITY)
         );
 
-        UserDetails principal = User.withUsername(user.loginId())
-                .password("")
-                .authorities(authorities)
-                .disabled(!user.enabled())
-                .accountExpired(false)
-                .accountLocked(false)
-                .credentialsExpired(false)
-                .build();
+        CustomUserPrincipal principal = new CustomUserPrincipal(
+                user.userId(),
+                user.loginId(),
+                user.email(),
+                user.username(),
+                user.password() == null ? "" : user.password(),
+                user.enabled(),
+                authorities
+        );
 
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(

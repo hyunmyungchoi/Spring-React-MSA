@@ -48,7 +48,7 @@ public class SecurityConfig {
     SecurityFilterChain appSecurityFilterChain(HttpSecurity http, SecurityContextRepository securityContextRepository) throws Exception {
         http
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/login/whatsapp/**", "/login/email/**")
+                        .ignoringRequestMatchers("/login/whatsapp/**", "/login/email/**", "/webhooks/whatsapp")
                 )
                 .securityContext(securityContext -> securityContext
                         .securityContextRepository(securityContextRepository)
@@ -56,6 +56,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/login/whatsapp/**", "/login/email/**").permitAll()
                         .requestMatchers("/login", "/error").permitAll()
+                        .requestMatchers("/webhooks/whatsapp").permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form

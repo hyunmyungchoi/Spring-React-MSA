@@ -50,7 +50,7 @@ const authSlice = createSlice({
                 console.log("[loadCurrentUser.fulfilled]", action.payload);
 
                 state.user = action.payload;
-                state.authenticated = true;
+                state.authenticated = action.payload !== null;
                 state.loading = false;
                 state.error = null;
             })
