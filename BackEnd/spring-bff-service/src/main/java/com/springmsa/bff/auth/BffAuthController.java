@@ -1,14 +1,12 @@
 package com.springmsa.bff.auth;
 
+import com.springmsa.bff.auth.dto.AuthMeResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -18,6 +16,7 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.view.RedirectView;
 import org.springframework.web.util.UriComponentsBuilder;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.Map;
 import java.util.Objects;
@@ -54,11 +53,14 @@ public class BffAuthController {
     @Value("${bff.frontend.redirect-uri}")
     private String frontendRedirectUri;
 
+    private final ObjectMapper objectMapper;
 
 
-    public BffAuthController(RestClient.Builder restClientBuilder, BffTokenService bffTokenService) {
+
+    public BffAuthController(RestClient.Builder restClientBuilder, BffTokenService bffTokenService, ObjectMapper objectMapper) {
         this.restClient = restClientBuilder.build();
         this.bffTokenService = bffTokenService;
+        this.objectMapper = objectMapper;
     }
 
     @GetMapping("/bff/auth/login")
@@ -136,22 +138,34 @@ public class BffAuthController {
 
 
     @GetMapping("/bff/auth/me")
-    public ResponseEntity<String> me(HttpSession session) {
-        String accessToken = bffTokenService.getAccessTokenOrThrow(session);
+    public ResponseEntity<AuthMeResponse> me(HttpSession session) {
+        String accessToken;
+
+        try {
+            accessToken = bffTokenService.getAccessTokenOrThrow(session);
+        } catch (ResponseStatusException e) {
+            if (e.getStatusCode().value() == 401) {
+                return ResponseEntity.ok(AuthMeResponse.anonymous());
+            }
+
+            throw e;
+        }
 
         if (accessToken.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not logged in");
+            return ResponseEntity.ok(AuthMeResponse.anonymous());
         }
 
         try {
-            String responseBody = requestUserInfo(accessToken);
-            return ResponseEntity.ok(responseBody);
+            return ResponseEntity.ok(buildAuthMeResponse(accessToken));
 
         } catch (HttpClientErrorException.Unauthorized e) {
-            OAuth2TokenResponse refreshedToken = bffTokenService.refreshAccessToken(session);
+            try {
+                OAuth2TokenResponse refreshedToken = bffTokenService.refreshAccessToken(session);
+                return ResponseEntity.ok(buildAuthMeResponse(refreshedToken.accessToken()));
 
-            String responseBody = requestUserInfo(refreshedToken.accessToken());
-            return ResponseEntity.ok(responseBody);
+            } catch (ResponseStatusException refreshFail) {
+                return ResponseEntity.ok(AuthMeResponse.anonymous());
+            }
         }
     }
 
@@ -161,6 +175,27 @@ public class BffAuthController {
                 .headers(headers -> headers.setBearerAuth(accessToken))
                 .retrieve()
                 .body(String.class));
+    }
+
+    @SuppressWarnings("unchecked")
+    private AuthMeResponse buildAuthMeResponse(String accessToken) {
+        try {
+            String responseBody = requestUserInfo(accessToken);
+
+            Map<String, Object> userInfo = objectMapper.readValue(
+                    responseBody,
+                    Map.class
+            );
+
+            return AuthMeResponse.authenticated(userInfo);
+
+        } catch (Exception e) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_GATEWAY,
+                    "Failed to load authentication user",
+                    e
+            );
+        }
     }
 
 

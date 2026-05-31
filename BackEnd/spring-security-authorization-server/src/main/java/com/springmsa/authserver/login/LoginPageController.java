@@ -1,15 +1,17 @@
 package com.springmsa.authserver.login;
 
 import org.springframework.http.MediaType;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class LoginPageController {
 
     @GetMapping(value = "/login", produces = MediaType.TEXT_HTML_VALUE)
-    public String loginPage() {
-        return """
+    public String loginPage(@RequestAttribute("_csrf") CsrfToken csrfToken) {
+        String html = """
                 <!DOCTYPE html>
                 <html>
                 <head>
@@ -46,6 +48,7 @@ public class LoginPageController {
                     <section>
                         <h2>ID / Password Login</h2>
                         <form method="post" action="/login">
+                            __CSRF_INPUT__
                             <input type="text" name="username" placeholder="Login ID" value="user" />
                             <input type="password" name="password" placeholder="Password" value="password" />
                             <button type="submit">Login</button>
@@ -179,5 +182,11 @@ public class LoginPageController {
                 </body>
                 </html>
                 """;
+
+        String csrfInput = """
+        <input type="hidden" name="%s" value="%s" />
+        """.formatted(csrfToken.getParameterName(), csrfToken.getToken());
+
+        return html.replace("__CSRF_INPUT__", csrfInput);
     }
 }
