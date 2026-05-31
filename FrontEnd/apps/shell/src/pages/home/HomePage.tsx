@@ -1,7 +1,14 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAppDispatch } from "../../app/reduxHooks";
+import { logoutCurrentUser } from "../../features/auth/authSlice";
 import { getUserMe, type UserMeResponse } from "../../features/user/userApi";
 
 function HomePage() {
+    const dispatch = useAppDispatch();
+    const navigate = useNavigate();
+
+
     const [userMe, setUserMe] = useState<UserMeResponse | null>(null);
     const [loading, setLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -22,6 +29,18 @@ function HomePage() {
         }
     };
 
+    const handleLogout = async () => {
+        try {
+            await dispatch(logoutCurrentUser()).unwrap();
+            navigate("/login", { replace: true });
+        } catch (error) {
+            console.error(error);
+            setErrorMessage("로그아웃 실패");
+        }
+    };
+
+
+
     return (
         <main style={{ padding: "24px" }}>
             <h1>Spring MSA Home</h1>
@@ -29,6 +48,14 @@ function HomePage() {
             <section style={{ marginTop: "16px" }}>
                 <button type="button" onClick={handleLoadUserMe} disabled={loading}>
                     {loading ? "Loading..." : "User Me 호출"}
+                </button>
+
+                <button
+                    type="button"
+                    onClick={handleLogout}
+                    style={{ marginTop: "8px" }}
+                >
+                    Logout
                 </button>
             </section>
 
