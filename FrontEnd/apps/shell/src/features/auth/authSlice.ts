@@ -1,6 +1,11 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { fetchAuthMe, logout as requestLogout } from "./authApi";
 
+type AuthMeResponse = {
+    authenticated: boolean;
+    user: unknown | null;
+};
+
 type AuthState = {
     user: unknown | null;
     authenticated: boolean;
@@ -15,10 +20,10 @@ const initialState: AuthState = {
     error: null,
 };
 
-export const loadCurrentUser = createAsyncThunk(
+export const loadCurrentUser = createAsyncThunk<AuthMeResponse>(
     "auth/loadCurrentUser",
     async () => {
-        return await fetchAuthMe();
+        return await fetchAuthMe() as AuthMeResponse;
     }
 );
 
@@ -47,16 +52,12 @@ const authSlice = createSlice({
                 state.error = null;
             })
             .addCase(loadCurrentUser.fulfilled, (state, action) => {
-                console.log("[loadCurrentUser.fulfilled]", action.payload);
-
-                state.user = action.payload;
-                state.authenticated = action.payload !== null;
+                state.user = action.payload.user;
+                state.authenticated = action.payload.authenticated;
                 state.loading = false;
                 state.error = null;
             })
-            .addCase(loadCurrentUser.rejected, (state, action) => {
-                console.log("[loadCurrentUser.rejected]", action.error);
-
+            .addCase(loadCurrentUser.rejected, (state) => {
                 state.user = null;
                 state.authenticated = false;
                 state.loading = false;

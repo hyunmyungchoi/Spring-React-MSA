@@ -111,7 +111,7 @@ public class BffAuthController {
         OAuth2TokenResponse tokenResponse = bffTokenService.exchangeCodeForToken(code);
         bffTokenService.saveTokenResponse(session, tokenResponse);
 
-        return new RedirectView("http://localhost:5173");
+        return new RedirectView(frontendRedirectUri);
     }
 
     @GetMapping("/bff/auth/session")
