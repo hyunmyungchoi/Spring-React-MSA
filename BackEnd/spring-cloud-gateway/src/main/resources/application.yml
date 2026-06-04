@@ -41,6 +41,11 @@ spring:
               predicates:
                 - Path=/api/community/**
 
+            - id: stock-service
+              uri: http://localhost:8084
+              predicates:
+                - Path=/api/stock/**
+
             - id: authorization-server
               uri: http://localhost:9000
               predicates:

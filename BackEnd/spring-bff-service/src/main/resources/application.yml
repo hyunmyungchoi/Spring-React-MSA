@@ -30,6 +30,7 @@ bff:
   api:
     community-me-uri: http://localhost:8080/api/community/me
     user-me-uri: http://localhost:8080/api/user/me
+    stock-me-uri: http://localhost:8080/api/stock/me
 
 management:
   endpoints:
