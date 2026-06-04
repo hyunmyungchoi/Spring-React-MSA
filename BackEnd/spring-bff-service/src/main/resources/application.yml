@@ -24,6 +24,7 @@ bff:
     client-id: bff-client
     client-secret: bff-secret
     redirect-uri: http://localhost:8080/bff/auth/callback
+    end-session-uri: http://localhost:8080/connect/logout
     scope: openid profile
 
   api:

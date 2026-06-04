@@ -44,6 +44,9 @@ public class BffAuthController {
     @Value("${bff.oauth2.redirect-uri}")
     private String redirectUri;
 
+    @Value("${bff.oauth2.end-session-uri}")
+    private String endSessionUri;
+
     @Value("${bff.oauth2.scope}")
     private String scope;
 
@@ -80,17 +83,28 @@ public class BffAuthController {
         return new RedirectView(authorizeUrl);
     }
 
-    @PostMapping("/bff/auth/logout")
-    public Map<String, Object> logout(HttpServletRequest request) {
+    @GetMapping("/bff/auth/logout")
+    public RedirectView logout(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
 
+        String idToken = null;
+
         if (session != null) {
+            idToken = (String) session.getAttribute(SESSION_ID_TOKEN);
             session.invalidate();
         }
 
-        return Map.of(
-                "logout", "success"
-        );
+        if (idToken == null || idToken.isBlank()) {
+            return new RedirectView(frontendRedirectUri + "/login");
+        }
+
+        String logoutUrl = UriComponentsBuilder.fromUriString(endSessionUri)
+                .queryParam("id_token_hint", idToken)
+                .queryParam("post_logout_redirect_uri", frontendRedirectUri + "/login")
+                .build()
+                .toUriString();
+
+        return new RedirectView(logoutUrl);
     }
 
 
