@@ -30,6 +30,8 @@ spring:
               uri: http://localhost:8087
               predicates:
                 - Path=/admin-bff/**
+              filters:
+                - StripPrefix=1
 
             - id: authorization-server
               uri: http://localhost:9000
