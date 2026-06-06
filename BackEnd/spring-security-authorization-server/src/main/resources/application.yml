@@ -34,6 +34,25 @@ spring:
                 - profile
             require-authorization-consent: false
             require-proof-key: false
+          admin-bff-client:
+            registration:
+              client-id: admin-bff-client
+              client-secret: "$2a$10$Dm7Jh0Txq5XD7GRJXZSFFuIZQL1fMzpohFZJPM2EcFVPJNDsfveWi"
+              client-authentication-methods:
+                - client_secret_basic
+              authorization-grant-types:
+                - authorization_code
+                - refresh_token
+              redirect-uris:
+                - http://localhost:8090/admin-bff/auth/callback
+              post-logout-redirect-uris:
+                - http://localhost:5176/login
+              scopes:
+                - openid
+                - profile
+            require-authorization-consent: false
+            require-proof-key: false
+
   mail:
     host: smtp.example.com
     port: 587
