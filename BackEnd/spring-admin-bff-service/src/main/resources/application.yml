@@ -1,0 +1,35 @@
+server:
+  port: 8087
+  servlet:
+    session:
+      cookie:
+        name: ADMINSESSIONID
+        http-only: true
+        same-site: lax
+
+spring:
+  application:
+    name: spring-admin-bff-service
+
+  session:
+    store-type: redis
+    data:
+      redis:
+        namespace: spring:session:admin-bff
+
+  data:
+    redis:
+      host: localhost
+      port: 16379
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+logging:
+  charset:
+    console: UTF-8
+  level:
+    com.springmsa.adminbff: debug
