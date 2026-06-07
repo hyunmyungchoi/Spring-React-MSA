@@ -36,6 +36,9 @@ admin-bff:
     end-session-uri: http://localhost:8090/connect/logout
     scope: openid profile
 
+  api:
+    user-me-uri: http://localhost:8080/api/user/me
+
 management:
   endpoints:
     web:
