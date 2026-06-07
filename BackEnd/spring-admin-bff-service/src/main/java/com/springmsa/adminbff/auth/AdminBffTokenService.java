@@ -40,6 +40,7 @@ public class AdminBffTokenService {
         this.restClient = restClientBuilder.build();
     }
 
+
     public String getAccessTokenOrThrow(HttpSession session) {
         String accessToken = (String) session.getAttribute(SESSION_ACCESS_TOKEN);
 
