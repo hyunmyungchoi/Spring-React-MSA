@@ -8,11 +8,20 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.FormLoginConfigurer;
+import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcUserInfoAuthenticationContext;
+import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcUserInfoAuthenticationToken;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.function.Function;
 
 @Configuration
 @EnableWebSecurity
@@ -37,7 +46,11 @@ public class SecurityConfig {
                         )
                 )
                 .oauth2AuthorizationServer(authorizationServer -> authorizationServer
-                        .oidc(Customizer.withDefaults())
+                        .oidc(oidc -> oidc
+                                .userInfoEndpoint(userInfo -> userInfo
+                                        .userInfoMapper(userInfoMapper())
+                                )
+                        )
                 );
 
         return http.build();
@@ -71,5 +84,45 @@ public class SecurityConfig {
     @Bean
     SecurityContextRepository securityContextRepository() {
         return new HttpSessionSecurityContextRepository();
+    }
+
+    private Function<OidcUserInfoAuthenticationContext, OidcUserInfo> userInfoMapper() {
+        return context -> {
+            Map<String, Object> claims = getStringObjectMap(context);
+
+            Map<String, Object> userInfo = new LinkedHashMap<>();
+            putIfNotNull(userInfo, "sub", claims.get("sub"));
+            putIfNotNull(userInfo, "name", claims.get("name"));
+            putIfNotNull(userInfo, "userId", claims.get("user_id"));
+            putIfNotNull(userInfo, "loginId", claims.get("login_id"));
+            putIfNotNull(userInfo, "email", claims.get("email"));
+            putIfNotNull(userInfo, "roles", claims.get("roles"));
+
+            return new OidcUserInfo(userInfo);
+        };
+    }
+
+    private static Map<String, Object> getStringObjectMap(OidcUserInfoAuthenticationContext context) {
+        OidcUserInfoAuthenticationToken authentication = context.getAuthentication();
+
+        Object principalObject = authentication.getPrincipal();
+
+        if (!(principalObject instanceof JwtAuthenticationToken principal)) {
+            throw new IllegalStateException("OIDC UserInfo principal must be JwtAuthenticationToken");
+        }
+
+        Jwt jwt = principal.getToken();
+
+        if (jwt == null) {
+            throw new IllegalStateException("OIDC UserInfo JWT must not be null");
+        }
+
+        return jwt.getClaims();
+    }
+
+    private void putIfNotNull(Map<String, Object> target, String key, Object value) {
+        if (value != null) {
+            target.put(key, value);
+        }
     }
 }

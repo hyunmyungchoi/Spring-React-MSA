@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
-@NullMarked
 @RestController
 public class HealthController {
 

@@ -32,6 +32,7 @@ public class JwtTokenCustomizer {
                         .claim("user_id", userPrincipal.getUserId())
                         .claim("login_id", userPrincipal.getLoginId())
                         .claim("email", userPrincipal.getEmail())
+                        .claim("name", userPrincipal.getName())
                         .claim("roles", roles);
             }
 
