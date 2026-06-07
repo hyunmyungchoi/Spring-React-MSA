@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
 
 type AdminMeResponse = {
@@ -20,9 +20,26 @@ type AdminLogoutResponse = {
 
 const ADMIN_GATEWAY_BASE_URL = 'http://localhost:8090'
 
+const getInitialMessage = (): string => {
+  const params = new URLSearchParams(window.location.search)
+  const error = params.get('error')
+
+  return error ? `Admin login failed: ${error}` : ''
+}
+
+const fetchAdminMe = async (signal?: AbortSignal): Promise<AdminMeResponse> => {
+  const response = await fetch(`${ADMIN_GATEWAY_BASE_URL}/admin-bff/auth/me`, {
+    method: 'GET',
+    credentials: 'include',
+    signal
+  })
+
+  return (await response.json()) as AdminMeResponse
+}
+
 function App() {
   const [me, setMe] = useState<AdminMeResponse | null>(null)
-  const [message, setMessage] = useState<string>('')
+  const [message, setMessage] = useState<string>(getInitialMessage)
 
   const login = () => {
     window.location.href = `${ADMIN_GATEWAY_BASE_URL}/admin-bff/auth/login`
@@ -31,12 +48,7 @@ function App() {
   const loadMe = async () => {
     setMessage('')
 
-    const response = await fetch(`${ADMIN_GATEWAY_BASE_URL}/admin-bff/auth/me`, {
-      method: 'GET',
-      credentials: 'include'
-    })
-
-    const data = await response.json()
+    const data = await fetchAdminMe()
     setMe(data)
   }
 
@@ -48,7 +60,7 @@ function App() {
       credentials: 'include'
     })
 
-    const data: AdminLogoutResponse = await response.json()
+    const data = (await response.json()) as AdminLogoutResponse
 
     setMe(null)
     setMessage(JSON.stringify(data, null, 2))
@@ -57,6 +69,46 @@ function App() {
       window.location.href = data.authServerLogoutUrl
     }
   }
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const error = params.get('error')
+
+    if (error) {
+      window.history.replaceState({}, '', window.location.pathname)
+      return
+    }
+
+    const controller = new AbortController()
+    let ignored = false
+
+    const loadInitialMe = async () => {
+      try {
+        const data = await fetchAdminMe(controller.signal)
+
+        if (!ignored) {
+          setMe(data)
+        }
+      } catch (error) {
+        if (ignored) {
+          return
+        }
+
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          return
+        }
+
+        setMessage('Failed to load admin session')
+      }
+    }
+
+    void loadInitialMe()
+
+    return () => {
+      ignored = true
+      controller.abort()
+    }
+  }, [])
 
   return (
       <main style={{ padding: 40 }}>
