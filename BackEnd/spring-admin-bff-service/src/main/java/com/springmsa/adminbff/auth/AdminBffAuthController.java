@@ -2,7 +2,9 @@ package com.springmsa.adminbff.auth;
 
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.view.RedirectView;
@@ -33,6 +35,12 @@ public class AdminBffAuthController {
 
     @Value("${admin-bff.oauth2.scope}")
     private String scope;
+
+    @Value("${admin-bff.oauth2.end-session-uri}")
+    private String endSessionUri;
+
+    @Value("${admin-bff.frontend.redirect-uri}")
+    private String frontendRedirectUri;
 
     public AdminBffAuthController(AdminBffTokenService adminBffTokenService, AdminJwtRoleValidator adminJwtRoleValidator, AdminJwtClaimReader adminJwtClaimReader) {
         this.adminBffTokenService = adminBffTokenService;
@@ -144,6 +152,35 @@ public class AdminBffAuthController {
                 "loginId", claims.get("login_id"),
                 "email", claims.get("email"),
                 "roles", claims.get("roles")
+        ));
+    }
+
+    @PostMapping("/auth/logout")
+    public ResponseEntity<Map<String, Object>> logout(HttpSession session) {
+        Object idTokenObj = session.getAttribute(AdminBffTokenService.SESSION_ID_TOKEN);
+
+        String idToken = idTokenObj instanceof String token ? token : "";
+
+        session.invalidate();
+
+        if (!StringUtils.hasText(idToken)) {
+            return ResponseEntity.ok(Map.of(
+                    "logout", "success",
+                    "authServerLogoutRequired", false
+            ));
+        }
+
+        String authServerLogoutUrl = UriComponentsBuilder.fromUriString(endSessionUri)
+                .queryParam("id_token_hint", idToken)
+                .queryParam("post_logout_redirect_uri", frontendRedirectUri)
+                .build()
+                .encode()
+                .toUriString();
+
+        return ResponseEntity.ok(Map.of(
+                "logout", "success",
+                "authServerLogoutRequired", true,
+                "authServerLogoutUrl", authServerLogoutUrl
         ));
     }
 }
