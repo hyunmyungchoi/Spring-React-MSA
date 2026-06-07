@@ -128,10 +128,11 @@ public class AdminBffAuthController {
         Object accessTokenObj = session.getAttribute(AdminBffTokenService.SESSION_ACCESS_TOKEN);
 
         if (!(accessTokenObj instanceof String accessToken) || accessToken.isBlank()) {
-            return ResponseEntity.ok(Map.of(
-                    "authenticated", false,
-                    "user", null
-            ));
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("authenticated", false);
+            response.put("user", null);
+
+            return ResponseEntity.ok(response);
         }
 
         Map<?, ?> claims = adminJwtClaimReader.readClaims(accessToken);
@@ -149,8 +150,12 @@ public class AdminBffAuthController {
         }
 
         Map<String, Object> response = new LinkedHashMap<>();
-        response.put("authenticated", false);
-        response.put("user", null);
+        response.put("authenticated", true);
+        response.put("sub", claims.get("sub"));
+        response.put("userId", claims.get("user_id"));
+        response.put("loginId", claims.get("login_id"));
+        response.put("email", claims.get("email"));
+        response.put("roles", claims.get("roles"));
 
         return ResponseEntity.ok(response);
     }
