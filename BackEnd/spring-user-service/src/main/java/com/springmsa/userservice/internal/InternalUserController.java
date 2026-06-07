@@ -1,4 +1,4 @@
-package com.springmsa.userservice.api;
+package com.springmsa.userservice.internal;
 
 import com.springmsa.userservice.domain.User;
 import com.springmsa.userservice.repository.UserRepository;
