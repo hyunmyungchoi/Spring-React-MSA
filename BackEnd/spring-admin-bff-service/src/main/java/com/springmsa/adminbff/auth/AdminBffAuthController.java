@@ -12,6 +12,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -140,20 +141,18 @@ public class AdminBffAuthController {
         if (!admin) {
             session.invalidate();
 
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
-                    "authenticated", false,
-                    "reason", "admin_role_required"
-            ));
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("authenticated", false);
+            response.put("reason", "admin_role_required");
+
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
         }
 
-        return ResponseEntity.ok(Map.of(
-                "authenticated", true,
-                "sub", claims.get("sub"),
-                "userId", claims.get("user_id"),
-                "loginId", claims.get("login_id"),
-                "email", claims.get("email"),
-                "roles", claims.get("roles")
-        ));
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("authenticated", false);
+        response.put("user", null);
+
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/auth/logout")

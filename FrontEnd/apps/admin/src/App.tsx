@@ -37,9 +37,12 @@ const fetchAdminMe = async (signal?: AbortSignal): Promise<AdminMeResponse> => {
   return (await response.json()) as AdminMeResponse
 }
 
+
+
 function App() {
   const [me, setMe] = useState<AdminMeResponse | null>(null)
   const [message, setMessage] = useState<string>(getInitialMessage)
+  const [userMe, setUserMe] = useState<unknown>(null)
 
   const login = () => {
     window.location.href = `${ADMIN_GATEWAY_BASE_URL}/admin-bff/auth/login`
@@ -69,6 +72,29 @@ function App() {
       window.location.href = data.authServerLogoutUrl
     }
   }
+
+  const fetchAdminUserMe = async (signal?: AbortSignal): Promise<unknown> => {
+    const response = await fetch(`${ADMIN_GATEWAY_BASE_URL}/admin-bff/user/me`, {
+      method: 'GET',
+      credentials: 'include',
+      signal,
+    })
+
+    return await response.json()
+  }
+
+  const loadUserMe = async () => {
+    setMessage('')
+
+    try {
+      const data = await fetchAdminUserMe()
+      setUserMe(data)
+    } catch {
+      setMessage('Failed to load admin user me')
+    }
+  }
+
+
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -118,11 +144,17 @@ function App() {
           <button onClick={login}>Admin Login</button>
           <button onClick={loadMe}>Admin Me</button>
           <button onClick={logout}>Admin Logout</button>
+          <button onClick={loadUserMe}>Admin User Me</button>
         </div>
 
         <section>
           <h2>Admin Me</h2>
           <pre>{me ? JSON.stringify(me, null, 2) : 'No data'}</pre>
+        </section>
+
+        <section>
+          <h2>Admin User Me</h2>
+          <pre>{userMe ? JSON.stringify(userMe, null, 2) : 'No data'}</pre>
         </section>
 
         <section>
