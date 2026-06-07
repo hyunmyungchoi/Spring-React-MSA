@@ -114,20 +114,19 @@ public class AdminBffAuthController {
         Map<String, Object> userInfo = requestUserInfoMap(tokenResponse.accessToken());
 
         if (hasRole(userInfo, ROLE_ADMIN)) {
-            session.invalidate();
-
-            return new RedirectView(
-                    UriComponentsBuilder.fromUriString(frontendRedirectUri)
-                            .queryParam("error", "admin_role_required")
-                            .build()
-                            .encode()
-                            .toUriString()
-            );
+            adminBffTokenService.saveTokenResponse(session, tokenResponse);
+            return new RedirectView(frontendRedirectUri);
         }
 
-        adminBffTokenService.saveTokenResponse(session, tokenResponse);
+        session.invalidate();
 
-        return new RedirectView(frontendRedirectUri);
+        return new RedirectView(
+                UriComponentsBuilder.fromUriString(frontendRedirectUri)
+                        .queryParam("error", "admin_role_required")
+                        .build()
+                        .encode()
+                        .toUriString()
+        );
     }
 
     @GetMapping("/auth/me")
@@ -199,7 +198,7 @@ public class AdminBffAuthController {
 
         String authServerLogoutUrl = UriComponentsBuilder.fromUriString(endSessionUri)
                 .queryParam("id_token_hint", idToken)
-                .queryParam("post_logout_redirect_uri", frontendRedirectUri+ "/login")
+                .queryParam("post_logout_redirect_uri", frontendRedirectUri + "/login")
                 .build()
                 .encode()
                 .toUriString();
