@@ -1,4 +1,4 @@
-package com.springmsa.bff;
+package com.springmsa.bff.health;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
 
 @RestController
-public class BffHealthController {
+public class HealthController {
 
     @GetMapping("/bff/health")
     public Map<String, Object> health() {
