@@ -67,19 +67,21 @@ public class AdminBffAuthController {
     }
 
     @GetMapping("/auth/callback")
-    public ResponseEntity<Map<String, Object>> callback(
+    public RedirectView callback(
             @RequestParam String code,
             @RequestParam(required = false) String state,
             HttpSession session
     ) {
-
         Object savedState = session.getAttribute(SESSION_OAUTH2_STATE);
 
         if (!(savedState instanceof String savedStateValue) || !savedStateValue.equals(state)) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "login", "failed",
-                    "reason", "invalid_state"
-            ));
+            return new RedirectView(
+                    UriComponentsBuilder.fromUriString(frontendRedirectUri)
+                            .queryParam("error", "invalid_state")
+                            .build()
+                            .encode()
+                            .toUriString()
+            );
         }
 
         session.removeAttribute(SESSION_OAUTH2_STATE);
@@ -89,10 +91,13 @@ public class AdminBffAuthController {
         if (tokenResponse.accessToken() == null || tokenResponse.accessToken().isBlank()) {
             session.invalidate();
 
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
-                    "login", "failed",
-                    "reason", "invalid_token_response"
-            ));
+            return new RedirectView(
+                    UriComponentsBuilder.fromUriString(frontendRedirectUri)
+                            .queryParam("error", "invalid_token_response")
+                            .build()
+                            .encode()
+                            .toUriString()
+            );
         }
 
         boolean admin = adminJwtRoleValidator.hasRole(
@@ -103,22 +108,18 @@ public class AdminBffAuthController {
         if (!admin) {
             session.invalidate();
 
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
-                    "login", "failed",
-                    "reason", "admin_role_required"
-            ));
+            return new RedirectView(
+                    UriComponentsBuilder.fromUriString(frontendRedirectUri)
+                            .queryParam("error", "admin_role_required")
+                            .build()
+                            .encode()
+                            .toUriString()
+            );
         }
 
         adminBffTokenService.saveTokenResponse(session, tokenResponse);
 
-        return ResponseEntity.ok(Map.of(
-                "login", "success",
-                "tokenType", tokenResponse.tokenType(),
-                "expiresIn", tokenResponse.expiresIn(),
-                "hasAccessToken", tokenResponse.accessToken() != null && !tokenResponse.accessToken().isBlank(),
-                "hasRefreshToken", tokenResponse.refreshToken() != null && !tokenResponse.refreshToken().isBlank(),
-                "hasIdToken", tokenResponse.idToken() != null && !tokenResponse.idToken().isBlank()
-        ));
+        return new RedirectView(frontendRedirectUri);
     }
 
     @GetMapping("/auth/me")
