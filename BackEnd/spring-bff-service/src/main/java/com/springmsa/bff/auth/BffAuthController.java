@@ -1,7 +1,6 @@
 package com.springmsa.bff.auth;
 
 import com.springmsa.bff.auth.dto.AuthMeResponse;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.beans.factory.annotation.Value;
@@ -76,6 +75,7 @@ public class BffAuthController {
                 .queryParam("scope", scope)
                 .queryParam("state", state)
                 .build()
+                .encode()
                 .toUriString();
 
         return new RedirectView(authorizeUrl);

@@ -17,7 +17,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import tools.jackson.databind.ObjectMapper;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
+
 
 @RestController
 public class AdminBffAuthController {
@@ -109,7 +113,7 @@ public class AdminBffAuthController {
 
         Map<String, Object> userInfo = requestUserInfoMap(tokenResponse.accessToken());
 
-        if (!hasRole(userInfo, ROLE_ADMIN)) {
+        if (hasRole(userInfo, ROLE_ADMIN)) {
             session.invalidate();
 
             return new RedirectView(
