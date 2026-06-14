@@ -27,20 +27,38 @@ export const useAdminDashboard = () => {
     const loadMe = async () => {
         setMessage('')
 
-        const data = await fetchAdminMe()
-        setMe(data)
+        try {
+            const data = await fetchAdminMe()
+            setMe(data)
+        } catch (error) {
+            if (error instanceof AdminFetchError) {
+                setMessage(`Failed to load admin me. status=${error.status}`)
+                return
+            }
+
+            setMessage('Failed to load admin me')
+        }
     }
 
     const logout = async () => {
         setMessage('')
 
-        const data = await requestAdminLogout()
+        try {
+            const data = await requestAdminLogout()
 
-        setMe(null)
-        setMessage(JSON.stringify(data, null, 2))
+            setMe(null)
+            setMessage(JSON.stringify(data, null, 2))
 
-        if (data.authServerLogoutUrl) {
-            window.location.href = data.authServerLogoutUrl
+            if (data.authServerLogoutUrl) {
+                window.location.href = data.authServerLogoutUrl
+            }
+        } catch (error) {
+            if (error instanceof AdminFetchError) {
+                setMessage(`Failed to logout admin. status=${error.status}`)
+                return
+            }
+
+            setMessage('Failed to logout admin')
         }
     }
 
