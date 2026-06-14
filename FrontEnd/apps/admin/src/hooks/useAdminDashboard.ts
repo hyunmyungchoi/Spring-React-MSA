@@ -5,12 +5,7 @@ import {
     requestAdminLogout,
     type AdminMeResponse,
 } from '../api/adminAuthApi'
-import {
-    fetchAdminUserDetail,
-    fetchAdminUserMe,
-    fetchAdminUsers,
-    type AdminUserResponse,
-} from '../api/adminUserApi'
+import { fetchAdminUserMe } from '../api/adminUserApi'
 
 const getInitialMessage = (): string => {
     const params = new URLSearchParams(window.location.search)
@@ -24,9 +19,6 @@ export const useAdminDashboard = () => {
     const [message, setMessage] = useState<string>(getInitialMessage)
     const [userMe, setUserMe] = useState<unknown>(null)
 
-    const [adminUsers, setAdminUsers] = useState<AdminUserResponse[] | null>(null)
-    const [adminUserDetail, setAdminUserDetail] = useState<AdminUserResponse | null>(null)
-    const [adminUserId, setAdminUserId] = useState<string>('1')
 
     const login = () => {
         window.location.href = `${ADMIN_GATEWAY_BASE_URL}/admin-bff/auth/login`
@@ -63,32 +55,7 @@ export const useAdminDashboard = () => {
         }
     }
 
-    const loadAdminUsers = async () => {
-        setMessage('')
 
-        try {
-            const data = await fetchAdminUsers()
-            setAdminUsers(data)
-        } catch {
-            setMessage('Failed to load admin users')
-        }
-    }
-
-    const loadAdminUserDetail = async () => {
-        setMessage('')
-
-        if (!adminUserId.trim()) {
-            setMessage('User ID is required')
-            return
-        }
-
-        try {
-            const data = await fetchAdminUserDetail(adminUserId.trim())
-            setAdminUserDetail(data)
-        } catch {
-            setMessage('Failed to load admin user detail')
-        }
-    }
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search)
@@ -134,15 +101,9 @@ export const useAdminDashboard = () => {
         me,
         message,
         userMe,
-        adminUsers,
-        adminUserDetail,
-        adminUserId,
-        setAdminUserId,
         login,
         loadMe,
         logout,
         loadUserMe,
-        loadAdminUsers,
-        loadAdminUserDetail,
     }
 }
