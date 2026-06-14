@@ -155,10 +155,6 @@ function App() {
             adminUserDetail={adminUserDetail}
             message={message}
         />
-        <section>
-          <h2>Message</h2>
-          <pre>{message || 'No message'}</pre>
-        </section>
       </main>
   )
 }
