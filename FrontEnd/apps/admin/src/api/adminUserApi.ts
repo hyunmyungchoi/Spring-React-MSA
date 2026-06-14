@@ -1,4 +1,4 @@
-import { ADMIN_GATEWAY_BASE_URL } from './adminAuthApi'
+import { ADMIN_GATEWAY_BASE_URL } from '../config/adminEnv'
 
 export type AdminUserResponse = {
     userId: number
