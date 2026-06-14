@@ -16,6 +16,8 @@ function AdminUserActionPanel({
             <button onClick={onLoadAdminUsers}>Admin Users</button>
 
             <input
+                type="number"
+                min="1"
                 value={adminUserId}
                 onChange={(event) => onAdminUserIdChange(event.target.value)}
                 placeholder="User ID"
