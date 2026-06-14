@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
-import {
-    ADMIN_GATEWAY_BASE_URL,
-    fetchAdminMe,
+import {fetchAdminMe,
     requestAdminLogout,
     type AdminMeResponse,
 } from '../api/adminAuthApi'
 import { fetchAdminUserMe } from '../api/adminUserApi'
+import {AdminFetchError} from "../api/adminFetch.ts";
+import { ADMIN_GATEWAY_BASE_URL } from '../config/adminEnv'
 
 const getInitialMessage = (): string => {
     const params = new URLSearchParams(window.location.search)
@@ -50,7 +50,12 @@ export const useAdminDashboard = () => {
         try {
             const data = await fetchAdminUserMe()
             setUserMe(data)
-        } catch {
+        } catch (error) {
+            if (error instanceof AdminFetchError) {
+                setMessage(`Failed to load admin user me. status=${error.status}`)
+                return
+            }
+
             setMessage('Failed to load admin user me')
         }
     }
@@ -81,7 +86,8 @@ export const useAdminDashboard = () => {
                     return
                 }
 
-                if (error instanceof DOMException && error.name === 'AbortError') {
+                if (error instanceof AdminFetchError) {
+                    setMessage(`Failed to load admin session. status=${error.status}`)
                     return
                 }
 
