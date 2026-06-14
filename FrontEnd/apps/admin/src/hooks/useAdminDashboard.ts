@@ -5,8 +5,8 @@ import {
     type AdminMeResponse,
 } from '../api/adminAuthApi'
 import { fetchAdminUserMe } from '../api/adminUserApi'
-import { AdminFetchError } from '../api/adminFetch'
 import { ADMIN_GATEWAY_BASE_URL } from '../config/adminEnv'
+import { getAdminErrorMessage } from '../api/adminErrorMessage'
 
 const getInitialMessage = (): string => {
     const params = new URLSearchParams(window.location.search)
@@ -32,12 +32,7 @@ export const useAdminDashboard = () => {
             const data = await fetchAdminMe()
             setMe(data)
         } catch (error) {
-            if (error instanceof AdminFetchError) {
-                setMessage(`Failed to load admin me. status=${error.status}`)
-                return
-            }
-
-            setMessage('Failed to load admin me')
+            setMessage(getAdminErrorMessage(error, 'Failed to load admin me'))
         }
     }
 
@@ -54,12 +49,7 @@ export const useAdminDashboard = () => {
                 window.location.href = data.authServerLogoutUrl
             }
         } catch (error) {
-            if (error instanceof AdminFetchError) {
-                setMessage(`Failed to logout admin. status=${error.status}`)
-                return
-            }
-
-            setMessage('Failed to logout admin')
+            setMessage(getAdminErrorMessage(error, 'Failed to load admin me'))
         }
     }
 
@@ -70,12 +60,7 @@ export const useAdminDashboard = () => {
             const data = await fetchAdminUserMe()
             setUserMe(data)
         } catch (error) {
-            if (error instanceof AdminFetchError) {
-                setMessage(`Failed to load admin user me. status=${error.status}`)
-                return
-            }
-
-            setMessage('Failed to load admin user me')
+            setMessage(getAdminErrorMessage(error, 'Failed to load admin me'))
         }
     }
 
@@ -105,12 +90,7 @@ export const useAdminDashboard = () => {
                     return
                 }
 
-                if (error instanceof AdminFetchError) {
-                    setMessage(`Failed to load admin session. status=${error.status}`)
-                    return
-                }
-
-                setMessage('Failed to load admin session')
+                setMessage(getAdminErrorMessage(error, 'Failed to load admin session'))
             }
         }
 
