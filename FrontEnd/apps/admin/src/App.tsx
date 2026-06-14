@@ -11,8 +11,10 @@ import {
   fetchAdminUsers,
   type AdminUserResponse,
 } from './api/adminUserApi'
+import AdminMeCard from './components/AdminMeCard'
 import AdminUsersTable from './components/AdminUsersTable'
 import AdminUserDetailCard from './components/AdminUserDetailCard'
+import AdminUserMeCard from './components/AdminUserMeCard'
 import './App.css'
 
 const getInitialMessage = (): string => {
@@ -155,12 +157,12 @@ function App() {
 
         <section>
           <h2>Admin Me</h2>
-          <pre>{me ? JSON.stringify(me, null, 2) : 'No data'}</pre>
+          <AdminMeCard me={me} />
         </section>
 
         <section>
           <h2>Admin User Me</h2>
-          <pre>{userMe ? JSON.stringify(userMe, null, 2) : 'No data'}</pre>
+          <AdminUserMeCard userMe={userMe} />
         </section>
 
         <section>
