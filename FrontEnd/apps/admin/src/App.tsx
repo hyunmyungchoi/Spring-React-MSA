@@ -1,24 +1,17 @@
 import { useEffect, useState } from 'react'
+import {
+  ADMIN_GATEWAY_BASE_URL,
+  fetchAdminMe,
+  requestAdminLogout,
+  type AdminMeResponse,
+} from './api/adminAuthApi'
+import {
+  fetchAdminUserDetail,
+  fetchAdminUserMe,
+  fetchAdminUsers,
+  type AdminUserResponse,
+} from './api/adminUserApi'
 import './App.css'
-
-type AdminMeResponse = {
-  authenticated?: boolean
-  sub?: string
-  userId?: number
-  loginId?: string
-  email?: string
-  roles?: string[]
-  reason?: string
-  user?: null
-}
-
-type AdminLogoutResponse = {
-  logout: string
-  authServerLogoutRequired?: boolean
-  authServerLogoutUrl?: string
-}
-
-const ADMIN_GATEWAY_BASE_URL = 'http://localhost:8090'
 
 const getInitialMessage = (): string => {
   const params = new URLSearchParams(window.location.search)
@@ -27,22 +20,14 @@ const getInitialMessage = (): string => {
   return error ? `Admin login failed: ${error}` : ''
 }
 
-const fetchAdminMe = async (signal?: AbortSignal): Promise<AdminMeResponse> => {
-  const response = await fetch(`${ADMIN_GATEWAY_BASE_URL}/admin-bff/auth/me`, {
-    method: 'GET',
-    credentials: 'include',
-    signal
-  })
-
-  return (await response.json()) as AdminMeResponse
-}
-
-
-
 function App() {
   const [me, setMe] = useState<AdminMeResponse | null>(null)
   const [message, setMessage] = useState<string>(getInitialMessage)
   const [userMe, setUserMe] = useState<unknown>(null)
+
+  const [adminUsers, setAdminUsers] = useState<AdminUserResponse[] | null>(null)
+  const [adminUserDetail, setAdminUserDetail] = useState<AdminUserResponse | null>(null)
+  const [adminUserId, setAdminUserId] = useState<string>('1')
 
   const login = () => {
     window.location.href = `${ADMIN_GATEWAY_BASE_URL}/admin-bff/auth/login`
@@ -58,12 +43,7 @@ function App() {
   const logout = async () => {
     setMessage('')
 
-    const response = await fetch(`${ADMIN_GATEWAY_BASE_URL}/admin-bff/auth/logout`, {
-      method: 'POST',
-      credentials: 'include'
-    })
-
-    const data = (await response.json()) as AdminLogoutResponse
+    const data = await requestAdminLogout()
 
     setMe(null)
     setMessage(JSON.stringify(data, null, 2))
@@ -71,16 +51,6 @@ function App() {
     if (data.authServerLogoutUrl) {
       window.location.href = data.authServerLogoutUrl
     }
-  }
-
-  const fetchAdminUserMe = async (signal?: AbortSignal): Promise<unknown> => {
-    const response = await fetch(`${ADMIN_GATEWAY_BASE_URL}/admin-bff/user/me`, {
-      method: 'GET',
-      credentials: 'include',
-      signal,
-    })
-
-    return await response.json()
   }
 
   const loadUserMe = async () => {
@@ -94,6 +64,32 @@ function App() {
     }
   }
 
+  const loadAdminUsers = async () => {
+    setMessage('')
+
+    try {
+      const data = await fetchAdminUsers()
+      setAdminUsers(data)
+    } catch {
+      setMessage('Failed to load admin users')
+    }
+  }
+
+  const loadAdminUserDetail = async () => {
+    setMessage('')
+
+    if (!adminUserId.trim()) {
+      setMessage('User ID is required')
+      return
+    }
+
+    try {
+      const data = await fetchAdminUserDetail(adminUserId.trim())
+      setAdminUserDetail(data)
+    } catch {
+      setMessage('Failed to load admin user detail')
+    }
+  }
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -139,11 +135,20 @@ function App() {
       <main style={{ padding: 40 }}>
         <h1>Spring MSA Admin Frontend</h1>
 
-        <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
+        <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
           <button onClick={login}>Admin Login</button>
           <button onClick={loadMe}>Admin Me</button>
           <button onClick={logout}>Admin Logout</button>
           <button onClick={loadUserMe}>Admin User Me</button>
+          <button onClick={loadAdminUsers}>Admin Users</button>
+
+          <input
+              value={adminUserId}
+              onChange={(event) => setAdminUserId(event.target.value)}
+              placeholder="User ID"
+              style={{ width: 80 }}
+          />
+          <button onClick={loadAdminUserDetail}>Admin User Detail</button>
         </div>
 
         <section>
@@ -154,6 +159,16 @@ function App() {
         <section>
           <h2>Admin User Me</h2>
           <pre>{userMe ? JSON.stringify(userMe, null, 2) : 'No data'}</pre>
+        </section>
+
+        <section>
+          <h2>Admin Users</h2>
+          <pre>{adminUsers ? JSON.stringify(adminUsers, null, 2) : 'No data'}</pre>
+        </section>
+
+        <section>
+          <h2>Admin User Detail</h2>
+          <pre>{adminUserDetail ? JSON.stringify(adminUserDetail, null, 2) : 'No data'}</pre>
         </section>
 
         <section>
