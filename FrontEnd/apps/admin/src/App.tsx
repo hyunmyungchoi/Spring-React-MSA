@@ -11,6 +11,7 @@ import {
   fetchAdminUsers,
   type AdminUserResponse,
 } from './api/adminUserApi'
+import AdminUsersTable from './components/AdminUsersTable'
 import './App.css'
 
 const getInitialMessage = (): string => {
@@ -163,7 +164,7 @@ function App() {
 
         <section>
           <h2>Admin Users</h2>
-          <pre>{adminUsers ? JSON.stringify(adminUsers, null, 2) : 'No data'}</pre>
+          <AdminUsersTable users={adminUsers} />
         </section>
 
         <section>
