@@ -1,9 +1,10 @@
 import { Outlet } from 'react-router-dom'
+import AdminHeader from '../components/AdminHeader'
 
 function AdminLayout() {
     return (
         <main style={{ padding: 40 }}>
-            <h1>Spring MSA Admin Frontend</h1>
+            <AdminHeader />
             <Outlet />
         </main>
     )
