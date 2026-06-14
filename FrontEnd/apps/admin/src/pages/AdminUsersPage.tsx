@@ -1,7 +1,7 @@
 import AdminUserActionPanel from '../components/AdminUserActionPanel'
 import AdminUserDetailCard from '../components/AdminUserDetailCard'
 import AdminUsersTable from '../components/AdminUsersTable'
-import { useAdminDashboard } from '../hooks/useAdminDashboard'
+import { useAdminUsers } from '../hooks/useAdminUsers'
 
 function AdminUsersPage() {
     const {
@@ -12,7 +12,7 @@ function AdminUsersPage() {
         setAdminUserId,
         loadAdminUsers,
         loadAdminUserDetail,
-    } = useAdminDashboard()
+    } = useAdminUsers()
 
     return (
         <>
