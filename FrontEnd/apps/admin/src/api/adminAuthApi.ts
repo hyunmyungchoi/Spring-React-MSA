@@ -1,12 +1,16 @@
-export type AdminMeResponse = {
-    authenticated?: boolean
+export type AdminMeUser = {
     sub?: string
+    name?: string
     userId?: number
     loginId?: string
     email?: string
     roles?: string[]
-    reason?: string
-    user?: null
+}
+
+export type AdminMeResponse = {
+    authenticated: boolean
+    user: AdminMeUser | null
+    reason: string | null
 }
 
 export type AdminLogoutResponse = {
