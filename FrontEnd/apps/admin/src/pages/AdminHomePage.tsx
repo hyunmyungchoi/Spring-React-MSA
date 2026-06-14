@@ -20,9 +20,7 @@ function AdminHomePage() {
     } = useAdminDashboard()
 
     return (
-        <main style={{ padding: 40 }}>
-            <h1>Spring MSA Admin Frontend</h1>
-
+        <>
             <AdminActionPanel
                 adminUserId={adminUserId}
                 onAdminUserIdChange={setAdminUserId}
@@ -41,7 +39,7 @@ function AdminHomePage() {
                 adminUserDetail={adminUserDetail}
                 message={message}
             />
-        </main>
+        </>
     )
 }
 
