@@ -11,6 +11,7 @@ function AdminUserActionPanel({
                                   onLoadAdminUsers,
                                   onLoadAdminUserDetail,
                               }: AdminUserActionPanelProps) {
+    const isAdminUserDetailDisabled = !adminUserId.trim()
     return (
         <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
             <button onClick={onLoadAdminUsers}>Admin Users</button>
@@ -24,7 +25,12 @@ function AdminUserActionPanel({
                 style={{ width: 80 }}
             />
 
-            <button onClick={onLoadAdminUserDetail}>Admin User Detail</button>
+            <button
+                onClick={onLoadAdminUserDetail}
+                disabled={isAdminUserDetailDisabled}
+            >
+                Admin User Detail
+            </button>
         </div>
     )
 }
