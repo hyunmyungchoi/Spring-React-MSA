@@ -26,14 +26,22 @@ export const useAdminUsers = () => {
     const loadAdminUserDetail = async () => {
         setMessage('')
 
-        if (!adminUserId.trim()) {
-            setMessage('User ID is required')
+        const trimmedUserId = adminUserId.trim()
+
+        if (!trimmedUserId) {
+            setMessage('Admin user id is required')
+            return
+        }
+
+        if (!/^\d+$/.test(trimmedUserId)) {
+            setMessage('Admin user id must be numeric')
             return
         }
 
         try {
-            const data = await fetchAdminUserDetail(adminUserId.trim())
+            const data = await fetchAdminUserDetail(trimmedUserId)
             setAdminUserDetail(data)
+            setMessage('Loaded admin user detail')
         } catch (error) {
             setMessage(getAdminErrorMessage(error, 'Failed to load admin user detail'))
         }
