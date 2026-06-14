@@ -11,11 +11,8 @@ import {
   fetchAdminUsers,
   type AdminUserResponse,
 } from './api/adminUserApi'
-import AdminMeCard from './components/AdminMeCard'
-import AdminUsersTable from './components/AdminUsersTable'
-import AdminUserDetailCard from './components/AdminUserDetailCard'
-import AdminUserMeCard from './components/AdminUserMeCard'
 import AdminActionPanel from './components/AdminActionPanel'
+import AdminDashboardSections from './components/AdminDashboardSections'
 import './App.css'
 
 const getInitialMessage = (): string => {
@@ -151,26 +148,13 @@ function App() {
             onLoadAdminUserDetail={loadAdminUserDetail}
         />
 
-        <section>
-          <h2>Admin Me</h2>
-          <AdminMeCard me={me} />
-        </section>
-
-        <section>
-          <h2>Admin User Me</h2>
-          <AdminUserMeCard userMe={userMe} />
-        </section>
-
-        <section>
-          <h2>Admin Users</h2>
-          <AdminUsersTable users={adminUsers} />
-        </section>
-
-        <section>
-          <h2>Admin User Detail</h2>
-          <AdminUserDetailCard user={adminUserDetail} />
-        </section>
-
+        <AdminDashboardSections
+            me={me}
+            userMe={userMe}
+            adminUsers={adminUsers}
+            adminUserDetail={adminUserDetail}
+            message={message}
+        />
         <section>
           <h2>Message</h2>
           <pre>{message || 'No message'}</pre>
