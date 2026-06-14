@@ -1,3 +1,6 @@
+import { ADMIN_GATEWAY_BASE_URL } from '../config/adminEnv'
+import { adminFetchJson } from './adminFetch'
+
 export type AdminMeUser = {
     sub?: string
     name?: string
@@ -19,23 +22,19 @@ export type AdminLogoutResponse = {
     authServerLogoutUrl?: string
 }
 
-import { ADMIN_GATEWAY_BASE_URL } from '../config/adminEnv'
+
 
 export const fetchAdminMe = async (signal?: AbortSignal): Promise<AdminMeResponse> => {
-    const response = await fetch(`${ADMIN_GATEWAY_BASE_URL}/admin-bff/auth/me`, {
-        method: 'GET',
-        credentials: 'include',
-        signal,
-    })
-
-    return (await response.json()) as AdminMeResponse
+    return adminFetchJson<AdminMeResponse>(
+        `${ADMIN_GATEWAY_BASE_URL}/admin-bff/auth/me`,
+        { signal }
+    )
 }
 
-export const requestAdminLogout = async (): Promise<AdminLogoutResponse> => {
-    const response = await fetch(`${ADMIN_GATEWAY_BASE_URL}/admin-bff/auth/logout`, {
-        method: 'POST',
-        credentials: 'include',
-    })
 
-    return (await response.json()) as AdminLogoutResponse
+export const requestAdminLogout = async (): Promise<AdminLogoutResponse> => {
+    return adminFetchJson<AdminLogoutResponse>(
+        `${ADMIN_GATEWAY_BASE_URL}/admin-bff/auth/logout`,
+        { method: 'POST' }
+    )
 }
