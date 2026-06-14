@@ -1,6 +1,6 @@
 import AdminActionPanel from './components/AdminActionPanel'
 import AdminDashboardSections from './components/AdminDashboardSections'
-import { useAdminDashboard } from './hooks/useAdminDashboard.ts'
+import { useAdminDashboard } from './hooks/useAdminDashboard'
 import './App.css'
 
 function App() {
