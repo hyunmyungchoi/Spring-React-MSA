@@ -4,7 +4,7 @@ import {
     fetchAdminUsers,
     type AdminUserResponse,
 } from '../api/adminUserApi'
-import { AdminFetchError } from '../api/adminFetch'
+import { getAdminErrorMessage } from '../api/adminErrorMessage'
 
 export const useAdminUsers = () => {
     const [message, setMessage] = useState<string>('')
@@ -19,12 +19,7 @@ export const useAdminUsers = () => {
             const data = await fetchAdminUsers()
             setAdminUsers(data)
         } catch (error) {
-            if (error instanceof AdminFetchError) {
-                setMessage(`Failed to load admin users. status=${error.status}`)
-                return
-            }
-
-            setMessage('Failed to load admin users')
+            setMessage(getAdminErrorMessage(error, 'Failed to load admin users'))
         }
     }
 
@@ -40,12 +35,7 @@ export const useAdminUsers = () => {
             const data = await fetchAdminUserDetail(adminUserId.trim())
             setAdminUserDetail(data)
         } catch (error) {
-            if (error instanceof AdminFetchError) {
-                setMessage(`Failed to load admin user detail. status=${error.status}`)
-                return
-            }
-
-            setMessage('Failed to load admin user detail')
+            setMessage(getAdminErrorMessage(error, 'Failed to load admin user detail'))
         }
     }
 
