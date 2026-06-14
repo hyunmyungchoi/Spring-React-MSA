@@ -1,8 +1,14 @@
-import AdminHomePage from './pages/AdminHomePage'
+import {BrowserRouter} from "react-router-dom";
+import AdminRoutes from "./routes/AdminRoutes.tsx";
 import './App.css'
 
 function App() {
-  return <AdminHomePage />
+  return (
+      <BrowserRouter>
+        <AdminRoutes />
+      </BrowserRouter>
+  )
 }
+
 
 export default App
