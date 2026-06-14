@@ -15,6 +15,7 @@ import AdminMeCard from './components/AdminMeCard'
 import AdminUsersTable from './components/AdminUsersTable'
 import AdminUserDetailCard from './components/AdminUserDetailCard'
 import AdminUserMeCard from './components/AdminUserMeCard'
+import AdminActionPanel from './components/AdminActionPanel'
 import './App.css'
 
 const getInitialMessage = (): string => {
@@ -139,21 +140,16 @@ function App() {
       <main style={{ padding: 40 }}>
         <h1>Spring MSA Admin Frontend</h1>
 
-        <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
-          <button onClick={login}>Admin Login</button>
-          <button onClick={loadMe}>Admin Me</button>
-          <button onClick={logout}>Admin Logout</button>
-          <button onClick={loadUserMe}>Admin User Me</button>
-          <button onClick={loadAdminUsers}>Admin Users</button>
-
-          <input
-              value={adminUserId}
-              onChange={(event) => setAdminUserId(event.target.value)}
-              placeholder="User ID"
-              style={{ width: 80 }}
-          />
-          <button onClick={loadAdminUserDetail}>Admin User Detail</button>
-        </div>
+        <AdminActionPanel
+            adminUserId={adminUserId}
+            onAdminUserIdChange={setAdminUserId}
+            onLogin={login}
+            onLoadMe={loadMe}
+            onLogout={logout}
+            onLoadUserMe={loadUserMe}
+            onLoadAdminUsers={loadAdminUsers}
+            onLoadAdminUserDetail={loadAdminUserDetail}
+        />
 
         <section>
           <h2>Admin Me</h2>
