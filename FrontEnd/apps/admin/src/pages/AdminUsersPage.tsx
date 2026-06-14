@@ -1,6 +1,5 @@
 import AdminUserActionPanel from '../components/AdminUserActionPanel'
-import AdminUserDetailCard from '../components/AdminUserDetailCard'
-import AdminUsersTable from '../components/AdminUsersTable'
+import AdminUsersSections from '../components/AdminUsersSections'
 import { useAdminUsers } from '../hooks/useAdminUsers'
 
 function AdminUsersPage() {
@@ -23,20 +22,11 @@ function AdminUsersPage() {
                 onLoadAdminUserDetail={loadAdminUserDetail}
             />
 
-            <section>
-                <h2>Admin Users</h2>
-                <AdminUsersTable users={adminUsers} />
-            </section>
-
-            <section>
-                <h2>Admin User Detail</h2>
-                <AdminUserDetailCard user={adminUserDetail} />
-            </section>
-
-            <section>
-                <h2>Message</h2>
-                <pre>{message || 'No message'}</pre>
-            </section>
+            <AdminUsersSections
+                adminUsers={adminUsers}
+                adminUserDetail={adminUserDetail}
+                message={message}
+            />
         </>
     )
 }
