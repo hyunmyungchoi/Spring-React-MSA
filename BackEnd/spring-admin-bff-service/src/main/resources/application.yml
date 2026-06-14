@@ -38,6 +38,7 @@ admin-bff:
 
   api:
     user-me-uri: http://localhost:8080/api/user/me
+    user-admin-users-uri: http://localhost:8080/api/user/admin/users
 
 management:
   endpoints:

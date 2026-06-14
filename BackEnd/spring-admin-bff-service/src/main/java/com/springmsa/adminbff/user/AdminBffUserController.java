@@ -6,13 +6,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
 import tools.jackson.databind.ObjectMapper;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -23,6 +26,9 @@ public class AdminBffUserController {
 
     @Value("${admin-bff.api.user-me-uri}")
     private String userMeUri;
+
+    @Value("${admin-bff.api.user-admin-users-uri}")
+    private String userAdminUsersUri;
 
     public AdminBffUserController(
             AdminBffApiProxyClient adminBffApiProxyClient,
@@ -64,6 +70,76 @@ public class AdminBffUserController {
         }
     }
 
+
+    @GetMapping("/user/admin/users")
+    public ResponseEntity<Object> users(HttpSession session) {
+        try {
+            String responseBody = adminBffApiProxyClient.get(session, userAdminUsersUri);
+            return ResponseEntity.ok(parseJsonArray(responseBody));
+
+        } catch (ResponseStatusException e) {
+            return ResponseEntity
+                    .status(e.getStatusCode())
+                    .body(errorResponse(
+                            e.getStatusCode().value(),
+                            resolveMessage(e, "Admin BFF session is invalid")
+                    ));
+
+        } catch (ResourceAccessException e) {
+            return ResponseEntity
+                    .status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(errorResponse(
+                            HttpStatus.SERVICE_UNAVAILABLE.value(),
+                            "User service is unavailable"
+                    ));
+
+        } catch (RestClientResponseException e) {
+            return ResponseEntity
+                    .status(e.getStatusCode())
+                    .body(errorResponse(
+                            e.getStatusCode().value(),
+                            "User admin users request failed"
+                    ));
+        }
+    }
+
+    @GetMapping("/user/admin/users/{userId}")
+    public ResponseEntity<Object> user(@PathVariable Long userId, HttpSession session) {
+        try {
+            String responseBody = adminBffApiProxyClient.get(
+                    session,
+                    userAdminUsersUri + "/" + userId
+            );
+
+            return ResponseEntity.ok(parseJsonObject(responseBody));
+
+        } catch (ResponseStatusException e) {
+            return ResponseEntity
+                    .status(e.getStatusCode())
+                    .body(errorResponse(
+                            e.getStatusCode().value(),
+                            resolveMessage(e, "Admin BFF session is invalid")
+                    ));
+
+        } catch (ResourceAccessException e) {
+            return ResponseEntity
+                    .status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(errorResponse(
+                            HttpStatus.SERVICE_UNAVAILABLE.value(),
+                            "User service is unavailable"
+                    ));
+
+        } catch (RestClientResponseException e) {
+            return ResponseEntity
+                    .status(e.getStatusCode())
+                    .body(errorResponse(
+                            e.getStatusCode().value(),
+                            "User admin user request failed"
+                    ));
+        }
+    }
+
+
     private Map<String, Object> parseJsonObject(String responseBody) {
         try {
             Object parsed = objectMapper.readValue(responseBody, Map.class);
@@ -82,6 +158,32 @@ public class AdminBffUserController {
             );
 
             return response;
+
+        } catch (ResponseStatusException e) {
+            throw e;
+
+        } catch (Exception e) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_GATEWAY,
+                    "Failed to parse user service response",
+                    e
+            );
+        }
+    }
+
+
+    private List<Object> parseJsonArray(String responseBody) {
+        try {
+            Object parsed = objectMapper.readValue(responseBody, List.class);
+
+            if (!(parsed instanceof List<?> parsedList)) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_GATEWAY,
+                        "User service response is not a JSON array"
+                );
+            }
+
+            return new ArrayList<>(parsedList);
 
         } catch (ResponseStatusException e) {
             throw e;
