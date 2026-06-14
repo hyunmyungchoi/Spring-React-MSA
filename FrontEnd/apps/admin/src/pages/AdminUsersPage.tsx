@@ -1,4 +1,4 @@
-import AdminActionPanel from '../components/AdminActionPanel'
+import AdminUserActionPanel from '../components/AdminUserActionPanel'
 import AdminUserDetailCard from '../components/AdminUserDetailCard'
 import AdminUsersTable from '../components/AdminUsersTable'
 import { useAdminDashboard } from '../hooks/useAdminDashboard'
@@ -10,23 +10,15 @@ function AdminUsersPage() {
         adminUserDetail,
         adminUserId,
         setAdminUserId,
-        login,
-        loadMe,
-        logout,
-        loadUserMe,
         loadAdminUsers,
         loadAdminUserDetail,
     } = useAdminDashboard()
 
     return (
         <>
-            <AdminActionPanel
+            <AdminUserActionPanel
                 adminUserId={adminUserId}
                 onAdminUserIdChange={setAdminUserId}
-                onLogin={login}
-                onLoadMe={loadMe}
-                onLogout={logout}
-                onLoadUserMe={loadUserMe}
                 onLoadAdminUsers={loadAdminUsers}
                 onLoadAdminUserDetail={loadAdminUserDetail}
             />
