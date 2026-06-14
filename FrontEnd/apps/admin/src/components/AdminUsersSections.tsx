@@ -1,6 +1,7 @@
 import type { AdminUserResponse } from '../api/adminUserApi'
 import AdminUserDetailCard from './AdminUserDetailCard'
 import AdminUsersTable from './AdminUsersTable'
+import MessageSection from './MessageSection'
 
 type AdminUsersSectionsProps = {
     adminUsers: AdminUserResponse[] | null
@@ -25,10 +26,7 @@ function AdminUsersSections({
                 <AdminUserDetailCard user={adminUserDetail} />
             </section>
 
-            <section>
-                <h2>Message</h2>
-                <pre>{message || 'No message'}</pre>
-            </section>
+            <MessageSection message={message} />
         </>
     )
 }

@@ -1,6 +1,7 @@
 import type { AdminMeResponse } from '../api/adminAuthApi'
 import AdminMeCard from './AdminMeCard'
 import AdminUserMeCard from './AdminUserMeCard'
+import MessageSection from './MessageSection'
 
 type AdminDashboardSectionsProps = {
     me: AdminMeResponse | null
@@ -25,10 +26,7 @@ function AdminDashboardSections({
                 <AdminUserMeCard userMe={userMe} />
             </section>
 
-            <section>
-                <h2>Message</h2>
-                <pre>{message || 'No message'}</pre>
-            </section>
+            <MessageSection message={message} />
         </>
     )
 }
