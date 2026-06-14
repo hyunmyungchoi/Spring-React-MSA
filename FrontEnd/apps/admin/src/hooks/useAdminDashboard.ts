@@ -49,7 +49,7 @@ export const useAdminDashboard = () => {
                 window.location.href = data.authServerLogoutUrl
             }
         } catch (error) {
-            setMessage(getAdminErrorMessage(error, 'Failed to load admin me'))
+            setMessage(getAdminErrorMessage(error, 'Failed to logout admin'))
         }
     }
 
@@ -60,7 +60,7 @@ export const useAdminDashboard = () => {
             const data = await fetchAdminUserMe()
             setUserMe(data)
         } catch (error) {
-            setMessage(getAdminErrorMessage(error, 'Failed to load admin me'))
+            setMessage(getAdminErrorMessage(error, 'Failed to load admin user me'))
         }
     }
 
