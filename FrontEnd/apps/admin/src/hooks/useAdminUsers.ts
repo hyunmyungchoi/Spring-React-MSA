@@ -5,6 +5,7 @@ import {
     type AdminUserResponse,
 } from '../api/adminUserApi'
 import { getAdminErrorMessage } from '../api/adminErrorMessage'
+import { isValidAdminUserId, normalizeAdminUserId } from '../utils/adminUserId'
 
 export const useAdminUsers = () => {
     const [message, setMessage] = useState<string>('')
@@ -26,14 +27,14 @@ export const useAdminUsers = () => {
     const loadAdminUserDetail = async () => {
         setMessage('')
 
-        const trimmedUserId = adminUserId.trim()
+        const trimmedUserId = normalizeAdminUserId(adminUserId)
 
         if (!trimmedUserId) {
             setMessage('Admin user id is required')
             return
         }
 
-        if (!/^\d+$/.test(trimmedUserId)) {
+        if (!isValidAdminUserId(trimmedUserId)) {
             setMessage('Admin user id must be numeric')
             return
         }

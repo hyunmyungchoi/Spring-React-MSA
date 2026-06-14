@@ -4,6 +4,7 @@ type AdminUserActionPanelProps = {
     onLoadAdminUsers: () => void
     onLoadAdminUserDetail: () => void
 }
+import { isValidAdminUserId } from '../utils/adminUserId'
 
 function AdminUserActionPanel({
                                   adminUserId,
@@ -11,8 +12,8 @@ function AdminUserActionPanel({
                                   onLoadAdminUsers,
                                   onLoadAdminUserDetail,
                               }: AdminUserActionPanelProps) {
-    const trimmedAdminUserId = adminUserId.trim()
-    const isAdminUserDetailDisabled = !/^\d+$/.test(trimmedAdminUserId)
+
+    const isAdminUserDetailDisabled = !isValidAdminUserId(adminUserId)
 
     return (
         <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
