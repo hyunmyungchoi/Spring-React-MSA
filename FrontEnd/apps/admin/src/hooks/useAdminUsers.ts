@@ -48,12 +48,17 @@ export const useAdminUsers = () => {
         }
     }
 
+    const changeAdminUserId = (nextAdminUserId: string) => {
+        setAdminUserId(nextAdminUserId)
+        setAdminUserDetail(null)
+    }
+
     return {
         message,
         adminUsers,
         adminUserDetail,
         adminUserId,
-        setAdminUserId,
+        setAdminUserId: changeAdminUserId,
         loadAdminUsers,
         loadAdminUserDetail,
     }
