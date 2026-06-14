@@ -12,6 +12,7 @@ import {
   type AdminUserResponse,
 } from './api/adminUserApi'
 import AdminUsersTable from './components/AdminUsersTable'
+import AdminUserDetailCard from './components/AdminUserDetailCard'
 import './App.css'
 
 const getInitialMessage = (): string => {
@@ -169,7 +170,7 @@ function App() {
 
         <section>
           <h2>Admin User Detail</h2>
-          <pre>{adminUserDetail ? JSON.stringify(adminUserDetail, null, 2) : 'No data'}</pre>
+          <AdminUserDetailCard user={adminUserDetail} />
         </section>
 
         <section>
