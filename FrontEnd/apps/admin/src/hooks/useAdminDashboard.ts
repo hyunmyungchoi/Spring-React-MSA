@@ -4,7 +4,7 @@ import {fetchAdminMe,
     type AdminMeResponse,
 } from '../api/adminAuthApi'
 import { fetchAdminUserMe } from '../api/adminUserApi'
-import {AdminFetchError} from "../api/adminFetch.ts";
+import { AdminFetchError } from '../api/adminFetch'
 import { ADMIN_GATEWAY_BASE_URL } from '../config/adminEnv'
 
 const getInitialMessage = (): string => {
