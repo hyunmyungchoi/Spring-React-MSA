@@ -19,7 +19,8 @@ export type AdminLogoutResponse = {
     authServerLogoutUrl?: string
 }
 
-export const ADMIN_GATEWAY_BASE_URL = 'http://localhost:8090'
+import { ADMIN_GATEWAY_BASE_URL } from '../config/adminEnv'
+export { ADMIN_GATEWAY_BASE_URL }
 
 export const fetchAdminMe = async (signal?: AbortSignal): Promise<AdminMeResponse> => {
     const response = await fetch(`${ADMIN_GATEWAY_BASE_URL}/admin-bff/auth/me`, {
