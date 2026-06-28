@@ -6,4 +6,4 @@ spring:
     name: spring-user-service
 
   profiles:
-    active: local
+    default: local
