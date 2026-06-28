@@ -22,3 +22,9 @@ management:
     web:
       exposure:
         include: health,info
+
+logging:
+  charset:
+    console: UTF-8
+  level:
+    com.springmsa.bff: debug

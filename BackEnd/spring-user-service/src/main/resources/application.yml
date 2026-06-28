@@ -5,5 +5,15 @@ spring:
   application:
     name: spring-user-service
 
-  profiles:
-    default: local
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+logging:
+  charset:
+    console: UTF-8
+  level:
+    com.springmsa.userservice: debug
+    org.springframework.security: debug

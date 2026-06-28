@@ -1,0 +1,32 @@
+spring:
+  config:
+    activate:
+      on-profile: local
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080
+
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:15432/msa
+    username: msa
+    password: msa
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  sql:
+    init:
+      mode: never
+
+logging:
+  level:
+    org.hibernate.SQL: debug

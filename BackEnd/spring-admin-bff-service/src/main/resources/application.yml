@@ -17,29 +17,6 @@ spring:
       redis:
         namespace: spring:session:admin-bff
 
-  data:
-    redis:
-      host: localhost
-      port: 16379
-
-admin-bff:
-  frontend:
-    redirect-uri: http://localhost:5176
-
-  oauth2:
-    authorization-uri: http://localhost:8090/oauth2/authorize
-    token-uri: http://localhost:8090/oauth2/token
-    userinfo-uri: http://localhost:8090/userinfo
-    client-id: admin-bff-client
-    client-secret: ${ADMIN_BFF_CLIENT_SECRET:admin-bff-secret}
-    redirect-uri: http://localhost:8090/admin-bff/auth/callback
-    end-session-uri: http://localhost:8090/connect/logout
-    scope: openid profile
-
-  api:
-    user-me-uri: http://localhost:8080/api/user/me
-    user-admin-users-uri: http://localhost:8080/api/user/admin/users
-
 management:
   endpoints:
     web:

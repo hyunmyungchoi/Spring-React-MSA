@@ -1,0 +1,20 @@
+spring:
+  config:
+    activate:
+      on-profile: local
+
+  datasource:
+    url: jdbc:postgresql://localhost:15432/msa
+    username: msa
+    password: msa
+
+  data:
+    redis:
+      host: localhost
+      port: 16379
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080

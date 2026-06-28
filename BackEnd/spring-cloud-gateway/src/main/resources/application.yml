@@ -1,4 +1,19 @@
+server:
+  port: 8080
+
 spring:
-  config:
-    activate:
-      on-profile: local
+  application:
+    name: spring-cloud-gateway
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+
+logging:
+  charset:
+    console: UTF-8
+  level:
+    com.springmsa.gateway: debug
+    org.springframework.cloud.gateway: debug
