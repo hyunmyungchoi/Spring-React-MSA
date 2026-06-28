@@ -2,3 +2,36 @@ spring:
   config:
     activate:
       on-profile: docker
+
+  cloud:
+    gateway:
+      server:
+        webflux:
+          globalcors:
+            add-to-simple-url-handler-mapping: true
+            cors-configurations:
+              '[/**]':
+                allowedOrigins:
+                  - "http://localhost:5176"
+                allowedMethods:
+                  - GET
+                  - POST
+                  - PUT
+                  - DELETE
+                  - OPTIONS
+                allowedHeaders:
+                  - "*"
+                allowCredentials: true
+
+          routes:
+            - id: admin-bff-service
+              uri: http://spring-admin-bff-service:8087
+              predicates:
+                - Path=/admin-bff/**
+              filters:
+                - StripPrefix=1
+
+            - id: authorization-server
+              uri: http://spring-security-authorization-server:9000
+              predicates:
+                - Path=/oauth2/**,/.well-known/**,/userinfo,/login,/login/**,/logout,/connect/**

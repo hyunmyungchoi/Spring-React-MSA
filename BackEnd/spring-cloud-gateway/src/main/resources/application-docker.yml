@@ -2,3 +2,49 @@ spring:
   config:
     activate:
       on-profile: docker
+
+  cloud:
+    gateway:
+      server:
+        webflux:
+          globalcors:
+            add-to-simple-url-handler-mapping: true
+            cors-configurations:
+              '[/**]':
+                allowedOrigins:
+                  - "http://localhost:5173"
+                allowedMethods:
+                  - GET
+                  - POST
+                  - PUT
+                  - DELETE
+                  - OPTIONS
+                allowedHeaders:
+                  - "*"
+                allowCredentials: true
+
+          routes:
+            - id: bff-service
+              uri: http://spring-bff-service:8079
+              predicates:
+                - Path=/bff/**
+
+            - id: user-service
+              uri: http://spring-user-service:8081
+              predicates:
+                - Path=/api/user/**
+
+            - id: community-service
+              uri: http://spring-community-service:8083
+              predicates:
+                - Path=/api/community/**
+
+            - id: stock-service
+              uri: http://spring-stock-service:8084
+              predicates:
+                - Path=/api/stock/**
+
+            - id: authorization-server
+              uri: http://spring-security-authorization-server:9000
+              predicates:
+                - Path=/oauth2/**,/.well-known/**,/userinfo,/login,/login/**,/logout,/webhooks/whatsapp,/connect/**
