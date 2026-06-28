@@ -12,6 +12,45 @@ spring:
     oauth2:
       authorizationserver:
         issuer: http://spring-cloud-gateway:8080
+        client:
+          bff-client:
+            registration:
+              client-id: ${BFF_CLIENT_ID:bff-client}
+              client-secret: ${BFF_CLIENT_SECRET_HASH:$2a$10$BDeXFNHccQiu0ef5vYr/Bu0fAjSQzCgKc5NBppHdETy1G.W4KJzbS}
+              client-authentication-methods:
+                - client_secret_basic
+              authorization-grant-types:
+                - authorization_code
+                - refresh_token
+              redirect-uris:
+                - ${BFF_OAUTH2_REDIRECT_URI:http://localhost:8080/bff/auth/callback}
+              post-logout-redirect-uris:
+                - ${BFF_POST_LOGOUT_REDIRECT_URI:http://localhost:5173/login}
+              scopes:
+                - openid
+                - profile
+            require-authorization-consent: false
+            require-proof-key: false
+
+          admin-bff-client:
+            registration:
+              client-id: ${ADMIN_BFF_CLIENT_ID:admin-bff-client}
+              client-secret: ${ADMIN_BFF_CLIENT_SECRET_HASH:$2a$10$Dm7Jh0Txq5XD7GRJXZSFFuIZQL1fMzpohFZJPM2EcFVPJNDsfveWi}
+              client-authentication-methods:
+                - client_secret_basic
+              authorization-grant-types:
+                - authorization_code
+                - refresh_token
+              redirect-uris:
+                - ${ADMIN_BFF_OAUTH2_REDIRECT_URI:http://localhost:8090/admin-bff/auth/callback}
+              post-logout-redirect-uris:
+                - ${ADMIN_BFF_POST_LOGOUT_REDIRECT_URI:http://localhost:5176}
+                - ${ADMIN_BFF_POST_LOGOUT_LOGIN_REDIRECT_URI:http://localhost:5176/login}
+              scopes:
+                - openid
+                - profile
+            require-authorization-consent: false
+            require-proof-key: false
 
 app:
   user-service:

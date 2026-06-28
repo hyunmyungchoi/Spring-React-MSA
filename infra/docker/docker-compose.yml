@@ -24,6 +24,9 @@ services:
   spring-user-service:
     image: spring-react-msa/spring-user-service:latest
     container_name: spring-user-service
+    build:
+      context: ../../BackEnd/spring-user-service
+      dockerfile: Dockerfile
     environment:
       SPRING_PROFILES_ACTIVE: docker
     ports:
@@ -37,6 +40,9 @@ services:
   spring-community-service:
     image: spring-react-msa/spring-community-service:latest
     container_name: spring-community-service
+    build:
+      context: ../../BackEnd/spring-community-service
+      dockerfile: Dockerfile
     environment:
       SPRING_PROFILES_ACTIVE: docker
     ports:
@@ -50,6 +56,9 @@ services:
   spring-stock-service:
     image: spring-react-msa/spring-stock-service:latest
     container_name: spring-stock-service
+    build:
+      context: ../../BackEnd/spring-stock-service
+      dockerfile: Dockerfile
     environment:
       SPRING_PROFILES_ACTIVE: docker
     ports:
@@ -63,6 +72,9 @@ services:
   spring-security-authorization-server:
     image: spring-react-msa/spring-security-authorization-server:latest
     container_name: spring-security-authorization-server
+    build:
+      context: ../../BackEnd/spring-security-authorization-server
+      dockerfile: Dockerfile
     environment:
       SPRING_PROFILES_ACTIVE: docker
       APP_OTP_EXPOSE_DEV_OTP: "true"
@@ -77,6 +89,9 @@ services:
   spring-bff-service:
     image: spring-react-msa/spring-bff-service:latest
     container_name: spring-bff-service
+    build:
+      context: ../../BackEnd/spring-bff-service
+      dockerfile: Dockerfile
     environment:
       SPRING_PROFILES_ACTIVE: docker
       BFF_CLIENT_SECRET: bff-secret
@@ -91,6 +106,9 @@ services:
   spring-admin-bff-service:
     image: spring-react-msa/spring-admin-bff-service:latest
     container_name: spring-admin-bff-service
+    build:
+      context: ../../BackEnd/spring-admin-bff-service
+      dockerfile: Dockerfile
     environment:
       SPRING_PROFILES_ACTIVE: docker
       ADMIN_BFF_CLIENT_SECRET: admin-bff-secret
@@ -105,6 +123,9 @@ services:
   spring-cloud-gateway:
     image: spring-react-msa/spring-cloud-gateway:latest
     container_name: spring-cloud-gateway
+    build:
+      context: ../../BackEnd/spring-cloud-gateway
+      dockerfile: Dockerfile
     environment:
       SPRING_PROFILES_ACTIVE: docker
     ports:
@@ -121,6 +142,9 @@ services:
   spring-admin-gateway:
     image: spring-react-msa/spring-admin-gateway:latest
     container_name: spring-admin-gateway
+    build:
+      context: ../../BackEnd/spring-admin-gateway
+      dockerfile: Dockerfile
     environment:
       SPRING_PROFILES_ACTIVE: docker
     ports:
