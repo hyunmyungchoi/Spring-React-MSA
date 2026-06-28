@@ -45,6 +45,8 @@ spring:
                 - Path=/api/stock/**
 
             - id: authorization-server
-              uri: http://spring-security-authorization-server:9000
+              uri: ${GATEWAY_AUTHORIZATION_SERVER_URI:http://spring-security-authorization-server:9000}
               predicates:
                 - Path=/oauth2/**,/.well-known/**,/userinfo,/login,/login/**,/logout,/webhooks/whatsapp,/connect/**
+              filters:
+                - PreserveHostHeader
