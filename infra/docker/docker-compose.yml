@@ -1,0 +1,139 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: spring-msa-postgres
+    environment:
+      POSTGRES_DB: msa
+      POSTGRES_USER: msa
+      POSTGRES_PASSWORD: msa
+    ports:
+      - "15432:5432"
+    volumes:
+      - spring-msa-postgres-data:/var/lib/postgresql/data
+    networks:
+      - spring-msa-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: spring-msa-redis
+    ports:
+      - "16379:6379"
+    networks:
+      - spring-msa-network
+
+  spring-user-service:
+    image: spring-react-msa/spring-user-service:latest
+    container_name: spring-user-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "8081:8081"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - spring-msa-network
+
+  spring-community-service:
+    image: spring-react-msa/spring-community-service:latest
+    container_name: spring-community-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "8083:8083"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - spring-msa-network
+
+  spring-stock-service:
+    image: spring-react-msa/spring-stock-service:latest
+    container_name: spring-stock-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "8084:8084"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - spring-msa-network
+
+  spring-security-authorization-server:
+    image: spring-react-msa/spring-security-authorization-server:latest
+    container_name: spring-security-authorization-server
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      APP_OTP_EXPOSE_DEV_OTP: "true"
+    ports:
+      - "9000:9000"
+    depends_on:
+      - redis
+      - spring-user-service
+    networks:
+      - spring-msa-network
+
+  spring-bff-service:
+    image: spring-react-msa/spring-bff-service:latest
+    container_name: spring-bff-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      BFF_CLIENT_SECRET: bff-secret
+    ports:
+      - "8079:8079"
+    depends_on:
+      - redis
+      - spring-security-authorization-server
+    networks:
+      - spring-msa-network
+
+  spring-admin-bff-service:
+    image: spring-react-msa/spring-admin-bff-service:latest
+    container_name: spring-admin-bff-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      ADMIN_BFF_CLIENT_SECRET: admin-bff-secret
+    ports:
+      - "8087:8087"
+    depends_on:
+      - redis
+      - spring-security-authorization-server
+    networks:
+      - spring-msa-network
+
+  spring-cloud-gateway:
+    image: spring-react-msa/spring-cloud-gateway:latest
+    container_name: spring-cloud-gateway
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "8080:8080"
+    depends_on:
+      - spring-bff-service
+      - spring-user-service
+      - spring-community-service
+      - spring-stock-service
+      - spring-security-authorization-server
+    networks:
+      - spring-msa-network
+
+  spring-admin-gateway:
+    image: spring-react-msa/spring-admin-gateway:latest
+    container_name: spring-admin-gateway
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "8090:8090"
+    depends_on:
+      - spring-admin-bff-service
+      - spring-security-authorization-server
+    networks:
+      - spring-msa-network
+
+volumes:
+  spring-msa-postgres-data:
+
+networks:
+  spring-msa-network:
+    driver: bridge
