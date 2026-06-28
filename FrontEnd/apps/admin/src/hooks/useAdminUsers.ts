@@ -19,6 +19,7 @@ export const useAdminUsers = () => {
         try {
             const data = await fetchAdminUsers()
             setAdminUsers(data)
+            setAdminUserDetail(null)
         } catch (error) {
             setMessage(getAdminErrorMessage(error, 'Failed to load admin users'))
         }
