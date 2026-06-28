@@ -1,0 +1,7 @@
+﻿.gradle
+build/tmp
+build/reports
+build/test-results
+src/test
+*.iml
+.idea
