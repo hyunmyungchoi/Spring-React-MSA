@@ -30,7 +30,7 @@ export const loadCurrentUser = createAsyncThunk<AuthMeResponse>(
 export const logoutCurrentUser = createAsyncThunk(
     "auth/logoutCurrentUser",
     async () => {
-        requestLogout();
+        await requestLogout();
     }
 );
 

@@ -29,7 +29,7 @@ function HomePage() {
 
     const handleLogout = async () => {
         try {
-            dispatch(logoutCurrentUser());
+            await dispatch(logoutCurrentUser()).unwrap();
         } catch (error) {
             console.error(error);
             setErrorMessage("로그아웃 실패");
