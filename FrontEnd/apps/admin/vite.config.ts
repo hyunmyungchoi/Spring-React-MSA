@@ -1,6 +1,8 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
+const gatewayTarget = 'http://localhost:8090'
+
 export default defineConfig({
   plugins: [react()],
   server: {
@@ -8,31 +10,31 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       '/admin-bff': {
-        target: 'http://localhost:8090',
+        target: gatewayTarget,
         changeOrigin: true,
       },
       '/oauth2': {
-        target: 'http://localhost:8090',
+        target: gatewayTarget,
         changeOrigin: true,
       },
       '/.well-known': {
-        target: 'http://localhost:8090',
+        target: gatewayTarget,
         changeOrigin: true,
       },
       '/login': {
-        target: 'http://localhost:8090',
+        target: gatewayTarget,
         changeOrigin: true,
       },
       '/logout': {
-        target: 'http://localhost:8090',
+        target: gatewayTarget,
         changeOrigin: true,
       },
       '/connect': {
-        target: 'http://localhost:8090',
+        target: gatewayTarget,
         changeOrigin: true,
       },
       '/userinfo': {
-        target: 'http://localhost:8090',
+        target: gatewayTarget,
         changeOrigin: true,
       },
     },

@@ -38,6 +38,9 @@ log/
 .env
 .env.*
 !.env.example
+!FrontEnd/apps/*/.env.docker
+!FrontEnd/apps/*/.env.prod
+!FrontEnd/apps/*/.env.k8s
 
 application-local.yml
 application-local.yaml

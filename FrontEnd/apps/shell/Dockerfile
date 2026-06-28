@@ -8,7 +8,9 @@ COPY package.json pnpm-lock.yaml* ./
 RUN if [ -f pnpm-lock.yaml ]; then pnpm install --frozen-lockfile; else pnpm install; fi
 
 COPY . .
-RUN pnpm run build
+
+ARG VITE_MODE=docker
+RUN pnpm exec tsc -b && pnpm exec vite build --mode ${VITE_MODE}
 
 FROM nginx:1.27-alpine
 

@@ -1,5 +1,4 @@
-const BFF_BASE_URL =
-    import.meta.env.VITE_BFF_BASE_URL ?? "http://localhost:8080";
+import { BFF_BASE_URL } from "../../config/shellEnv";
 
 type BffRequestOptions = Omit<RequestInit, "credentials">;
 

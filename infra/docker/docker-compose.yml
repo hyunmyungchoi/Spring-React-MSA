@@ -137,6 +137,8 @@ services:
     build:
       context: ../../FrontEnd/apps/shell
       dockerfile: Dockerfile
+      args:
+        VITE_MODE: docker
     ports:
       - "5173:80"
     depends_on:
@@ -150,6 +152,8 @@ services:
     build:
       context: ../../FrontEnd/apps/admin
       dockerfile: Dockerfile
+      args:
+        VITE_MODE: docker
     ports:
       - "5176:80"
     depends_on:
