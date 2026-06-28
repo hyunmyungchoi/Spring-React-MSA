@@ -20,6 +20,7 @@ admin-bff:
     client-secret: test-admin-bff-secret
     redirect-uri: http://localhost:8090/admin-bff/auth/callback
     end-session-uri: http://localhost:8090/connect/logout
+    logout-uri: http://localhost:8090/logout
     scope: openid profile
 
   api:

@@ -20,6 +20,7 @@ admin-bff:
     client-secret: ${ADMIN_BFF_CLIENT_SECRET}
     redirect-uri: ${ADMIN_BFF_OAUTH2_REDIRECT_URI}
     end-session-uri: ${ADMIN_BFF_OAUTH2_END_SESSION_URI}
+    logout-uri: ${ADMIN_BFF_OAUTH2_LOGOUT_URI}
     scope: ${ADMIN_BFF_OAUTH2_SCOPE:openid profile}
 
   api:

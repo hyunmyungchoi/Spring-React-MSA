@@ -20,3 +20,64 @@ CREATE TABLE IF NOT EXISTS user_roles (
         REFERENCES users (user_id)
         ON DELETE CASCADE
 );
+
+INSERT INTO users (
+    login_id,
+    email,
+    password,
+    username,
+    phone_number,
+    whatsapp_number,
+    enabled,
+    created_at,
+    updated_at
+) VALUES (
+    'user',
+    'user@test.com',
+    '$2a$10$78NjeFaqL97eNcQ69Rkpt.fSecHhpLf6KnwtoAVC4JDLplE1xUzB2',
+    'Test User',
+    '01012345678',
+    '01012345678',
+    TRUE,
+    CURRENT_TIMESTAMP,
+    CURRENT_TIMESTAMP
+) ON CONFLICT (login_id) DO NOTHING;
+
+INSERT INTO user_roles (user_id, role)
+SELECT user_id, 'ROLE_USER'
+FROM users
+WHERE login_id = 'user'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO users (
+    login_id,
+    email,
+    password,
+    username,
+    phone_number,
+    whatsapp_number,
+    enabled,
+    created_at,
+    updated_at
+) VALUES (
+    'admin',
+    'admin@test.com',
+    '$2a$10$78NjeFaqL97eNcQ69Rkpt.fSecHhpLf6KnwtoAVC4JDLplE1xUzB2',
+    'Admin User',
+    '01012345679',
+    '01012345679',
+    TRUE,
+    CURRENT_TIMESTAMP,
+    CURRENT_TIMESTAMP
+) ON CONFLICT (login_id) DO NOTHING;
+
+INSERT INTO user_roles (user_id, role)
+SELECT user_id, role
+FROM users
+CROSS JOIN (
+    VALUES
+        ('ROLE_USER'),
+        ('ROLE_ADMIN')
+) AS roles(role)
+WHERE login_id = 'admin'
+ON CONFLICT DO NOTHING;

@@ -17,6 +17,10 @@ spring:
     hibernate:
       ddl-auto: update
 
+  sql:
+    init:
+      mode: always
+
   security:
     oauth2:
       resourceserver:

@@ -45,6 +45,7 @@ spring:
               redirect-uris:
                 - http://localhost:8090/admin-bff/auth/callback
               post-logout-redirect-uris:
+                - http://localhost:5176
                 - http://localhost:5176/login
               scopes:
                 - openid

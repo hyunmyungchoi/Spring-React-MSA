@@ -44,6 +44,9 @@ public class AdminBffAuthController {
     @Value("${admin-bff.oauth2.end-session-uri}")
     private String endSessionUri;
 
+    @Value("${admin-bff.oauth2.logout-uri}")
+    private String logoutUri;
+
     @Value("${admin-bff.oauth2.scope}")
     private String scope;
 
@@ -189,19 +192,20 @@ public class AdminBffAuthController {
 
         session.invalidate();
 
-        if (!StringUtils.hasText(idToken)) {
-            return ResponseEntity.ok(Map.of(
-                    "logout", "success",
-                    "authServerLogoutRequired", false
-            ));
-        }
+        String postLogoutRedirectUri = frontendRedirectUri;
 
-        String authServerLogoutUrl = UriComponentsBuilder.fromUriString(endSessionUri)
-                .queryParam("id_token_hint", idToken)
-                .queryParam("post_logout_redirect_uri", frontendRedirectUri + "/login")
-                .build()
-                .encode()
-                .toUriString();
+        String authServerLogoutUrl = StringUtils.hasText(idToken)
+                ? UriComponentsBuilder.fromUriString(endSessionUri)
+                        .queryParam("id_token_hint", idToken)
+                        .queryParam("post_logout_redirect_uri", postLogoutRedirectUri)
+                        .build()
+                        .encode()
+                        .toUriString()
+                : UriComponentsBuilder.fromUriString(logoutUri)
+                        .queryParam("post_logout_redirect_uri", postLogoutRedirectUri)
+                        .build()
+                        .encode()
+                        .toUriString();
 
         return ResponseEntity.ok(Map.of(
                 "logout", "success",

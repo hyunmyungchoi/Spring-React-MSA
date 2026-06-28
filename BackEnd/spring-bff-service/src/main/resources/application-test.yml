@@ -2,3 +2,28 @@ spring:
   config:
     activate:
       on-profile: test
+
+  data:
+    redis:
+      host: localhost
+      port: 16379
+
+bff:
+  frontend:
+    redirect-uri: http://localhost:5173
+
+  oauth2:
+    authorization-uri: http://localhost:8080/oauth2/authorize
+    token-uri: http://localhost:8080/oauth2/token
+    userinfo-uri: http://localhost:8080/userinfo
+    client-id: bff-client
+    client-secret: test-bff-secret
+    redirect-uri: http://localhost:8080/bff/auth/callback
+    end-session-uri: http://localhost:8080/connect/logout
+    logout-uri: http://localhost:8080/logout
+    scope: openid profile
+
+  api:
+    community-me-uri: http://localhost:8080/api/community/me
+    user-me-uri: http://localhost:8080/api/user/me
+    stock-me-uri: http://localhost:8080/api/stock/me

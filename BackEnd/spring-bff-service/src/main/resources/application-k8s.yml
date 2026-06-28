@@ -7,3 +7,23 @@ spring:
     redis:
       host: ${REDIS_HOST:redis}
       port: ${REDIS_PORT:6379}
+
+bff:
+  frontend:
+    redirect-uri: ${BFF_FRONTEND_REDIRECT_URI}
+
+  oauth2:
+    authorization-uri: ${BFF_OAUTH2_AUTHORIZATION_URI}
+    token-uri: ${BFF_OAUTH2_TOKEN_URI:http://spring-cloud-gateway:8080/oauth2/token}
+    userinfo-uri: ${BFF_OAUTH2_USERINFO_URI:http://spring-cloud-gateway:8080/userinfo}
+    client-id: ${BFF_CLIENT_ID:bff-client}
+    client-secret: ${BFF_CLIENT_SECRET}
+    redirect-uri: ${BFF_OAUTH2_REDIRECT_URI}
+    end-session-uri: ${BFF_OAUTH2_END_SESSION_URI}
+    logout-uri: ${BFF_OAUTH2_LOGOUT_URI}
+    scope: ${BFF_OAUTH2_SCOPE:openid profile}
+
+  api:
+    community-me-uri: ${BFF_API_COMMUNITY_ME_URI:http://spring-cloud-gateway:8080/api/community/me}
+    user-me-uri: ${BFF_API_USER_ME_URI:http://spring-cloud-gateway:8080/api/user/me}
+    stock-me-uri: ${BFF_API_STOCK_ME_URI:http://spring-cloud-gateway:8080/api/stock/me}

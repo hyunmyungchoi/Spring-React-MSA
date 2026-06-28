@@ -20,6 +20,7 @@ admin-bff:
     client-secret: ${ADMIN_BFF_CLIENT_SECRET:admin-bff-secret}
     redirect-uri: ${ADMIN_BFF_OAUTH2_REDIRECT_URI:http://localhost:8090/admin-bff/auth/callback}
     end-session-uri: ${ADMIN_BFF_OAUTH2_END_SESSION_URI:http://localhost:8090/connect/logout}
+    logout-uri: ${ADMIN_BFF_OAUTH2_LOGOUT_URI:http://localhost:8090/logout}
     scope: ${ADMIN_BFF_OAUTH2_SCOPE:openid profile}
 
   api:

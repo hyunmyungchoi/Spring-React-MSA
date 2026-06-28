@@ -20,6 +20,7 @@ bff:
     client-secret: ${BFF_CLIENT_SECRET:bff-secret}
     redirect-uri: http://localhost:8080/bff/auth/callback
     end-session-uri: http://localhost:8080/connect/logout
+    logout-uri: http://localhost:8080/logout
     scope: openid profile
 
   api:

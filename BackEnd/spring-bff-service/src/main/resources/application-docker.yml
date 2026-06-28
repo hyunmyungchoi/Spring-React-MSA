@@ -10,19 +10,20 @@ spring:
 
 bff:
   frontend:
-    redirect-uri: http://localhost:5173
+    redirect-uri: ${BFF_FRONTEND_REDIRECT_URI:http://localhost:5173}
 
   oauth2:
-    authorization-uri: http://localhost:8080/oauth2/authorize
-    token-uri: http://spring-cloud-gateway:8080/oauth2/token
-    userinfo-uri: http://spring-cloud-gateway:8080/userinfo
-    client-id: bff-client
+    authorization-uri: ${BFF_OAUTH2_AUTHORIZATION_URI:http://localhost:8080/oauth2/authorize}
+    token-uri: ${BFF_OAUTH2_TOKEN_URI:http://spring-cloud-gateway:8080/oauth2/token}
+    userinfo-uri: ${BFF_OAUTH2_USERINFO_URI:http://spring-cloud-gateway:8080/userinfo}
+    client-id: ${BFF_CLIENT_ID:bff-client}
     client-secret: ${BFF_CLIENT_SECRET:bff-secret}
-    redirect-uri: http://localhost:8080/bff/auth/callback
-    end-session-uri: http://localhost:8080/connect/logout
-    scope: openid profile
+    redirect-uri: ${BFF_OAUTH2_REDIRECT_URI:http://localhost:8080/bff/auth/callback}
+    end-session-uri: ${BFF_OAUTH2_END_SESSION_URI:http://localhost:8080/connect/logout}
+    logout-uri: ${BFF_OAUTH2_LOGOUT_URI:http://localhost:8080/logout}
+    scope: ${BFF_OAUTH2_SCOPE:openid profile}
 
   api:
-    community-me-uri: http://spring-cloud-gateway:8080/api/community/me
-    user-me-uri: http://spring-cloud-gateway:8080/api/user/me
-    stock-me-uri: http://spring-cloud-gateway:8080/api/stock/me
+    community-me-uri: ${BFF_API_COMMUNITY_ME_URI:http://spring-cloud-gateway:8080/api/community/me}
+    user-me-uri: ${BFF_API_USER_ME_URI:http://spring-cloud-gateway:8080/api/user/me}
+    stock-me-uri: ${BFF_API_STOCK_ME_URI:http://spring-cloud-gateway:8080/api/stock/me}
