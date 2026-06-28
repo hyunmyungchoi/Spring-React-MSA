@@ -10,18 +10,18 @@ spring:
 
 admin-bff:
   frontend:
-    redirect-uri: http://localhost:5176
+    redirect-uri: ${ADMIN_BFF_FRONTEND_REDIRECT_URI:http://localhost:5176}
 
   oauth2:
-    authorization-uri: http://localhost:8090/oauth2/authorize
-    token-uri: http://spring-admin-gateway:8090/oauth2/token
-    userinfo-uri: http://spring-admin-gateway:8090/userinfo
-    client-id: admin-bff-client
+    authorization-uri: ${ADMIN_BFF_OAUTH2_AUTHORIZATION_URI:http://localhost:8090/oauth2/authorize}
+    token-uri: ${ADMIN_BFF_OAUTH2_TOKEN_URI:http://spring-admin-gateway:8090/oauth2/token}
+    userinfo-uri: ${ADMIN_BFF_OAUTH2_USERINFO_URI:http://spring-admin-gateway:8090/userinfo}
+    client-id: ${ADMIN_BFF_CLIENT_ID:admin-bff-client}
     client-secret: ${ADMIN_BFF_CLIENT_SECRET:admin-bff-secret}
-    redirect-uri: http://localhost:8090/admin-bff/auth/callback
-    end-session-uri: http://localhost:8090/connect/logout
-    scope: openid profile
+    redirect-uri: ${ADMIN_BFF_OAUTH2_REDIRECT_URI:http://localhost:8090/admin-bff/auth/callback}
+    end-session-uri: ${ADMIN_BFF_OAUTH2_END_SESSION_URI:http://localhost:8090/connect/logout}
+    scope: ${ADMIN_BFF_OAUTH2_SCOPE:openid profile}
 
   api:
-    user-me-uri: http://spring-cloud-gateway:8080/api/user/me
-    user-admin-users-uri: http://spring-cloud-gateway:8080/api/user/admin/users
+    user-me-uri: ${ADMIN_BFF_API_USER_ME_URI:http://spring-cloud-gateway:8080/api/user/me}
+    user-admin-users-uri: ${ADMIN_BFF_API_USER_ADMIN_USERS_URI:http://spring-cloud-gateway:8080/api/user/admin/users}

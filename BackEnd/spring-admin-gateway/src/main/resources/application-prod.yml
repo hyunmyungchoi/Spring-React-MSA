@@ -2,3 +2,36 @@ spring:
   config:
     activate:
       on-profile: prod
+
+  cloud:
+    gateway:
+      server:
+        webflux:
+          globalcors:
+            add-to-simple-url-handler-mapping: true
+            cors-configurations:
+              '[/**]':
+                allowedOrigins:
+                  - ${ADMIN_GATEWAY_CORS_ALLOWED_ORIGIN}
+                allowedMethods:
+                  - GET
+                  - POST
+                  - PUT
+                  - DELETE
+                  - OPTIONS
+                allowedHeaders:
+                  - "*"
+                allowCredentials: true
+
+          routes:
+            - id: admin-bff-service
+              uri: ${ADMIN_GATEWAY_ADMIN_BFF_URI}
+              predicates:
+                - Path=/admin-bff/**
+              filters:
+                - StripPrefix=1
+
+            - id: authorization-server
+              uri: ${ADMIN_GATEWAY_AUTHORIZATION_SERVER_URI}
+              predicates:
+                - Path=/oauth2/**,/.well-known/**,/userinfo,/login,/login/**,/logout,/connect/**

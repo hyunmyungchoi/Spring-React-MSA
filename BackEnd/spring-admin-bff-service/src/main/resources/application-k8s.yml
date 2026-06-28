@@ -7,3 +7,21 @@ spring:
     redis:
       host: ${REDIS_HOST:redis}
       port: ${REDIS_PORT:6379}
+
+admin-bff:
+  frontend:
+    redirect-uri: ${ADMIN_BFF_FRONTEND_REDIRECT_URI}
+
+  oauth2:
+    authorization-uri: ${ADMIN_BFF_OAUTH2_AUTHORIZATION_URI}
+    token-uri: ${ADMIN_BFF_OAUTH2_TOKEN_URI:http://spring-admin-gateway:8090/oauth2/token}
+    userinfo-uri: ${ADMIN_BFF_OAUTH2_USERINFO_URI:http://spring-admin-gateway:8090/userinfo}
+    client-id: ${ADMIN_BFF_CLIENT_ID:admin-bff-client}
+    client-secret: ${ADMIN_BFF_CLIENT_SECRET}
+    redirect-uri: ${ADMIN_BFF_OAUTH2_REDIRECT_URI}
+    end-session-uri: ${ADMIN_BFF_OAUTH2_END_SESSION_URI}
+    scope: ${ADMIN_BFF_OAUTH2_SCOPE:openid profile}
+
+  api:
+    user-me-uri: ${ADMIN_BFF_API_USER_ME_URI:http://spring-cloud-gateway:8080/api/user/me}
+    user-admin-users-uri: ${ADMIN_BFF_API_USER_ADMIN_USERS_URI:http://spring-cloud-gateway:8080/api/user/admin/users}

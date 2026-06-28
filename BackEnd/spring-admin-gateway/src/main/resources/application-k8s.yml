@@ -2,3 +2,36 @@ spring:
   config:
     activate:
       on-profile: k8s
+
+  cloud:
+    gateway:
+      server:
+        webflux:
+          globalcors:
+            add-to-simple-url-handler-mapping: true
+            cors-configurations:
+              '[/**]':
+                allowedOrigins:
+                  - ${ADMIN_GATEWAY_CORS_ALLOWED_ORIGIN}
+                allowedMethods:
+                  - GET
+                  - POST
+                  - PUT
+                  - DELETE
+                  - OPTIONS
+                allowedHeaders:
+                  - "*"
+                allowCredentials: true
+
+          routes:
+            - id: admin-bff-service
+              uri: ${ADMIN_GATEWAY_ADMIN_BFF_URI:http://spring-admin-bff-service:8087}
+              predicates:
+                - Path=/admin-bff/**
+              filters:
+                - StripPrefix=1
+
+            - id: authorization-server
+              uri: ${ADMIN_GATEWAY_AUTHORIZATION_SERVER_URI:http://spring-security-authorization-server:9000}
+              predicates:
+                - Path=/oauth2/**,/.well-known/**,/userinfo,/login,/login/**,/logout,/connect/**
