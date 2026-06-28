@@ -1,0 +1,14 @@
+﻿spring:
+  config:
+    activate:
+      on-profile: k8s
+
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:postgres}:${POSTGRES_PORT:5432}/${POSTGRES_DB:msa}
+    username: ${POSTGRES_USER:msa}
+    password: ${POSTGRES_PASSWORD:msa}
+
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}

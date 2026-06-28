@@ -1,0 +1,9 @@
+﻿spring:
+  config:
+    activate:
+      on-profile: k8s
+
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
