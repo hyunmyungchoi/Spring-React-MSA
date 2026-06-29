@@ -1,0 +1,107 @@
+name: Build and Push Images to GHCR
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_OWNER: hyunmyungchoi
+  IMAGE_TAG: latest
+
+jobs:
+  build-backend:
+    name: Build backend images
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - spring-cloud-gateway
+          - spring-admin-gateway
+          - spring-security-authorization-server
+          - spring-user-service
+          - spring-community-service
+          - spring-stock-service
+          - spring-bff-service
+          - spring-admin-bff-service
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Build jar
+        working-directory: BackEnd/${{ matrix.service }}
+        run: |
+          chmod +x ./gradlew
+          ./gradlew clean bootJar -x test
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: BackEnd/${{ matrix.service }}
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.service }}:${{ env.IMAGE_TAG }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.service }}:${{ github.sha }}
+
+  build-frontend:
+    name: Build frontend images
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: spring-shell-web
+            context: FrontEnd/apps/shell
+            vite_arg_name: VITE_BFF_BASE_URL
+            vite_arg_value: https://api.example.com
+          - service: spring-admin-web
+            context: FrontEnd/apps/admin
+            vite_arg_name: VITE_ADMIN_GATEWAY_BASE_URL
+            vite_arg_value: https://admin-api.example.com
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          push: true
+          build-args: |
+            VITE_MODE=prod
+            ${{ matrix.vite_arg_name }}=${{ matrix.vite_arg_value }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.service }}:${{ env.IMAGE_TAG }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.service }}:${{ github.sha }}
