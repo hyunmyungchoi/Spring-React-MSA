@@ -176,8 +176,14 @@ services:
     container_name: spring-cloud-gateway
     environment:
       SPRING_PROFILES_ACTIVE: prod
-      SHELL_FRONTEND_URL: ${SHELL_FRONTEND_URL}
-      PUBLIC_GATEWAY_URL: ${PUBLIC_GATEWAY_URL}
+
+      GATEWAY_CORS_ALLOWED_ORIGIN: ${SHELL_FRONTEND_URL}
+
+      GATEWAY_BFF_URI: http://spring-bff-service:8079
+      GATEWAY_USER_SERVICE_URI: http://spring-user-service:8081
+      GATEWAY_COMMUNITY_SERVICE_URI: http://spring-community-service:8083
+      GATEWAY_STOCK_SERVICE_URI: http://spring-stock-service:8084
+      GATEWAY_AUTHORIZATION_SERVER_URI: http://spring-security-authorization-server:9000
     ports:
       - "8080:8080"
     depends_on:
@@ -195,8 +201,11 @@ services:
     container_name: spring-admin-gateway
     environment:
       SPRING_PROFILES_ACTIVE: prod
-      ADMIN_FRONTEND_URL: ${ADMIN_FRONTEND_URL}
-      PUBLIC_ADMIN_GATEWAY_URL: ${PUBLIC_ADMIN_GATEWAY_URL}
+
+      ADMIN_GATEWAY_CORS_ALLOWED_ORIGIN: ${ADMIN_FRONTEND_URL}
+
+      ADMIN_GATEWAY_ADMIN_BFF_URI: http://spring-admin-bff-service:8087
+      ADMIN_GATEWAY_AUTHORIZATION_SERVER_URI: http://spring-security-authorization-server:9000
     ports:
       - "8090:8090"
     depends_on:
