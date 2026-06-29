@@ -7,3 +7,52 @@ spring:
     redis:
       host: ${SPRING_DATA_REDIS_HOST}
       port: ${SPRING_DATA_REDIS_PORT:6379}
+      password: ${SPRING_DATA_REDIS_PASSWORD}
+
+  security:
+    oauth2:
+      authorizationserver:
+        issuer: ${AUTH_SERVER_ISSUER}
+        client:
+          bff-client:
+            registration:
+              client-id: ${BFF_CLIENT_ID}
+              client-secret: ${BFF_CLIENT_SECRET_HASH}
+              client-authentication-methods:
+                - client_secret_basic
+              authorization-grant-types:
+                - authorization_code
+                - refresh_token
+              redirect-uris:
+                - ${BFF_OAUTH2_REDIRECT_URI}
+              post-logout-redirect-uris:
+                - ${BFF_POST_LOGOUT_REDIRECT_URI}
+              scopes:
+                - openid
+                - profile
+            require-authorization-consent: false
+            require-proof-key: false
+
+          admin-bff-client:
+            registration:
+              client-id: ${ADMIN_BFF_CLIENT_ID}
+              client-secret: ${ADMIN_BFF_CLIENT_SECRET_HASH}
+              client-authentication-methods:
+                - client_secret_basic
+              authorization-grant-types:
+                - authorization_code
+                - refresh_token
+              redirect-uris:
+                - ${ADMIN_BFF_OAUTH2_REDIRECT_URI}
+              post-logout-redirect-uris:
+                - ${ADMIN_BFF_POST_LOGOUT_REDIRECT_URI}
+                - ${ADMIN_BFF_POST_LOGOUT_LOGIN_REDIRECT_URI}
+              scopes:
+                - openid
+                - profile
+            require-authorization-consent: false
+            require-proof-key: false
+
+app:
+  user-service:
+    base-url: ${USER_SERVICE_BASE_URL}
