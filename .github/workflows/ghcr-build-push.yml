@@ -77,11 +77,11 @@ jobs:
           - service: spring-shell-web
             context: FrontEnd/apps/shell
             vite_arg_name: VITE_BFF_BASE_URL
-            vite_arg_value: https://api.example.com
+            vite_arg_value: http://localhost:8080
           - service: spring-admin-web
             context: FrontEnd/apps/admin
             vite_arg_name: VITE_ADMIN_GATEWAY_BASE_URL
-            vite_arg_value: https://admin-api.example.com
+            vite_arg_value: http://localhost:8090
 
     steps:
       - name: Checkout
