@@ -128,3 +128,4 @@ generated-files/
 # infra
 # =========================
 infra/docker/.env.prod
+!infra/docker/.env.prod.example
