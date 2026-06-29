@@ -156,34 +156,26 @@ services:
       - spring-msa-network
 
   spring-shell-web:
-    image: spring-react-msa/spring-shell-web:latest
+    image: ${IMAGE_REGISTRY}/spring-shell-web:${IMAGE_TAG}
     container_name: spring-shell-web
-    build:
-      context: ../../FrontEnd/apps/shell
-      dockerfile: Dockerfile
-      args:
-        VITE_MODE: docker
     ports:
       - "5173:80"
     depends_on:
       - spring-cloud-gateway
     networks:
       - spring-msa-network
+    restart: unless-stopped
 
   spring-admin-web:
-    image: spring-react-msa/spring-admin-web:latest
+    image: ${IMAGE_REGISTRY}/spring-admin-web:${IMAGE_TAG}
     container_name: spring-admin-web
-    build:
-      context: ../../FrontEnd/apps/admin
-      dockerfile: Dockerfile
-      args:
-        VITE_MODE: docker
     ports:
       - "5176:80"
     depends_on:
       - spring-admin-gateway
     networks:
       - spring-msa-network
+    restart: unless-stopped
 
 volumes:
   spring-msa-postgres-data:
