@@ -122,3 +122,9 @@ generated-files/
 *.backup
 *.old
 *.tmp
+
+
+# =========================
+# infra
+# =========================
+infra/docker/.env.prod
