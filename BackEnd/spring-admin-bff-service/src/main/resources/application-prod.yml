@@ -7,6 +7,7 @@ spring:
     redis:
       host: ${SPRING_DATA_REDIS_HOST}
       port: ${SPRING_DATA_REDIS_PORT:6379}
+      password: ${SPRING_DATA_REDIS_PASSWORD}
 
 admin-bff:
   frontend:
@@ -16,7 +17,7 @@ admin-bff:
     authorization-uri: ${ADMIN_BFF_OAUTH2_AUTHORIZATION_URI}
     token-uri: ${ADMIN_BFF_OAUTH2_TOKEN_URI}
     userinfo-uri: ${ADMIN_BFF_OAUTH2_USERINFO_URI}
-    client-id: ${ADMIN_BFF_CLIENT_ID:admin-bff-client}
+    client-id: ${ADMIN_BFF_CLIENT_ID}
     client-secret: ${ADMIN_BFF_CLIENT_SECRET}
     redirect-uri: ${ADMIN_BFF_OAUTH2_REDIRECT_URI}
     end-session-uri: ${ADMIN_BFF_OAUTH2_END_SESSION_URI}

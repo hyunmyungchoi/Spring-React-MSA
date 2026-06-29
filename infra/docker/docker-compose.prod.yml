@@ -113,13 +113,26 @@ services:
     container_name: spring-bff-service
     environment:
       SPRING_PROFILES_ACTIVE: prod
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
 
-      PUBLIC_GATEWAY_URL: ${PUBLIC_GATEWAY_URL}
-      SHELL_FRONTEND_URL: ${SHELL_FRONTEND_URL}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD}
 
+      BFF_FRONTEND_REDIRECT_URI: ${SHELL_FRONTEND_URL}
+
+      BFF_OAUTH2_AUTHORIZATION_URI: ${PUBLIC_GATEWAY_URL}/oauth2/authorize
+      BFF_OAUTH2_TOKEN_URI: http://spring-cloud-gateway:8080/oauth2/token
+      BFF_OAUTH2_USERINFO_URI: http://spring-cloud-gateway:8080/userinfo
       BFF_CLIENT_ID: ${BFF_CLIENT_ID}
       BFF_CLIENT_SECRET: ${BFF_CLIENT_SECRET}
+      BFF_OAUTH2_REDIRECT_URI: ${PUBLIC_GATEWAY_URL}/bff/auth/callback
+      BFF_OAUTH2_END_SESSION_URI: ${PUBLIC_GATEWAY_URL}/connect/logout
+      BFF_OAUTH2_LOGOUT_URI: ${PUBLIC_GATEWAY_URL}/logout
+      BFF_OAUTH2_SCOPE: openid profile
+
+      BFF_API_COMMUNITY_ME_URI: http://spring-cloud-gateway:8080/api/community/me
+      BFF_API_USER_ME_URI: http://spring-cloud-gateway:8080/api/user/me
+      BFF_API_STOCK_ME_URI: http://spring-cloud-gateway:8080/api/stock/me
     depends_on:
       - redis
       - spring-security-authorization-server
@@ -132,14 +145,25 @@ services:
     container_name: spring-admin-bff-service
     environment:
       SPRING_PROFILES_ACTIVE: prod
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
 
-      PUBLIC_GATEWAY_URL: ${PUBLIC_GATEWAY_URL}
-      PUBLIC_ADMIN_GATEWAY_URL: ${PUBLIC_ADMIN_GATEWAY_URL}
-      ADMIN_FRONTEND_URL: ${ADMIN_FRONTEND_URL}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD}
 
+      ADMIN_BFF_FRONTEND_REDIRECT_URI: ${ADMIN_FRONTEND_URL}
+
+      ADMIN_BFF_OAUTH2_AUTHORIZATION_URI: ${PUBLIC_ADMIN_GATEWAY_URL}/oauth2/authorize
+      ADMIN_BFF_OAUTH2_TOKEN_URI: http://spring-admin-gateway:8090/oauth2/token
+      ADMIN_BFF_OAUTH2_USERINFO_URI: http://spring-admin-gateway:8090/userinfo
       ADMIN_BFF_CLIENT_ID: ${ADMIN_BFF_CLIENT_ID}
       ADMIN_BFF_CLIENT_SECRET: ${ADMIN_BFF_CLIENT_SECRET}
+      ADMIN_BFF_OAUTH2_REDIRECT_URI: ${PUBLIC_ADMIN_GATEWAY_URL}/admin-bff/auth/callback
+      ADMIN_BFF_OAUTH2_END_SESSION_URI: ${PUBLIC_ADMIN_GATEWAY_URL}/connect/logout
+      ADMIN_BFF_OAUTH2_LOGOUT_URI: ${PUBLIC_ADMIN_GATEWAY_URL}/logout
+      ADMIN_BFF_OAUTH2_SCOPE: openid profile
+
+      ADMIN_BFF_API_USER_ME_URI: http://spring-cloud-gateway:8080/api/user/me
+      ADMIN_BFF_API_USER_ADMIN_USERS_URI: http://spring-cloud-gateway:8080/api/user/admin/users
     depends_on:
       - redis
       - spring-security-authorization-server
