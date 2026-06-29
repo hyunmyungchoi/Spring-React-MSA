@@ -12,6 +12,7 @@ spring:
     redis:
       host: ${SPRING_DATA_REDIS_HOST}
       port: ${SPRING_DATA_REDIS_PORT:6379}
+      password: ${SPRING_DATA_REDIS_PASSWORD}
 
   jpa:
     hibernate:
@@ -27,3 +28,8 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI}
+
+logging:
+  level:
+    com.springmsa.userservice: info
+    org.springframework.security: warn

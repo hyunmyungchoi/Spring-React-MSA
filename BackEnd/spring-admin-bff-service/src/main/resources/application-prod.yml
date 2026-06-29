@@ -27,3 +27,7 @@ admin-bff:
   api:
     user-me-uri: ${ADMIN_BFF_API_USER_ME_URI}
     user-admin-users-uri: ${ADMIN_BFF_API_USER_ADMIN_USERS_URI}
+
+logging:
+  level:
+    com.springmsa.adminbff: info

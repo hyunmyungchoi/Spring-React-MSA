@@ -50,3 +50,8 @@ spring:
                 - Path=/oauth2/**,/.well-known/**,/userinfo,/login,/login/**,/logout,/webhooks/whatsapp,/connect/**
               filters:
                 - PreserveHostHeader
+
+logging:
+  level:
+    com.springmsa.gateway: info
+    org.springframework.cloud.gateway: warn

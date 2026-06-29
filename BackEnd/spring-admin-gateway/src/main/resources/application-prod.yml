@@ -37,3 +37,8 @@ spring:
                 - Path=/oauth2/**,/.well-known/**,/userinfo,/login,/login/**,/logout,/connect/**
               filters:
                 - PreserveHostHeader
+
+logging:
+  level:
+    com.springmsa.admingateway: info
+    org.springframework.cloud.gateway: warn

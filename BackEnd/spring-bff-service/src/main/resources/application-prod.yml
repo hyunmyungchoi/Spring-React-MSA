@@ -28,3 +28,7 @@ bff:
     community-me-uri: ${BFF_API_COMMUNITY_ME_URI}
     user-me-uri: ${BFF_API_USER_ME_URI}
     stock-me-uri: ${BFF_API_STOCK_ME_URI}
+
+logging:
+  level:
+    com.springmsa.bff: info
