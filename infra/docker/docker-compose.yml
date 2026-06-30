@@ -78,6 +78,11 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: docker
       APP_OTP_EXPOSE_DEV_OTP: "true"
+      USER_FRONTEND_LOGIN_URI: http://localhost:5173/auth
+      ADMIN_FRONTEND_LOGIN_URI: http://localhost:5176/auth
+      BFF_POST_LOGOUT_REDIRECT_URI: http://localhost:5173/auth
+      ADMIN_BFF_POST_LOGOUT_REDIRECT_URI: http://localhost:5176
+      ADMIN_BFF_POST_LOGOUT_LOGIN_REDIRECT_URI: http://localhost:5176/auth
     ports:
       - "9000:9000"
     depends_on:

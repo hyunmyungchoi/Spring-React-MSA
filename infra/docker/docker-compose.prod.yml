@@ -98,6 +98,8 @@ services:
 
       AUTH_SERVER_ISSUER: ${PUBLIC_GATEWAY_URL}
       USER_SERVICE_BASE_URL: http://spring-user-service:8081
+      USER_FRONTEND_LOGIN_URI: ${SHELL_FRONTEND_URL}/auth
+      ADMIN_FRONTEND_LOGIN_URI: ${ADMIN_FRONTEND_URL}/auth
 
       BFF_CLIENT_ID: ${BFF_CLIENT_ID}
       BFF_CLIENT_SECRET_HASH: ${BFF_CLIENT_SECRET_HASH}
@@ -140,6 +142,7 @@ services:
 
       BFF_API_COMMUNITY_ME_URI: http://spring-cloud-gateway:8080/api/community/me
       BFF_API_USER_ME_URI: http://spring-cloud-gateway:8080/api/user/me
+      BFF_API_USER_SIGNUP_URI: http://spring-user-service:8081/internal/users
       BFF_API_STOCK_ME_URI: http://spring-cloud-gateway:8080/api/stock/me
     depends_on:
       - redis
@@ -172,6 +175,7 @@ services:
 
       ADMIN_BFF_API_USER_ME_URI: http://spring-cloud-gateway:8080/api/user/me
       ADMIN_BFF_API_USER_ADMIN_USERS_URI: http://spring-cloud-gateway:8080/api/user/admin/users
+      ADMIN_BFF_API_USER_SIGNUP_URI: http://spring-user-service:8081/internal/users
     depends_on:
       - redis
       - spring-security-authorization-server

@@ -165,7 +165,7 @@ public class BffAuthController {
 
         session.invalidate();
 
-        String postLogoutRedirectUri = frontendRedirectUri + "/login";
+        String postLogoutRedirectUri = frontendRedirectUri + "/auth";
 
         String authServerLogoutUrl = StringUtils.hasText(idToken)
                 ? UriComponentsBuilder.fromUriString(endSessionUri)

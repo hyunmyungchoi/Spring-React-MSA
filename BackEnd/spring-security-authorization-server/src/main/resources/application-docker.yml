@@ -25,7 +25,7 @@ spring:
               redirect-uris:
                 - ${BFF_OAUTH2_REDIRECT_URI:http://localhost:8080/bff/auth/callback}
               post-logout-redirect-uris:
-                - ${BFF_POST_LOGOUT_REDIRECT_URI:http://localhost:5173/login}
+                - ${BFF_POST_LOGOUT_REDIRECT_URI:http://localhost:5173/auth}
               scopes:
                 - openid
                 - profile
@@ -45,7 +45,7 @@ spring:
                 - ${ADMIN_BFF_OAUTH2_REDIRECT_URI:http://localhost:8090/admin-bff/auth/callback}
               post-logout-redirect-uris:
                 - ${ADMIN_BFF_POST_LOGOUT_REDIRECT_URI:http://localhost:5176}
-                - ${ADMIN_BFF_POST_LOGOUT_LOGIN_REDIRECT_URI:http://localhost:5176/login}
+                - ${ADMIN_BFF_POST_LOGOUT_LOGIN_REDIRECT_URI:http://localhost:5176/auth}
               scopes:
                 - openid
                 - profile
@@ -54,8 +54,8 @@ spring:
 
 app:
   frontend:
-    user-login-uri: ${USER_FRONTEND_LOGIN_URI:http://localhost:5173/login}
-    admin-login-uri: ${ADMIN_FRONTEND_LOGIN_URI:http://localhost:5176/login}
+    user-login-uri: ${USER_FRONTEND_LOGIN_URI:http://localhost:5173/auth}
+    admin-login-uri: ${ADMIN_FRONTEND_LOGIN_URI:http://localhost:5176/auth}
 
   user-service:
     base-url: "http://spring-user-service:8081"

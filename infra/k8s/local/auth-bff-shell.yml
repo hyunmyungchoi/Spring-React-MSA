@@ -38,6 +38,10 @@ spec:
               value: http://localhost:8080
             - name: USER_SERVICE_BASE_URL
               value: http://spring-user-service:8081
+            - name: USER_FRONTEND_LOGIN_URI
+              value: http://localhost:5173/auth
+            - name: ADMIN_FRONTEND_LOGIN_URI
+              value: http://localhost:5176/auth
 
             - name: BFF_CLIENT_ID
               valueFrom:
@@ -153,6 +157,8 @@ spec:
               value: http://spring-cloud-gateway:8080/api/community/me
             - name: BFF_API_USER_ME_URI
               value: http://spring-cloud-gateway:8080/api/user/me
+            - name: BFF_API_USER_SIGNUP_URI
+              value: http://spring-user-service:8081/internal/users
             - name: BFF_API_STOCK_ME_URI
               value: http://spring-cloud-gateway:8080/api/stock/me
 

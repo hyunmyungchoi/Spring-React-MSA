@@ -68,6 +68,8 @@ spec:
               value: http://spring-cloud-gateway:8080/api/user/me
             - name: ADMIN_BFF_API_USER_ADMIN_USERS_URI
               value: http://spring-cloud-gateway:8080/api/user/admin/users
+            - name: ADMIN_BFF_API_USER_SIGNUP_URI
+              value: http://spring-user-service:8081/internal/users
 
 ---
 apiVersion: v1

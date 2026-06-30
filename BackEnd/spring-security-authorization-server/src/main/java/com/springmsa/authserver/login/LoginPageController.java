@@ -18,10 +18,10 @@ public class LoginPageController {
 
     private final RequestCache requestCache = new HttpSessionRequestCache();
 
-    @Value("${app.frontend.user-login-uri:http://localhost:5173/login}")
+    @Value("${app.frontend.user-login-uri:http://localhost:5173/auth}")
     private String userLoginUri;
 
-    @Value("${app.frontend.admin-login-uri:http://localhost:5176/login}")
+    @Value("${app.frontend.admin-login-uri:http://localhost:5176/auth}")
     private String adminLoginUri;
 
     @GetMapping("/login")
