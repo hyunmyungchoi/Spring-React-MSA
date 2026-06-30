@@ -21,7 +21,7 @@ public class BffStockController {
         this.bffApiProxyClient = bffApiProxyClient;
     }
 
-    @GetMapping("/bff/stock/me")
+    @GetMapping("/stock/me")
     public ResponseEntity<String> me(HttpSession session) {
         String responseBody = bffApiProxyClient.get(session, stockMeUri);
         return ResponseEntity.ok(responseBody);

@@ -12,7 +12,7 @@ spring:
             cors-configurations:
               '[/**]':
                 allowedOrigins:
-                  - ${ADMIN_GATEWAY_CORS_ALLOWED_ORIGIN:http://localhost:5176}
+                  - ${ADMIN_GATEWAY_CORS_ALLOWED_ORIGIN}
                 allowedMethods:
                   - GET
                   - POST
@@ -25,15 +25,17 @@ spring:
 
           routes:
             - id: admin-bff-service
-              uri: ${ADMIN_GATEWAY_ADMIN_BFF_URI:http://spring-admin-bff-service:8087}
+              uri: ${ADMIN_GATEWAY_ADMIN_BFF_URI}
               predicates:
                 - Path=/admin-bff/**
               filters:
                 - StripPrefix=1
+                - RewriteLocationResponseHeader=AS_IN_REQUEST, Location, ${ADMIN_PUBLIC_ORIGIN}
 
             - id: authorization-server
-              uri: ${ADMIN_GATEWAY_AUTHORIZATION_SERVER_URI:http://spring-security-authorization-server:9000}
+              uri: ${ADMIN_GATEWAY_AUTHORIZATION_SERVER_URI}
               predicates:
                 - Path=/oauth2/**,/.well-known/**,/userinfo,/login,/login/**,/logout,/connect/**
               filters:
                 - PreserveHostHeader
+                - RewriteLocationResponseHeader=AS_IN_REQUEST, Location, ${ADMIN_PUBLIC_ORIGIN}

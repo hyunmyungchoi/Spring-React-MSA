@@ -21,7 +21,7 @@ public class BffCommunityController {
         this.bffApiProxyClient = bffApiProxyClient;
     }
 
-    @GetMapping("/bff/community/me")
+    @GetMapping("/community/me")
     public ResponseEntity<String> me(HttpSession session) {
         String responseBody = bffApiProxyClient.get(session, communityMeUri);
         return ResponseEntity.ok(responseBody);

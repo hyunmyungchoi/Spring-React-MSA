@@ -77,12 +77,27 @@ services:
       dockerfile: Dockerfile
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      APP_OTP_EXPOSE_DEV_OTP: "true"
-      USER_FRONTEND_LOGIN_URI: http://localhost:5173/auth
-      ADMIN_FRONTEND_LOGIN_URI: http://localhost:5176/auth
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+
+      AUTH_SERVER_ISSUER: http://spring-cloud-gateway:8080
+
+      BFF_CLIENT_ID: bff-client
+      BFF_CLIENT_SECRET_HASH: $$2a$$10$$BDeXFNHccQiu0ef5vYr/Bu0fAjSQzCgKc5NBppHdETy1G.W4KJzbS
+      BFF_OAUTH2_REDIRECT_URI: http://localhost:8080/bff/auth/callback
       BFF_POST_LOGOUT_REDIRECT_URI: http://localhost:5173/auth
+
+      ADMIN_BFF_CLIENT_ID: admin-bff-client
+      ADMIN_BFF_CLIENT_SECRET_HASH: $$2a$$10$$Dm7Jh0Txq5XD7GRJXZSFFuIZQL1fMzpohFZJPM2EcFVPJNDsfveWi
+      ADMIN_BFF_OAUTH2_REDIRECT_URI: http://localhost:8090/admin-bff/auth/callback
       ADMIN_BFF_POST_LOGOUT_REDIRECT_URI: http://localhost:5176
       ADMIN_BFF_POST_LOGOUT_LOGIN_REDIRECT_URI: http://localhost:5176/auth
+
+      USER_FRONTEND_LOGIN_URI: http://localhost:5173/auth
+      ADMIN_FRONTEND_LOGIN_URI: http://localhost:5176/auth
+      USER_SERVICE_BASE_URL: http://spring-user-service:8081
+
+      APP_OTP_EXPOSE_DEV_OTP: "true"
     ports:
       - "9000:9000"
     depends_on:
@@ -99,7 +114,23 @@ services:
       dockerfile: Dockerfile
     environment:
       SPRING_PROFILES_ACTIVE: docker
+
+      BFF_FRONTEND_REDIRECT_URI: http://localhost:5173
+
+      BFF_OAUTH2_AUTHORIZATION_URI: http://localhost:8080/oauth2/authorize
+      BFF_OAUTH2_TOKEN_URI: http://spring-cloud-gateway:8080/oauth2/token
+      BFF_OAUTH2_USERINFO_URI: http://spring-cloud-gateway:8080/userinfo
+      BFF_CLIENT_ID: bff-client
       BFF_CLIENT_SECRET: bff-secret
+      BFF_OAUTH2_REDIRECT_URI: http://localhost:8080/bff/auth/callback
+      BFF_OAUTH2_END_SESSION_URI: http://localhost:8080/connect/logout
+      BFF_OAUTH2_LOGOUT_URI: http://localhost:8080/logout
+      BFF_OAUTH2_SCOPE: openid profile
+
+      BFF_API_COMMUNITY_ME_URI: http://spring-cloud-gateway:8080/api/community/me
+      BFF_API_USER_ME_URI: http://spring-cloud-gateway:8080/api/user/me
+      BFF_API_USER_SIGNUP_URI: http://spring-user-service:8081/internal/users
+      BFF_API_STOCK_ME_URI: http://spring-cloud-gateway:8080/api/stock/me
     ports:
       - "8079:8079"
     depends_on:
@@ -116,7 +147,23 @@ services:
       dockerfile: Dockerfile
     environment:
       SPRING_PROFILES_ACTIVE: docker
+
+      ADMIN_BFF_FRONTEND_REDIRECT_URI: http://localhost:5176
+
+      ADMIN_BFF_CLIENT_ID: admin-bff-client
       ADMIN_BFF_CLIENT_SECRET: admin-bff-secret
+      
+      ADMIN_BFF_OAUTH2_AUTHORIZATION_URI: http://localhost:8090/oauth2/authorize
+      ADMIN_BFF_OAUTH2_TOKEN_URI: http://spring-admin-gateway:8090/oauth2/token
+      ADMIN_BFF_OAUTH2_USERINFO_URI: http://spring-admin-gateway:8090/userinfo
+      ADMIN_BFF_OAUTH2_REDIRECT_URI: http://localhost:8090/admin-bff/auth/callback
+      ADMIN_BFF_OAUTH2_END_SESSION_URI: http://localhost:8090/connect/logout
+      ADMIN_BFF_OAUTH2_LOGOUT_URI: http://localhost:8090/logout
+      ADMIN_BFF_OAUTH2_SCOPE: openid profile
+
+      ADMIN_BFF_API_USER_ME_URI: http://spring-cloud-gateway:8080/api/user/me
+      ADMIN_BFF_API_USER_ADMIN_USERS_URI: http://spring-cloud-gateway:8080/api/user/admin/users
+      ADMIN_BFF_API_USER_SIGNUP_URI: http://spring-user-service:8081/internal/users
     ports:
       - "8087:8087"
     depends_on:
@@ -133,6 +180,10 @@ services:
       dockerfile: Dockerfile
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      PUBLIC_ORIGIN: http://localhost:5173
+      GATEWAY_CORS_ALLOWED_ORIGIN: http://localhost:5173
+      GATEWAY_ADMIN_BFF_URI: http://localhost:8079
+      GATEWAY_AUTHORIZATION_SERVER_URI: http://localhost:9000
     ports:
       - "8080:8080"
     depends_on:
@@ -152,6 +203,10 @@ services:
       dockerfile: Dockerfile
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      ADMIN_PUBLIC_ORIGIN: http://localhost:5176
+      ADMIN_GATEWAY_CORS_ALLOWED_ORIGIN: http://localhost:5176
+      ADMIN_GATEWAY_ADMIN_BFF_URI: http://localhost:8087
+      ADMIN_GATEWAY_AUTHORIZATION_SERVER_URI: http://localhost:9000
     ports:
       - "8090:8090"
     depends_on:

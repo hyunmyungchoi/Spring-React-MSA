@@ -72,7 +72,7 @@ public class BffAuthController {
         this.objectMapper = objectMapper;
     }
 
-    @GetMapping("/bff/auth/login")
+    @GetMapping("/auth/login")
     public RedirectView login(HttpSession session) {
         String state = UUID.randomUUID().toString();
         session.setAttribute(SESSION_OAUTH2_STATE, state);
@@ -90,7 +90,7 @@ public class BffAuthController {
         return new RedirectView(authorizeUrl);
     }
 
-    @GetMapping("/bff/auth/callback")
+    @GetMapping("/auth/callback")
     public RedirectView callback(@RequestParam String code, @RequestParam(required = false) String state, HttpSession session) {
         Object savedState = session.getAttribute(SESSION_OAUTH2_STATE);
 
@@ -125,7 +125,7 @@ public class BffAuthController {
         return new RedirectView(frontendRedirectUri);
     }
 
-    @GetMapping("/bff/auth/me")
+    @GetMapping("/auth/me")
     public ResponseEntity<AuthMeResponse> me(HttpSession session) {
         String accessToken;
 
@@ -157,7 +157,7 @@ public class BffAuthController {
         }
     }
 
-    @PostMapping("/bff/auth/logout")
+    @PostMapping("/auth/logout")
     public ResponseEntity<Map<String, Object>> logout(HttpSession session) {
         Object idTokenObj = session.getAttribute(BffTokenService.SESSION_ID_TOKEN);
 
@@ -188,7 +188,7 @@ public class BffAuthController {
     }
 
 
-    @GetMapping("/bff/auth/session")
+    @GetMapping("/auth/session")
     public Map<String, Object> session(HttpSession session) {
         return Map.of(
                 "hasAccessToken", session.getAttribute(SESSION_ACCESS_TOKEN) != null,
@@ -197,7 +197,7 @@ public class BffAuthController {
         );
     }
 
-    @PostMapping("/bff/auth/signup")
+    @PostMapping("/auth/signup")
     public ResponseEntity<Object> signup(@RequestBody SignupRequest request) {
         SignupRequest signupRequest = request.withRoles(Set.of("ROLE_USER"));
 
@@ -221,7 +221,7 @@ public class BffAuthController {
         }
     }
 
-    @PostMapping("/bff/auth/refresh")
+    @PostMapping("/auth/refresh")
     public Map<String, Object> refresh(HttpSession session) {
         OAuth2TokenResponse tokenResponse = bffTokenService.refreshAccessToken(session);
         return Map.of(

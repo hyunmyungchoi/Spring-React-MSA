@@ -5,13 +5,13 @@ spring:
 
   data:
     redis:
-      host: redis
-      port: 6379
+      host: ${SPRING_DATA_REDIS_HOST:redis}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
 
   security:
     oauth2:
       authorizationserver:
-        issuer: http://spring-cloud-gateway:8080
+        issuer: ${AUTH_SERVER_ISSUER:http://spring-cloud-gateway:8080}
         client:
           bff-client:
             registration:
@@ -58,4 +58,4 @@ app:
     admin-login-uri: ${ADMIN_FRONTEND_LOGIN_URI:http://localhost:5176/auth}
 
   user-service:
-    base-url: "http://spring-user-service:8081"
+    base-url: ${USER_SERVICE_BASE_URL:http://spring-user-service:8081}
