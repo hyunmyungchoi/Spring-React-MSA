@@ -3,6 +3,8 @@ package com.springmsa.authserver.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
@@ -14,16 +16,26 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
-import org.springframework.security.web.util.matcher.RegexRequestMatcher;
 import org.springframework.util.StringUtils;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+import static org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher.pathPattern;
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    private static final String LOGIN_PAGE = "/login";
+    private static final String LOGOUT_ENDPOINT = "/logout";
+    private static final String WHATSAPP_WEBHOOK_ENDPOINT = "/webhooks/whatsapp";
+    private static final String POST_LOGOUT_REDIRECT_URI = "post_logout_redirect_uri";
+    private static final String DEFAULT_LOGOUT_REDIRECT_URI = LOGIN_PAGE + "?logout";
 
     /**
      * Authorization Protocol (Oauth2 / OIDC)
@@ -32,7 +44,7 @@ public class SecurityConfig {
     @Order(1)
     SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
         // Handles OAuth2/OIDC protocol endpoints before the application login chain.
-        LoginUrlAuthenticationEntryPoint loginEntryPoint = new LoginUrlAuthenticationEntryPoint("/login");
+        LoginUrlAuthenticationEntryPoint loginEntryPoint = new LoginUrlAuthenticationEntryPoint(LOGIN_PAGE);
 
         http
                 .securityMatcher(
@@ -70,33 +82,25 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf
                         .ignoringRequestMatchers(
-                                "/login/**",
-                                "/webhooks/whatsapp"
+                                pathPattern(HttpMethod.POST, "/login/**"),
+                                pathPattern(HttpMethod.POST, WHATSAPP_WEBHOOK_ENDPOINT)
                         )
                 )
                 .securityContext(securityContext -> securityContext
                         .securityContextRepository(securityContextRepository)
                 )
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/login", "/login/**", "/error").permitAll()
-                        .requestMatchers("/webhooks/whatsapp").permitAll()
+                        .requestMatchers(LOGIN_PAGE, "/login/**", "/error").permitAll()
+                        .requestMatchers(WHATSAPP_WEBHOOK_ENDPOINT).permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
-                        .loginPage("/login")
+                        .loginPage(LOGIN_PAGE)
                         .permitAll()
                 )
                 .logout(logout -> logout
-                        .logoutRequestMatcher(new RegexRequestMatcher("^/logout(\\?.*)?$", null))
-                        .logoutSuccessHandler((request, response, authentication) -> {
-                            String redirectUri = request.getParameter("post_logout_redirect_uri");
-
-                            response.sendRedirect(
-                                    StringUtils.hasText(redirectUri)
-                                            ? redirectUri
-                                            : "/login?logout"
-                            );
-                        })
+                        .logoutRequestMatcher(pathPattern(HttpMethod.GET, LOGOUT_ENDPOINT))
+                        .logoutSuccessHandler(this::handleLogoutSuccess)
                         .clearAuthentication(true)
                         .invalidateHttpSession(true)
                         .deleteCookies("JSESSIONID")
@@ -109,6 +113,15 @@ public class SecurityConfig {
     @Bean
     SecurityContextRepository securityContextRepository() {
         return new HttpSessionSecurityContextRepository();
+    }
+
+    private void handleLogoutSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
+        String redirectUri = request.getParameter(POST_LOGOUT_REDIRECT_URI);
+        response.sendRedirect(
+                StringUtils.hasText(redirectUri)
+                        ? redirectUri
+                        : DEFAULT_LOGOUT_REDIRECT_URI
+        );
     }
 
     private Function<OidcUserInfoAuthenticationContext, OidcUserInfo> userInfoMapper() {

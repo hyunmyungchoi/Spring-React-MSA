@@ -35,6 +35,17 @@ export function signupAdmin(request: AdminSignupRequest): Promise<AdminSignupRes
 export async function loginAdminWithPassword(loginId: string, password: string): Promise<AdminPasswordLoginResponse> {
   await prepareAdminAuthorizationRequest()
 
+  const existingSession = await fetchAdminMe()
+
+  if (existingSession.authenticated) {
+    window.location.href = '/'
+    return {
+      authenticated: true,
+      redirectUrl: '/',
+      user: existingSession.user ?? undefined,
+    }
+  }
+
   const response = await adminFetchJson<AdminPasswordLoginResponse>('/login/password', {
     method: 'POST',
     body: { loginId, password },

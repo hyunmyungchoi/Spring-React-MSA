@@ -30,6 +30,17 @@ export function signupUser(request: SignupRequest): Promise<SignupResponse> {
 export async function loginUserWithPassword(loginId: string, password: string): Promise<PasswordLoginResponse> {
     await prepareUserAuthorizationRequest();
 
+    const existingSession = await fetchUserAuthMe();
+
+    if (existingSession.authenticated) {
+        window.location.href = "/";
+        return {
+            authenticated: true,
+            redirectUrl: "/",
+            user: existingSession.user ?? undefined,
+        };
+    }
+
     const response = await userFetchJson<PasswordLoginResponse>("/login/password", {
         method: "POST",
         body: { loginId, password },
