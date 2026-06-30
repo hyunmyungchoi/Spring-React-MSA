@@ -53,5 +53,9 @@ spring:
             require-proof-key: false
 
 app:
+  frontend:
+    user-login-uri: ${USER_FRONTEND_LOGIN_URI:http://localhost:5173/login}
+    admin-login-uri: ${ADMIN_FRONTEND_LOGIN_URI:http://localhost:5176/login}
+
   user-service:
     base-url: "http://spring-user-service:8081"

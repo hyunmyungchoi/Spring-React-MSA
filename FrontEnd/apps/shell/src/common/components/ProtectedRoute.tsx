@@ -10,7 +10,7 @@ function ProtectedRoute({ children }: ProtectedRouteProps) {
     const { authenticated, loading } = useAppSelector((state) => state.auth);
 
     if (loading) {
-        return <div>Loading...</div>;
+        return <div className="screen-loader">Loading...</div>;
     }
 
     if (!authenticated) {

@@ -1,13 +1,22 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { fetchAuthMe, logout as requestLogout } from "./authApi";
 
+export type AuthUser = {
+    sub?: string;
+    name?: string;
+    userId?: number;
+    loginId?: string;
+    email?: string;
+    roles?: string[];
+};
+
 type AuthMeResponse = {
     authenticated: boolean;
-    user: unknown | null;
+    user: AuthUser | null;
 };
 
 type AuthState = {
-    user: unknown | null;
+    user: AuthUser | null;
     authenticated: boolean;
     loading: boolean;
     error: string | null;

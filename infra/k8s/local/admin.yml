@@ -1,0 +1,168 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spring-admin-bff-service
+  namespace: spring-msa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spring-admin-bff-service
+  template:
+    metadata:
+      labels:
+        app: spring-admin-bff-service
+    spec:
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: spring-admin-bff-service
+          image: ghcr.io/hyunmyungchoi/spring-admin-bff-service:latest
+          ports:
+            - containerPort: 8087
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: prod
+
+            - name: SPRING_DATA_REDIS_HOST
+              value: redis
+            - name: SPRING_DATA_REDIS_PORT
+              value: "6379"
+            - name: SPRING_DATA_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: spring-msa-secret
+                  key: REDIS_PASSWORD
+
+            - name: ADMIN_BFF_FRONTEND_REDIRECT_URI
+              value: http://localhost:5176
+
+            - name: ADMIN_BFF_OAUTH2_AUTHORIZATION_URI
+              value: http://localhost:8090/oauth2/authorize
+            - name: ADMIN_BFF_OAUTH2_TOKEN_URI
+              value: http://spring-admin-gateway:8090/oauth2/token
+            - name: ADMIN_BFF_OAUTH2_USERINFO_URI
+              value: http://spring-admin-gateway:8090/userinfo
+
+            - name: ADMIN_BFF_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: spring-msa-oauth-secret
+                  key: ADMIN_BFF_CLIENT_ID
+            - name: ADMIN_BFF_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: spring-msa-oauth-secret
+                  key: ADMIN_BFF_CLIENT_SECRET
+
+            - name: ADMIN_BFF_OAUTH2_REDIRECT_URI
+              value: http://localhost:8090/admin-bff/auth/callback
+            - name: ADMIN_BFF_OAUTH2_END_SESSION_URI
+              value: http://localhost:8090/connect/logout
+            - name: ADMIN_BFF_OAUTH2_LOGOUT_URI
+              value: http://localhost:8090/logout
+            - name: ADMIN_BFF_OAUTH2_SCOPE
+              value: openid profile
+
+            - name: ADMIN_BFF_API_USER_ME_URI
+              value: http://spring-cloud-gateway:8080/api/user/me
+            - name: ADMIN_BFF_API_USER_ADMIN_USERS_URI
+              value: http://spring-cloud-gateway:8080/api/user/admin/users
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spring-admin-bff-service
+  namespace: spring-msa
+spec:
+  selector:
+    app: spring-admin-bff-service
+  ports:
+    - port: 8087
+      targetPort: 8087
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spring-admin-gateway
+  namespace: spring-msa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spring-admin-gateway
+  template:
+    metadata:
+      labels:
+        app: spring-admin-gateway
+    spec:
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: spring-admin-gateway
+          image: ghcr.io/hyunmyungchoi/spring-admin-gateway:latest
+          ports:
+            - containerPort: 8090
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: prod
+
+            - name: ADMIN_GATEWAY_CORS_ALLOWED_ORIGIN
+              value: http://localhost:5176
+
+            - name: ADMIN_GATEWAY_ADMIN_BFF_URI
+              value: http://spring-admin-bff-service:8087
+            - name: ADMIN_GATEWAY_AUTHORIZATION_SERVER_URI
+              value: http://spring-security-authorization-server:9000
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spring-admin-gateway
+  namespace: spring-msa
+spec:
+  selector:
+    app: spring-admin-gateway
+  ports:
+    - port: 8090
+      targetPort: 8090
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spring-admin-web
+  namespace: spring-msa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spring-admin-web
+  template:
+    metadata:
+      labels:
+        app: spring-admin-web
+    spec:
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: spring-admin-web
+          image: ghcr.io/hyunmyungchoi/spring-admin-web:latest
+          ports:
+            - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spring-admin-web
+  namespace: spring-msa
+spec:
+  selector:
+    app: spring-admin-web
+  ports:
+    - port: 80
+      targetPort: 80

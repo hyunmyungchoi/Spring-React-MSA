@@ -27,6 +27,7 @@ bff:
   api:
     community-me-uri: ${BFF_API_COMMUNITY_ME_URI}
     user-me-uri: ${BFF_API_USER_ME_URI}
+    user-signup-uri: ${BFF_API_USER_SIGNUP_URI}
     stock-me-uri: ${BFF_API_STOCK_ME_URI}
 
 logging:

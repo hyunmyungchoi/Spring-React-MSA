@@ -6,10 +6,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.view.RedirectView;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -20,6 +22,7 @@ import tools.jackson.databind.ObjectMapper;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 
@@ -55,6 +58,9 @@ public class AdminBffAuthController {
 
     @Value("${admin-bff.frontend.redirect-uri}")
     private String frontendRedirectUri;
+
+    @Value("${admin-bff.api.user-signup-uri:http://localhost:8081/internal/users}")
+    private String userSignupUri;
 
     private static final String ROLE_ADMIN = "ROLE_ADMIN";
 
@@ -214,6 +220,30 @@ public class AdminBffAuthController {
         ));
     }
 
+    @PostMapping("/auth/signup")
+    public ResponseEntity<Object> signup(@RequestBody SignupRequest request) {
+        SignupRequest signupRequest = request.withRoles(Set.of("ROLE_USER", ROLE_ADMIN));
+
+        try {
+            Object responseBody = restClient.post()
+                    .uri(userSignupUri)
+                    .body(signupRequest)
+                    .retrieve()
+                    .body(Object.class);
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(responseBody);
+
+        } catch (RestClientResponseException e) {
+            return ResponseEntity
+                    .status(e.getStatusCode())
+                    .body(Map.of(
+                            "success", false,
+                            "status", e.getStatusCode().value(),
+                            "message", resolveSignupErrorMessage(e)
+                    ));
+        }
+    }
+
     private Map<String, Object> requestUserInfoMap(String accessToken) {
         try {
             String responseBody = requestUserInfo(accessToken);
@@ -267,5 +297,37 @@ public class AdminBffAuthController {
         return roleValues.stream()
                 .map(String::valueOf)
                 .anyMatch(roleName::equals);
+    }
+
+    private String resolveSignupErrorMessage(RestClientResponseException e) {
+        String responseBody = e.getResponseBodyAsString();
+
+        if (StringUtils.hasText(responseBody)) {
+            return responseBody;
+        }
+
+        return "Admin signup request failed";
+    }
+
+    public record SignupRequest(
+            String loginId,
+            String email,
+            String password,
+            String username,
+            String phoneNumber,
+            String whatsappNumber,
+            Set<String> roles
+    ) {
+        SignupRequest withRoles(Set<String> nextRoles) {
+            return new SignupRequest(
+                    loginId,
+                    email,
+                    password,
+                    username,
+                    phoneNumber,
+                    whatsappNumber,
+                    nextRoles
+            );
+        }
     }
 }

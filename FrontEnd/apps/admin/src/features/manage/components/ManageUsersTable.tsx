@@ -1,0 +1,42 @@
+import type { ManageUserResponse } from '../manageApi'
+
+type ManageUsersTableProps = {
+    users: ManageUserResponse[] | null
+}
+
+function ManageUsersTable({ users }: ManageUsersTableProps) {
+    if (!users || users.length === 0) {
+        return <p className="admin-empty">조회된 유저가 없습니다.</p>
+    }
+
+    return (
+        <div className="admin-table-wrap">
+            <table className="admin-users-table">
+                <thead>
+                    <tr>
+                        <th>User ID</th>
+                        <th>Login ID</th>
+                        <th>Email</th>
+                        <th>Username</th>
+                        <th>Enabled</th>
+                        <th>Roles</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {users.map((user) => (
+                        <tr key={user.userId}>
+                            <td>{user.userId}</td>
+                            <td>{user.loginId}</td>
+                            <td>{user.email}</td>
+                            <td>{user.username}</td>
+                            <td>{user.enabled ? 'Y' : 'N'}</td>
+                            <td>{user.roles.join(', ')}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    )
+}
+
+export default ManageUsersTable

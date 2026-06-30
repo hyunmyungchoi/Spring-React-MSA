@@ -7,3 +7,8 @@ spring:
     redis:
       host: ${REDIS_HOST:redis}
       port: ${REDIS_PORT:6379}
+
+app:
+  frontend:
+    user-login-uri: ${USER_FRONTEND_LOGIN_URI}
+    admin-login-uri: ${ADMIN_FRONTEND_LOGIN_URI}

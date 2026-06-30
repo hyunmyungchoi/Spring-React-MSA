@@ -21,7 +21,15 @@ export default defineConfig({
         target: gatewayTarget,
         changeOrigin: true,
       },
-      '/login': {
+      '/login/password': {
+        target: gatewayTarget,
+        changeOrigin: true,
+      },
+      '/login/email': {
+        target: gatewayTarget,
+        changeOrigin: true,
+      },
+      '/login/whatsapp': {
         target: gatewayTarget,
         changeOrigin: true,
       },

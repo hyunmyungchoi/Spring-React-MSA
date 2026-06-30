@@ -26,4 +26,5 @@ bff:
   api:
     community-me-uri: ${BFF_API_COMMUNITY_ME_URI:http://spring-cloud-gateway:8080/api/community/me}
     user-me-uri: ${BFF_API_USER_ME_URI:http://spring-cloud-gateway:8080/api/user/me}
+    user-signup-uri: ${BFF_API_USER_SIGNUP_URI:http://spring-user-service:8081/internal/users}
     stock-me-uri: ${BFF_API_STOCK_ME_URI:http://spring-cloud-gateway:8080/api/stock/me}

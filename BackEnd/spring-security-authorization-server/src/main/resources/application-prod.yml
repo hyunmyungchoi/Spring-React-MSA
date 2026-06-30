@@ -54,6 +54,10 @@ spring:
             require-proof-key: false
 
 app:
+  frontend:
+    user-login-uri: ${USER_FRONTEND_LOGIN_URI}
+    admin-login-uri: ${ADMIN_FRONTEND_LOGIN_URI}
+
   user-service:
     base-url: ${USER_SERVICE_BASE_URL}
 

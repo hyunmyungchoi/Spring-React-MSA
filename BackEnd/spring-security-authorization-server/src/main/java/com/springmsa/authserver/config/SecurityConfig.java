@@ -3,7 +3,6 @@ package com.springmsa.authserver.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
-import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
@@ -15,7 +14,6 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
-import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 import org.springframework.security.web.util.matcher.RegexRequestMatcher;
 import org.springframework.util.StringUtils;
 
@@ -30,24 +28,27 @@ public class SecurityConfig {
     @Bean
     @Order(1)
     SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+        // Handles OAuth2/OIDC protocol endpoints before the application login chain.
+        LoginUrlAuthenticationEntryPoint loginEntryPoint = new LoginUrlAuthenticationEntryPoint("/login");
+
         http
                 .securityMatcher(
-                        "/oauth2/**",
-                        "/.well-known/**",
-                        "/userinfo",
-                        "/connect/**"
+                        "/oauth2/**",           // Authorization, token, JWK, and related OAuth2 endpoints.
+                        "/.well-known/**",      // OIDC discovery metadata.
+                        "/connect/**",          // OIDC provider endpoints such as logout.
+                        "/userinfo"             // BFFs call this with an access token to load user claims.
                 )
                 .authorizeHttpRequests(authorize -> authorize
                         .anyRequest().authenticated()
                 ).exceptionHandling(exceptions -> exceptions
-                        .defaultAuthenticationEntryPointFor(
-                                new LoginUrlAuthenticationEntryPoint("/login"),
-                                new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
-                        )
+                        // Redirect unauthenticated protocol requests to /login regardless of Accept headers.
+                        .authenticationEntryPoint(loginEntryPoint)
                 )
                 .oauth2AuthorizationServer(authorizationServer -> authorizationServer
+                        // Enables OIDC support, including the /userinfo endpoint.
                         .oidc(oidc -> oidc
                                 .userInfoEndpoint(userInfo -> userInfo
+                                        // Controls which JWT claims are exposed from /userinfo.
                                         .userInfoMapper(userInfoMapper())
                                 )
                         )
@@ -61,13 +62,18 @@ public class SecurityConfig {
     SecurityFilterChain appSecurityFilterChain(HttpSecurity http, SecurityContextRepository securityContextRepository) throws Exception {
         http
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/login/whatsapp/**", "/login/email/**", "/webhooks/whatsapp")
+                        .ignoringRequestMatchers(
+                                "/login/password",
+                                "/login/whatsapp/**",
+                                "/login/email/**",
+                                "/webhooks/whatsapp"
+                        )
                 )
                 .securityContext(securityContext -> securityContext
                         .securityContextRepository(securityContextRepository)
                 )
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/login/whatsapp/**", "/login/email/**").permitAll()
+                        .requestMatchers("/login/password", "/login/whatsapp/**", "/login/email/**").permitAll()
                         .requestMatchers("/login", "/error").permitAll()
                         .requestMatchers("/webhooks/whatsapp").permitAll()
                         .anyRequest().authenticated()

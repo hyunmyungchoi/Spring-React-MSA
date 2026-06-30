@@ -10,6 +10,7 @@ export async function bffRequest<T>(
         ...options,
         credentials: "include",
         headers: {
+            Accept: "application/json",
             ...(options.body ? { "Content-Type": "application/json" } : {}),
             ...options.headers,
         },
@@ -17,7 +18,7 @@ export async function bffRequest<T>(
 
     if (!response.ok) {
         const errorBody = await response.text().catch(() => "");
-        throw new Error(errorBody || `BFF request failed. status=${response.status}`);
+        throw new Error(resolveErrorMessage(errorBody, response.status));
     }
 
     if (response.status === 204) {
@@ -44,4 +45,22 @@ export function bffPost<T>(path: string, body?: unknown): Promise<T> {
         method: "POST",
         body: body === undefined ? undefined : JSON.stringify(body),
     });
+}
+
+function resolveErrorMessage(errorBody: string, status: number) {
+    if (!errorBody) {
+        return `BFF request failed. status=${status}`;
+    }
+
+    try {
+        const parsed = JSON.parse(errorBody) as {
+            message?: string;
+            detail?: string;
+            error?: string;
+        };
+
+        return parsed.message ?? parsed.detail ?? parsed.error ?? errorBody;
+    } catch {
+        return errorBody;
+    }
 }
