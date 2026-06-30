@@ -4,10 +4,10 @@ WORKDIR /app
 
 RUN corepack enable
 
-COPY package.json pnpm-lock.yaml* ./
+COPY FrontEnd/apps/admin/package.json FrontEnd/apps/admin/pnpm-lock.yaml ./
 RUN if [ -f pnpm-lock.yaml ]; then pnpm install --frozen-lockfile; else pnpm install; fi
 
-COPY . .
+COPY FrontEnd/apps/admin .
 
 ARG VITE_MODE=prod
 ARG VITE_ADMIN_GATEWAY_BASE_URL=
@@ -16,7 +16,7 @@ RUN if [ -n "$VITE_ADMIN_GATEWAY_BASE_URL" ]; then export VITE_ADMIN_GATEWAY_BAS
 
 FROM nginx:1.27-alpine
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY infra/nginx/frontend-static.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html
 
 EXPOSE 80

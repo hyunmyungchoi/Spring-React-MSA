@@ -25,6 +25,9 @@ import java.util.function.Function;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    /**
+     * Authorization Protocol (Oauth2 / OIDC)
+     */
     @Bean
     @Order(1)
     SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
@@ -57,6 +60,10 @@ public class SecurityConfig {
         return http.build();
     }
 
+
+    /**
+     * Application Protocol (API, Login, Logout...)
+     */
     @Bean
     @Order(2)
     SecurityFilterChain appSecurityFilterChain(HttpSecurity http, SecurityContextRepository securityContextRepository) throws Exception {

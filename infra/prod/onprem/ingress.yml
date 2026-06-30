@@ -1,0 +1,146 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: spring-msa-user-web
+  namespace: spring-msa
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  tls:
+    - hosts:
+        - user.example.com
+      secretName: user-web-tls
+  rules:
+    - host: user.example.com
+      http:
+        paths:
+          - path: /bff
+            pathType: Prefix
+            backend:
+              service:
+                name: spring-cloud-gateway
+                port:
+                  number: 8080
+          - path: /login
+            pathType: Prefix
+            backend:
+              service:
+                name: spring-cloud-gateway
+                port:
+                  number: 8080
+          - path: /oauth2
+            pathType: Prefix
+            backend:
+              service:
+                name: spring-cloud-gateway
+                port:
+                  number: 8080
+          - path: /.well-known
+            pathType: Prefix
+            backend:
+              service:
+                name: spring-cloud-gateway
+                port:
+                  number: 8080
+          - path: /logout
+            pathType: Prefix
+            backend:
+              service:
+                name: spring-cloud-gateway
+                port:
+                  number: 8080
+          - path: /connect
+            pathType: Prefix
+            backend:
+              service:
+                name: spring-cloud-gateway
+                port:
+                  number: 8080
+          - path: /userinfo
+            pathType: Prefix
+            backend:
+              service:
+                name: spring-cloud-gateway
+                port:
+                  number: 8080
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: spring-shell-web
+                port:
+                  number: 80
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: spring-msa-admin-web
+  namespace: spring-msa
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  tls:
+    - hosts:
+        - admin.example.com
+      secretName: admin-web-tls
+  rules:
+    - host: admin.example.com
+      http:
+        paths:
+          - path: /admin-bff
+            pathType: Prefix
+            backend:
+              service:
+                name: spring-admin-gateway
+                port:
+                  number: 8090
+          - path: /login
+            pathType: Prefix
+            backend:
+              service:
+                name: spring-admin-gateway
+                port:
+                  number: 8090
+          - path: /oauth2
+            pathType: Prefix
+            backend:
+              service:
+                name: spring-admin-gateway
+                port:
+                  number: 8090
+          - path: /.well-known
+            pathType: Prefix
+            backend:
+              service:
+                name: spring-admin-gateway
+                port:
+                  number: 8090
+          - path: /logout
+            pathType: Prefix
+            backend:
+              service:
+                name: spring-admin-gateway
+                port:
+                  number: 8090
+          - path: /connect
+            pathType: Prefix
+            backend:
+              service:
+                name: spring-admin-gateway
+                port:
+                  number: 8090
+          - path: /userinfo
+            pathType: Prefix
+            backend:
+              service:
+                name: spring-admin-gateway
+                port:
+                  number: 8090
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: spring-admin-web
+                port:
+                  number: 80

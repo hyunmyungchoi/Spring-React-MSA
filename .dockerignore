@@ -1,0 +1,14 @@
+.git
+.github
+.idea
+
+BackEnd
+infra/argocd
+infra/k8s
+infra/prod
+infra/docker
+
+**/node_modules
+**/dist
+**/.env.local
+**/*.log

@@ -14,10 +14,6 @@ export default defineConfig({
         target: gatewayTarget,
         changeOrigin: true,
       },
-      '/api': {
-        target: gatewayTarget,
-        changeOrigin: true,
-      },
       '/oauth2': {
         target: gatewayTarget,
         changeOrigin: true,

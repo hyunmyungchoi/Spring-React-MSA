@@ -226,14 +226,10 @@ services:
   spring-shell-web:
     image: ${IMAGE_REGISTRY}/spring-shell-web:${IMAGE_TAG}
     container_name: spring-shell-web
-    build:
-      context: ../../FrontEnd/apps/shell
-      dockerfile: Dockerfile
-      args:
-        VITE_MODE: prod
-        VITE_BFF_BASE_URL: ${PUBLIC_GATEWAY_URL}
     ports:
       - "5173:80"
+    volumes:
+      - ./nginx/user-web.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       - spring-cloud-gateway
     networks:
@@ -243,14 +239,10 @@ services:
   spring-admin-web:
     image: ${IMAGE_REGISTRY}/spring-admin-web:${IMAGE_TAG}
     container_name: spring-admin-web
-    build:
-      context: ../../FrontEnd/apps/admin
-      dockerfile: Dockerfile
-      args:
-        VITE_MODE: prod
-        VITE_ADMIN_GATEWAY_BASE_URL: ${PUBLIC_ADMIN_GATEWAY_URL}
     ports:
       - "5176:80"
+    volumes:
+      - ./nginx/admin-web.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       - spring-admin-gateway
     networks:

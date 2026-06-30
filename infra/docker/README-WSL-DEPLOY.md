@@ -43,6 +43,7 @@ cd ~/spring-msa-deploy
 
 cp /mnt/c/Portfolio/infra/docker/docker-compose.prod.yml .
 cp /mnt/c/Portfolio/infra/docker/docker-compose.wsl.yml .
+cp -r /mnt/c/Portfolio/infra/docker/nginx .
 cp /mnt/c/Portfolio/infra/docker/.env.prod .
 cp /mnt/c/Portfolio/infra/docker/deploy-wsl.sh .
 chmod +x deploy-wsl.sh

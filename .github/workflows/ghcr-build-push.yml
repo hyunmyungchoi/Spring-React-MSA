@@ -75,13 +75,9 @@ jobs:
       matrix:
         include:
           - service: spring-shell-web
-            context: FrontEnd/apps/shell
-            vite_arg_name: VITE_BFF_BASE_URL
-            vite_arg_value: ${{ vars.PUBLIC_GATEWAY_URL }}
+            dockerfile: FrontEnd/apps/shell/Dockerfile
           - service: spring-admin-web
-            context: FrontEnd/apps/admin
-            vite_arg_name: VITE_ADMIN_GATEWAY_BASE_URL
-            vite_arg_value: ${{ vars.PUBLIC_ADMIN_GATEWAY_URL }}
+            dockerfile: FrontEnd/apps/admin/Dockerfile
 
     steps:
       - name: Checkout
@@ -97,11 +93,11 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
-          context: ${{ matrix.context }}
+          context: .
+          file: ${{ matrix.dockerfile }}
           push: true
           build-args: |
             VITE_MODE=prod
-            ${{ matrix.vite_arg_name }}=${{ matrix.vite_arg_value }}
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.service }}:${{ env.IMAGE_TAG }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.service }}:${{ github.sha }}
