@@ -102,13 +102,13 @@ services:
       BFF_CLIENT_ID: ${BFF_CLIENT_ID}
       BFF_CLIENT_SECRET_HASH: ${BFF_CLIENT_SECRET_HASH}
       BFF_OAUTH2_REDIRECT_URI: ${PUBLIC_GATEWAY_URL}/bff/auth/callback
-      BFF_POST_LOGOUT_REDIRECT_URI: ${SHELL_FRONTEND_URL}/login
+      BFF_POST_LOGOUT_REDIRECT_URI: ${SHELL_FRONTEND_URL}/auth
 
       ADMIN_BFF_CLIENT_ID: ${ADMIN_BFF_CLIENT_ID}
       ADMIN_BFF_CLIENT_SECRET_HASH: ${ADMIN_BFF_CLIENT_SECRET_HASH}
       ADMIN_BFF_OAUTH2_REDIRECT_URI: ${PUBLIC_ADMIN_GATEWAY_URL}/admin-bff/auth/callback
       ADMIN_BFF_POST_LOGOUT_REDIRECT_URI: ${ADMIN_FRONTEND_URL}
-      ADMIN_BFF_POST_LOGOUT_LOGIN_REDIRECT_URI: ${ADMIN_FRONTEND_URL}/login
+      ADMIN_BFF_POST_LOGOUT_LOGIN_REDIRECT_URI: ${ADMIN_FRONTEND_URL}/auth
     depends_on:
       - redis
       - spring-user-service
@@ -224,7 +224,7 @@ services:
     restart: unless-stopped
 
   spring-shell-web:
-    image: ${IMAGE_REGISTRY}/spring-shell-web:${IMAGE_TAG}
+    image: ${IMAGE_REGISTRY:-ghcr.io/hyunmyungchoi}/spring-shell-web:${IMAGE_TAG:-latest}
     container_name: spring-shell-web
     ports:
       - "5173:80"
@@ -237,7 +237,7 @@ services:
     restart: unless-stopped
 
   spring-admin-web:
-    image: ${IMAGE_REGISTRY}/spring-admin-web:${IMAGE_TAG}
+    image: ${IMAGE_REGISTRY:-ghcr.io/hyunmyungchoi}/spring-admin-web:${IMAGE_TAG:-latest}
     container_name: spring-admin-web
     ports:
       - "5176:80"

@@ -156,7 +156,7 @@ services:
       - spring-msa-network
 
   spring-shell-web:
-    image: ${IMAGE_REGISTRY}/spring-shell-web:${IMAGE_TAG}
+    image: ${IMAGE_REGISTRY:-ghcr.io/hyunmyungchoi}/spring-shell-web:${IMAGE_TAG:-latest}
     container_name: spring-shell-web
     ports:
       - "5173:80"
@@ -169,7 +169,7 @@ services:
     restart: unless-stopped
 
   spring-admin-web:
-    image: ${IMAGE_REGISTRY}/spring-admin-web:${IMAGE_TAG}
+    image: ${IMAGE_REGISTRY:-ghcr.io/hyunmyungchoi}/spring-admin-web:${IMAGE_TAG:-latest}
     container_name: spring-admin-web
     ports:
       - "5176:80"
