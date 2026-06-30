@@ -35,3 +35,5 @@ spring:
               uri: http://localhost:9000
               predicates:
                 - Path=/oauth2/**,/.well-known/**,/userinfo,/login,/login/**,/logout,/connect/**
+              filters:
+                - PreserveHostHeader

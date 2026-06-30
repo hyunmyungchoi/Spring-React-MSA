@@ -46,7 +46,7 @@ public class PasswordLoginController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid login ID or password");
         }
 
-        String redirectUrl = otpLoginSessionService.login(user, httpRequest, httpResponse);
+        String redirectUrl = otpLoginSessionService.loginWithPassword(user, httpRequest, httpResponse);
 
         return ResponseEntity.ok(new PasswordLoginResponse(
                 true,

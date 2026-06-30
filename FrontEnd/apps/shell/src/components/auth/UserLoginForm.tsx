@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { FormEvent } from "react";
 import { useUserLogin } from "../../hooks/useUserLogin";
 import { USER_ERROR_MESSAGES } from "../../messages/userErrorMessages";
@@ -21,14 +21,6 @@ function UserLoginForm({ defaultLoginId, defaultEmail, pending, onPendingChange,
     const [password, setPassword] = useState("password");
     const [email, setEmail] = useState(defaultEmail);
     const [otp, setOtp] = useState("");
-
-    useEffect(() => {
-        setPasswordLoginId(defaultLoginId);
-    }, [defaultLoginId]);
-
-    useEffect(() => {
-        setEmail(defaultEmail);
-    }, [defaultEmail]);
 
     // Submits user password login credentials.
     const handlePasswordLogin = async (event: FormEvent<HTMLFormElement>) => {

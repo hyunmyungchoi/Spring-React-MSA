@@ -22,7 +22,8 @@ public class OtpAuthenticationFactory {
 
     public Authentication createAuthentication(
             AuthUserResponse user,
-            HttpServletRequest request
+            HttpServletRequest request,
+            String factorAuthority
     ) {
         Set<String> roles = user.roles() == null ? Set.of() : user.roles();
 
@@ -33,7 +34,7 @@ public class OtpAuthenticationFactory {
                 .forEach(authorities::add);
 
         authorities.add(
-                FactorGrantedAuthority.fromAuthority(FactorGrantedAuthority.OTT_AUTHORITY)
+                FactorGrantedAuthority.fromAuthority(factorAuthority)
         );
 
         CustomUserPrincipal principal = new CustomUserPrincipal(

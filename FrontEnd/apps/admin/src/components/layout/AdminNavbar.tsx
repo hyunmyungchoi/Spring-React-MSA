@@ -29,7 +29,8 @@ function AdminNavbar() {
 
       <nav className="admin-nav" aria-label="admin navigation">
         <NavLink to="/">홈</NavLink>
-        <NavLink to="/manage/users">User Management</NavLink>
+        <NavLink to="/manage/users">유저 관리</NavLink>
+        <NavLink to="/manage/logs">로그 관리</NavLink>
       </nav>
     </>
   )

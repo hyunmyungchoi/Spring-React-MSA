@@ -329,6 +329,10 @@
     box-shadow 160ms ease;
 }
 
+.admin-service-link {
+  display: block;
+}
+
 .admin-service-tile:hover {
   transform: translateY(-2px);
   border-color: rgba(107, 92, 255, 0.56);
@@ -387,6 +391,16 @@
 
 .admin-section {
   padding: 20px;
+}
+
+.admin-entry-panel {
+  margin-top: 18px;
+}
+
+.admin-entry-copy {
+  margin: 0;
+  color: #8f9bb7;
+  line-height: 1.6;
 }
 
 .admin-users-list-section {

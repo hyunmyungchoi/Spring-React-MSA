@@ -1,13 +1,19 @@
-import { Link } from 'react-router-dom'
+import AdminManageSelectCard from '../components/manage/AdminManageSelectCard'
 
 // Renders the admin landing page after login.
 function ManageHomePage() {
   return (
     <section className="admin-service-grid">
-      <Link className="admin-service-tile admin-service-link" to="/manage/users">
-        <span>Manage</span>
-        <strong>User Management</strong>
-      </Link>
+      <AdminManageSelectCard
+        to="/manage/users"
+        label="유저 관리"
+        title="User Management"
+      />
+      <AdminManageSelectCard
+        to="/manage/logs"
+        label="로그 관리"
+        title="Log Management"
+      />
     </section>
   )
 }

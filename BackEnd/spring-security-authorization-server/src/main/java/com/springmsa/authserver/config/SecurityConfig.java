@@ -70,9 +70,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf
                         .ignoringRequestMatchers(
-                                "/login/password",
-                                "/login/whatsapp/**",
-                                "/login/email/**",
+                                "/login/**",
                                 "/webhooks/whatsapp"
                         )
                 )
@@ -80,8 +78,7 @@ public class SecurityConfig {
                         .securityContextRepository(securityContextRepository)
                 )
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/login/password", "/login/whatsapp/**", "/login/email/**").permitAll()
-                        .requestMatchers("/login", "/error").permitAll()
+                        .requestMatchers("/login", "/login/**", "/error").permitAll()
                         .requestMatchers("/webhooks/whatsapp").permitAll()
                         .anyRequest().authenticated()
                 )

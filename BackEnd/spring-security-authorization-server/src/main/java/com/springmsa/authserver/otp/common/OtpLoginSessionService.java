@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.authority.FactorGrantedAuthority;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 import org.springframework.security.web.savedrequest.RequestCache;
@@ -32,8 +33,25 @@ public class OtpLoginSessionService {
             HttpServletRequest request,
             HttpServletResponse response
     ) {
+        return login(user, request, response, FactorGrantedAuthority.OTT_AUTHORITY);
+    }
+
+    public String loginWithPassword(
+            AuthUserResponse user,
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) {
+        return login(user, request, response, FactorGrantedAuthority.PASSWORD_AUTHORITY);
+    }
+
+    private String login(
+            AuthUserResponse user,
+            HttpServletRequest request,
+            HttpServletResponse response,
+            String factorAuthority
+    ) {
         Authentication authentication =
-                otpAuthenticationFactory.createAuthentication(user, request);
+                otpAuthenticationFactory.createAuthentication(user, request, factorAuthority);
 
         SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
         securityContext.setAuthentication(authentication);

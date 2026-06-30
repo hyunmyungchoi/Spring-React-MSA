@@ -35,3 +35,5 @@ spring:
               uri: ${ADMIN_GATEWAY_AUTHORIZATION_SERVER_URI:http://spring-security-authorization-server:9000}
               predicates:
                 - Path=/oauth2/**,/.well-known/**,/userinfo,/login,/login/**,/logout,/connect/**
+              filters:
+                - PreserveHostHeader
