@@ -34,6 +34,6 @@ spring:
             - id: authorization-server
               uri: http://localhost:9000
               predicates:
-                - Path=/oauth2/**,/.well-known/**,/userinfo,/login,/login/**,/logout,/connect/**
+                - Path=/oauth2/**,/.well-known/openid-configuration,/.well-known/oauth-authorization-server,/.well-known/oauth-protected-resource,/userinfo,/login,/login/**,/logout,/connect/**
               filters:
                 - PreserveHostHeader

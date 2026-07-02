@@ -50,7 +50,7 @@ spring:
             - id: authorization-server
               uri: ${GATEWAY_AUTHORIZATION_SERVER_URI}
               predicates:
-                - Path=/oauth2/**,/.well-known/**,/userinfo,/login,/login/**,/logout,/connect/**
+                - Path=/oauth2/**,/.well-known/openid-configuration,/.well-known/oauth-authorization-server,/.well-known/oauth-protected-resource,/userinfo,/login,/login/**,/logout,/connect/**
               filters:
                 - PreserveHostHeader
                 - RewriteLocationResponseHeader=AS_IN_REQUEST, Location, ${PUBLIC_ORIGIN}

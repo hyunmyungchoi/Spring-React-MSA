@@ -10,6 +10,11 @@ services:
       - "15432:5432"
     volumes:
       - spring-msa-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U msa -d msa"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
     networks:
       - spring-msa-network
 
@@ -18,6 +23,11 @@ services:
     container_name: spring-msa-redis
     ports:
       - "16379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
     networks:
       - spring-msa-network
 
@@ -32,8 +42,16 @@ services:
     ports:
       - "8081:8081"
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 8081"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
     networks:
       - spring-msa-network
 
@@ -48,8 +66,16 @@ services:
     ports:
       - "8083:8083"
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 8083"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
     networks:
       - spring-msa-network
 
@@ -64,8 +90,16 @@ services:
     ports:
       - "8084:8084"
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 8084"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
     networks:
       - spring-msa-network
 
@@ -99,8 +133,16 @@ services:
     ports:
       - "9000:9000"
     depends_on:
-      - redis
-      - spring-user-service
+      redis:
+        condition: service_healthy
+      spring-user-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 9000"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
     networks:
       - spring-msa-network
 
@@ -132,8 +174,22 @@ services:
     ports:
       - "8079:8079"
     depends_on:
-      - redis
-      - spring-security-authorization-server
+      redis:
+        condition: service_healthy
+      spring-security-authorization-server:
+        condition: service_healthy
+      spring-user-service:
+        condition: service_healthy
+      spring-member-community-service:
+        condition: service_healthy
+      spring-member-stock-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 8079"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
     networks:
       - spring-msa-network
 
@@ -163,8 +219,18 @@ services:
     ports:
       - "8087:8087"
     depends_on:
-      - redis
-      - spring-security-authorization-server
+      redis:
+        condition: service_healthy
+      spring-security-authorization-server:
+        condition: service_healthy
+      spring-user-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 8087"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
     networks:
       - spring-msa-network
 
@@ -176,18 +242,29 @@ services:
       dockerfile: Dockerfile
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      PUBLIC_ORIGIN: http://localhost:5173
+      PUBLIC_ORIGIN: localhost:5173
       GATEWAY_CORS_ALLOWED_ORIGIN: http://localhost:5173
       GATEWAY_BFF_URI: http://spring-member-bff-service:8079
       GATEWAY_AUTHORIZATION_SERVER_URI: http://spring-security-authorization-server:9000
     ports:
       - "8080:8080"
     depends_on:
-      - spring-member-bff-service
-      - spring-user-service
-      - spring-member-community-service
-      - spring-member-stock-service
-      - spring-security-authorization-server
+      spring-member-bff-service:
+        condition: service_healthy
+      spring-user-service:
+        condition: service_healthy
+      spring-member-community-service:
+        condition: service_healthy
+      spring-member-stock-service:
+        condition: service_healthy
+      spring-security-authorization-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 8080"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
     networks:
       - spring-msa-network
 
@@ -205,8 +282,16 @@ services:
     ports:
       - "8090:8090"
     depends_on:
-      - spring-admin-bff-service
-      - spring-security-authorization-server
+      spring-admin-bff-service:
+        condition: service_healthy
+      spring-security-authorization-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 8090"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
     networks:
       - spring-msa-network
 
@@ -221,7 +306,8 @@ services:
     volumes:
       - ./nginx/member-web.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
-      - spring-member-gateway
+      spring-member-gateway:
+        condition: service_healthy
     networks:
       - spring-msa-network
     restart: unless-stopped
@@ -237,7 +323,8 @@ services:
     volumes:
       - ./nginx/admin-web.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
-      - spring-admin-gateway
+      spring-admin-gateway:
+        condition: service_healthy
     networks:
       - spring-msa-network
     restart: unless-stopped
