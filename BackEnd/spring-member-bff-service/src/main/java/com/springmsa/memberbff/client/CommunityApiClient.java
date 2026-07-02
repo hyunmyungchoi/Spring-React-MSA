@@ -28,8 +28,8 @@ public interface CommunityApiClient {
     CommunityPostResponse createPost(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorization, @RequestBody CommunityPostRequest request);
 
     @PutMapping("/api/community/posts/{postId}")
-    CommunityPostResponse updatePost(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorization, @PathVariable("postId") Long postId, @RequestBody CommunityPostRequest request);
+    CommunityPostResponse updatePost(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorization, @PathVariable Long postId, @RequestBody CommunityPostRequest request);
 
     @DeleteMapping("/api/community/posts/{postId}")
-    void deletePost(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorization, @PathVariable("postId") Long postId);
+    void deletePost(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorization, @PathVariable Long postId);
 }

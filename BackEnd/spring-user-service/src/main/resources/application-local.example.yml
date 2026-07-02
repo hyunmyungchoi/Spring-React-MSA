@@ -8,6 +8,7 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: http://localhost:8080
+          jwk-set-uri: http://localhost:9000/oauth2/jwks
 
   datasource:
     url: jdbc:postgresql://127.0.0.1:15432/msa
