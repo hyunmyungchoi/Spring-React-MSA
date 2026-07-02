@@ -22,11 +22,8 @@ services:
       - spring-msa-network
 
   spring-user-service:
-    image: spring-react-msa/spring-user-service:latest
+    image: ${IMAGE_REGISTRY:-ghcr.io/hyunmyungchoi}/spring-user-service:${IMAGE_TAG:-latest}
     container_name: spring-user-service
-    build:
-      context: ../../BackEnd/spring-user-service
-      dockerfile: Dockerfile
     environment:
       SPRING_PROFILES_ACTIVE: docker
     ports:
@@ -38,11 +35,8 @@ services:
       - spring-msa-network
 
   spring-member-community-service:
-    image: spring-react-msa/spring-member-community-service:latest
+    image: ${IMAGE_REGISTRY:-ghcr.io/hyunmyungchoi}/spring-member-community-service:${IMAGE_TAG:-latest}
     container_name: spring-member-community-service
-    build:
-      context: ../../BackEnd/spring-member-community-service
-      dockerfile: Dockerfile
     environment:
       SPRING_PROFILES_ACTIVE: docker
     ports:
@@ -54,11 +48,8 @@ services:
       - spring-msa-network
 
   spring-member-stock-service:
-    image: spring-react-msa/spring-member-stock-service:latest
+    image: ${IMAGE_REGISTRY:-ghcr.io/hyunmyungchoi}/spring-member-stock-service:${IMAGE_TAG:-latest}
     container_name: spring-member-stock-service
-    build:
-      context: ../../BackEnd/spring-member-stock-service
-      dockerfile: Dockerfile
     environment:
       SPRING_PROFILES_ACTIVE: docker
     ports:
@@ -70,11 +61,8 @@ services:
       - spring-msa-network
 
   spring-security-authorization-server:
-    image: spring-react-msa/spring-security-authorization-server:latest
+    image: ${IMAGE_REGISTRY:-ghcr.io/hyunmyungchoi}/spring-security-authorization-server:${IMAGE_TAG:-latest}
     container_name: spring-security-authorization-server
-    build:
-      context: ../../BackEnd/spring-security-authorization-server
-      dockerfile: Dockerfile
     environment:
       SPRING_PROFILES_ACTIVE: docker
       SPRING_DATA_REDIS_HOST: redis
@@ -105,11 +93,8 @@ services:
       - spring-msa-network
 
   spring-member-bff-service:
-    image: spring-react-msa/spring-member-bff-service:latest
+    image: ${IMAGE_REGISTRY:-ghcr.io/hyunmyungchoi}/spring-member-bff-service:${IMAGE_TAG:-latest}
     container_name: spring-member-bff-service
-    build:
-      context: ../../BackEnd/spring-member-bff-service
-      dockerfile: Dockerfile
     environment:
       SPRING_PROFILES_ACTIVE: docker
 
@@ -138,11 +123,8 @@ services:
       - spring-msa-network
 
   spring-admin-bff-service:
-    image: spring-react-msa/spring-admin-bff-service:latest
+    image: ${IMAGE_REGISTRY:-ghcr.io/hyunmyungchoi}/spring-admin-bff-service:${IMAGE_TAG:-latest}
     container_name: spring-admin-bff-service
-    build:
-      context: ../../BackEnd/spring-admin-bff-service
-      dockerfile: Dockerfile
     environment:
       SPRING_PROFILES_ACTIVE: docker
 
@@ -169,11 +151,8 @@ services:
       - spring-msa-network
 
   spring-member-gateway:
-    image: spring-react-msa/spring-member-gateway:latest
+    image: ${IMAGE_REGISTRY:-ghcr.io/hyunmyungchoi}/spring-member-gateway:${IMAGE_TAG:-latest}
     container_name: spring-member-gateway
-    build:
-      context: ../../BackEnd/spring-member-gateway
-      dockerfile: Dockerfile
     environment:
       SPRING_PROFILES_ACTIVE: docker
       PUBLIC_ORIGIN: http://localhost:5173
@@ -192,11 +171,8 @@ services:
       - spring-msa-network
 
   spring-admin-gateway:
-    image: spring-react-msa/spring-admin-gateway:latest
+    image: ${IMAGE_REGISTRY:-ghcr.io/hyunmyungchoi}/spring-admin-gateway:${IMAGE_TAG:-latest}
     container_name: spring-admin-gateway
-    build:
-      context: ../../BackEnd/spring-admin-gateway
-      dockerfile: Dockerfile
     environment:
       SPRING_PROFILES_ACTIVE: docker
       ADMIN_GATEWAY_CORS_ALLOWED_ORIGIN: http://localhost:5176
@@ -211,11 +187,8 @@ services:
       - spring-msa-network
 
   spring-member-web:
-    image: spring-react-msa/spring-member-web:latest
+    image: ${IMAGE_REGISTRY:-ghcr.io/hyunmyungchoi}/spring-member-web:${IMAGE_TAG:-latest}
     container_name: spring-member-web
-    build:
-      context: ../..
-      dockerfile: FrontEnd/apps/member/Dockerfile
     ports:
       - "5173:80"
     volumes:
@@ -227,11 +200,8 @@ services:
     restart: unless-stopped
 
   spring-admin-web:
-    image: spring-react-msa/spring-admin-web:latest
+    image: ${IMAGE_REGISTRY:-ghcr.io/hyunmyungchoi}/spring-admin-web:${IMAGE_TAG:-latest}
     container_name: spring-admin-web
-    build:
-      context: ../..
-      dockerfile: FrontEnd/apps/admin/Dockerfile
     ports:
       - "5176:80"
     volumes:
