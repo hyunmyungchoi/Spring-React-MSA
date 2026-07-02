@@ -35,6 +35,7 @@ services:
       SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD}
 
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: ${PUBLIC_GATEWAY_URL}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://spring-security-authorization-server:9000/oauth2/jwks
     depends_on:
       - postgres
       - redis
@@ -42,9 +43,9 @@ services:
       - spring-msa-network
     restart: unless-stopped
 
-  spring-community-service:
-    image: ${IMAGE_REGISTRY}/spring-community-service:${IMAGE_TAG}
-    container_name: spring-community-service
+  spring-member-community-service:
+    image: ${IMAGE_REGISTRY}/spring-member-community-service:${IMAGE_TAG}
+    container_name: spring-member-community-service
     environment:
       SPRING_PROFILES_ACTIVE: prod
 
@@ -57,6 +58,7 @@ services:
       SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD}
 
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: ${PUBLIC_GATEWAY_URL}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://spring-security-authorization-server:9000/oauth2/jwks
     depends_on:
       - postgres
       - redis
@@ -64,9 +66,9 @@ services:
       - spring-msa-network
     restart: unless-stopped
 
-  spring-stock-service:
-    image: ${IMAGE_REGISTRY}/spring-stock-service:${IMAGE_TAG}
-    container_name: spring-stock-service
+  spring-member-stock-service:
+    image: ${IMAGE_REGISTRY}/spring-member-stock-service:${IMAGE_TAG}
+    container_name: spring-member-stock-service
     environment:
       SPRING_PROFILES_ACTIVE: prod
 
@@ -79,6 +81,7 @@ services:
       SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD}
 
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: ${PUBLIC_GATEWAY_URL}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://spring-security-authorization-server:9000/oauth2/jwks
     depends_on:
       - postgres
       - redis
@@ -98,19 +101,19 @@ services:
 
       AUTH_SERVER_ISSUER: ${PUBLIC_GATEWAY_URL}
       USER_SERVICE_BASE_URL: http://spring-user-service:8081
-      USER_FRONTEND_LOGIN_URI: ${SHELL_FRONTEND_URL}/auth
-      ADMIN_FRONTEND_LOGIN_URI: ${ADMIN_FRONTEND_URL}/auth
+      USER_FRONTEND_LOGIN_URI: ${MEMBER_FRONTEND_URL}/auth
+      ADMIN_FRONTEND_LOGIN_URI: ${ADMIN_PUBLIC_ORIGIN}/auth
 
       BFF_CLIENT_ID: ${BFF_CLIENT_ID}
       BFF_CLIENT_SECRET_HASH: ${BFF_CLIENT_SECRET_HASH}
-      BFF_OAUTH2_REDIRECT_URI: ${PUBLIC_GATEWAY_URL}/bff/auth/callback
-      BFF_POST_LOGOUT_REDIRECT_URI: ${SHELL_FRONTEND_URL}/auth
+      BFF_OAUTH2_REDIRECT_URI: ${MEMBER_FRONTEND_URL}/bff/login/oauth2/code/member-bff
+      BFF_POST_LOGOUT_REDIRECT_URI: ${MEMBER_FRONTEND_URL}/auth
 
       ADMIN_BFF_CLIENT_ID: ${ADMIN_BFF_CLIENT_ID}
       ADMIN_BFF_CLIENT_SECRET_HASH: ${ADMIN_BFF_CLIENT_SECRET_HASH}
-      ADMIN_BFF_OAUTH2_REDIRECT_URI: ${PUBLIC_ADMIN_GATEWAY_URL}/admin-bff/auth/callback
-      ADMIN_BFF_POST_LOGOUT_REDIRECT_URI: ${ADMIN_FRONTEND_URL}
-      ADMIN_BFF_POST_LOGOUT_LOGIN_REDIRECT_URI: ${ADMIN_FRONTEND_URL}/auth
+      ADMIN_BFF_OAUTH2_REDIRECT_URI: ${ADMIN_PUBLIC_ORIGIN}/admin-bff/login/oauth2/code/admin-bff
+      ADMIN_BFF_POST_LOGOUT_REDIRECT_URI: ${ADMIN_PUBLIC_ORIGIN}
+      ADMIN_BFF_POST_LOGOUT_LOGIN_REDIRECT_URI: ${ADMIN_PUBLIC_ORIGIN}/auth
     depends_on:
       - redis
       - spring-user-service
@@ -118,9 +121,9 @@ services:
       - spring-msa-network
     restart: unless-stopped
 
-  spring-bff-service:
-    image: ${IMAGE_REGISTRY}/spring-bff-service:${IMAGE_TAG}
-    container_name: spring-bff-service
+  spring-member-bff-service:
+    image: ${IMAGE_REGISTRY}/spring-member-bff-service:${IMAGE_TAG}
+    container_name: spring-member-bff-service
     environment:
       SPRING_PROFILES_ACTIVE: prod
 
@@ -128,22 +131,22 @@ services:
       SPRING_DATA_REDIS_PORT: 6379
       SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD}
 
-      BFF_FRONTEND_REDIRECT_URI: ${SHELL_FRONTEND_URL}
+      BFF_FRONTEND_REDIRECT_URI: ${MEMBER_FRONTEND_URL}
 
-      BFF_OAUTH2_AUTHORIZATION_URI: ${PUBLIC_GATEWAY_URL}/oauth2/authorize
-      BFF_OAUTH2_TOKEN_URI: http://spring-cloud-gateway:8080/oauth2/token
-      BFF_OAUTH2_USERINFO_URI: http://spring-cloud-gateway:8080/userinfo
+      BFF_OAUTH2_AUTHORIZATION_URI: ${MEMBER_FRONTEND_URL}/oauth2/authorize
+      BFF_OAUTH2_TOKEN_URI: http://spring-member-gateway:8080/oauth2/token
+      BFF_OAUTH2_USERINFO_URI: http://spring-member-gateway:8080/userinfo
+      BFF_OAUTH2_JWK_SET_URI: http://spring-member-gateway:8080/oauth2/jwks
       BFF_CLIENT_ID: ${BFF_CLIENT_ID}
       BFF_CLIENT_SECRET: ${BFF_CLIENT_SECRET}
-      BFF_OAUTH2_REDIRECT_URI: ${PUBLIC_GATEWAY_URL}/bff/auth/callback
-      BFF_OAUTH2_END_SESSION_URI: ${PUBLIC_GATEWAY_URL}/connect/logout
-      BFF_OAUTH2_LOGOUT_URI: ${PUBLIC_GATEWAY_URL}/logout
-      BFF_OAUTH2_SCOPE: openid profile
+      BFF_OAUTH2_REDIRECT_URI: ${MEMBER_FRONTEND_URL}/bff/login/oauth2/code/member-bff
+      BFF_OAUTH2_END_SESSION_URI: ${MEMBER_FRONTEND_URL}/connect/logout
+      BFF_OAUTH2_LOGOUT_URI: ${MEMBER_FRONTEND_URL}/logout
 
-      BFF_API_COMMUNITY_ME_URI: http://spring-cloud-gateway:8080/api/community/me
-      BFF_API_USER_ME_URI: http://spring-cloud-gateway:8080/api/user/me
-      BFF_API_USER_SIGNUP_URI: http://spring-user-service:8081/internal/users
-      BFF_API_STOCK_ME_URI: http://spring-cloud-gateway:8080/api/stock/me
+      BFF_API_USER_API_BASE_URL: http://spring-user-service:8081
+      BFF_API_USER_INTERNAL_BASE_URL: http://spring-user-service:8081
+      BFF_API_COMMUNITY_API_BASE_URL: http://spring-member-community-service:8083
+      BFF_API_STOCK_API_BASE_URL: http://spring-member-stock-service:8084
     depends_on:
       - redis
       - spring-security-authorization-server
@@ -161,21 +164,20 @@ services:
       SPRING_DATA_REDIS_PORT: 6379
       SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD}
 
-      ADMIN_BFF_FRONTEND_REDIRECT_URI: ${ADMIN_FRONTEND_URL}
+      ADMIN_BFF_FRONTEND_REDIRECT_URI: ${ADMIN_PUBLIC_ORIGIN}
 
-      ADMIN_BFF_OAUTH2_AUTHORIZATION_URI: ${PUBLIC_ADMIN_GATEWAY_URL}/oauth2/authorize
+      ADMIN_BFF_OAUTH2_AUTHORIZATION_URI: ${ADMIN_PUBLIC_ORIGIN}/oauth2/authorize
       ADMIN_BFF_OAUTH2_TOKEN_URI: http://spring-admin-gateway:8090/oauth2/token
       ADMIN_BFF_OAUTH2_USERINFO_URI: http://spring-admin-gateway:8090/userinfo
+      ADMIN_BFF_OAUTH2_JWK_SET_URI: http://spring-admin-gateway:8090/oauth2/jwks
       ADMIN_BFF_CLIENT_ID: ${ADMIN_BFF_CLIENT_ID}
       ADMIN_BFF_CLIENT_SECRET: ${ADMIN_BFF_CLIENT_SECRET}
-      ADMIN_BFF_OAUTH2_REDIRECT_URI: ${PUBLIC_ADMIN_GATEWAY_URL}/admin-bff/auth/callback
-      ADMIN_BFF_OAUTH2_END_SESSION_URI: ${PUBLIC_ADMIN_GATEWAY_URL}/connect/logout
-      ADMIN_BFF_OAUTH2_LOGOUT_URI: ${PUBLIC_ADMIN_GATEWAY_URL}/logout
-      ADMIN_BFF_OAUTH2_SCOPE: openid profile
+      ADMIN_BFF_OAUTH2_REDIRECT_URI: ${ADMIN_PUBLIC_ORIGIN}/admin-bff/login/oauth2/code/admin-bff
+      ADMIN_BFF_OAUTH2_END_SESSION_URI: ${ADMIN_PUBLIC_ORIGIN}/connect/logout
+      ADMIN_BFF_OAUTH2_LOGOUT_URI: ${ADMIN_PUBLIC_ORIGIN}/logout
 
-      ADMIN_BFF_API_USER_ME_URI: http://spring-cloud-gateway:8080/api/user/me
-      ADMIN_BFF_API_USER_ADMIN_USERS_URI: http://spring-cloud-gateway:8080/api/user/admin/users
-      ADMIN_BFF_API_USER_SIGNUP_URI: http://spring-user-service:8081/internal/users
+      ADMIN_BFF_API_USER_API_BASE_URL: http://spring-member-gateway:8080
+      ADMIN_BFF_API_USER_INTERNAL_BASE_URL: http://spring-user-service:8081
     depends_on:
       - redis
       - spring-security-authorization-server
@@ -183,26 +185,26 @@ services:
       - spring-msa-network
     restart: unless-stopped
 
-  spring-cloud-gateway:
-    image: ${IMAGE_REGISTRY}/spring-cloud-gateway:${IMAGE_TAG}
-    container_name: spring-cloud-gateway
+  spring-member-gateway:
+    image: ${IMAGE_REGISTRY}/spring-member-gateway:${IMAGE_TAG}
+    container_name: spring-member-gateway
     environment:
       SPRING_PROFILES_ACTIVE: prod
 
-      GATEWAY_CORS_ALLOWED_ORIGIN: ${SHELL_FRONTEND_URL}
+      GATEWAY_CORS_ALLOWED_ORIGIN: ${MEMBER_FRONTEND_URL}
 
-      GATEWAY_BFF_URI: http://spring-bff-service:8079
+      GATEWAY_BFF_URI: http://spring-member-bff-service:8079
       GATEWAY_USER_SERVICE_URI: http://spring-user-service:8081
-      GATEWAY_COMMUNITY_SERVICE_URI: http://spring-community-service:8083
-      GATEWAY_STOCK_SERVICE_URI: http://spring-stock-service:8084
+      GATEWAY_COMMUNITY_SERVICE_URI: http://spring-member-community-service:8083
+      GATEWAY_STOCK_SERVICE_URI: http://spring-member-stock-service:8084
       GATEWAY_AUTHORIZATION_SERVER_URI: http://spring-security-authorization-server:9000
     ports:
       - "8080:8080"
     depends_on:
-      - spring-bff-service
+      - spring-member-bff-service
       - spring-user-service
-      - spring-community-service
-      - spring-stock-service
+      - spring-member-community-service
+      - spring-member-stock-service
       - spring-security-authorization-server
     networks:
       - spring-msa-network
@@ -214,7 +216,7 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: prod
 
-      ADMIN_GATEWAY_CORS_ALLOWED_ORIGIN: ${ADMIN_FRONTEND_URL}
+      ADMIN_GATEWAY_CORS_ALLOWED_ORIGIN: ${ADMIN_PUBLIC_ORIGIN}
 
       ADMIN_GATEWAY_ADMIN_BFF_URI: http://spring-admin-bff-service:8087
       ADMIN_GATEWAY_AUTHORIZATION_SERVER_URI: http://spring-security-authorization-server:9000
@@ -227,15 +229,15 @@ services:
       - spring-msa-network
     restart: unless-stopped
 
-  spring-shell-web:
-    image: ${IMAGE_REGISTRY:-ghcr.io/hyunmyungchoi}/spring-shell-web:${IMAGE_TAG:-latest}
-    container_name: spring-shell-web
+  spring-member-web:
+    image: ${IMAGE_REGISTRY:-ghcr.io/hyunmyungchoi}/spring-member-web:${IMAGE_TAG:-latest}
+    container_name: spring-member-web
     ports:
       - "5173:80"
     volumes:
-      - ./nginx/user-web.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/member-web.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
-      - spring-cloud-gateway
+      - spring-member-gateway
     networks:
       - spring-msa-network
     restart: unless-stopped

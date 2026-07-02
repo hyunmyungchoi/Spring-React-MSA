@@ -12,56 +12,56 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: spring-cloud-gateway
+                name: spring-member-gateway
                 port:
                   number: 8080
           - path: /login
             pathType: Prefix
             backend:
               service:
-                name: spring-cloud-gateway
+                name: spring-member-gateway
                 port:
                   number: 8080
           - path: /oauth2
             pathType: Prefix
             backend:
               service:
-                name: spring-cloud-gateway
+                name: spring-member-gateway
                 port:
                   number: 8080
           - path: /.well-known
             pathType: Prefix
             backend:
               service:
-                name: spring-cloud-gateway
+                name: spring-member-gateway
                 port:
                   number: 8080
           - path: /logout
             pathType: Prefix
             backend:
               service:
-                name: spring-cloud-gateway
+                name: spring-member-gateway
                 port:
                   number: 8080
           - path: /connect
             pathType: Prefix
             backend:
               service:
-                name: spring-cloud-gateway
+                name: spring-member-gateway
                 port:
                   number: 8080
           - path: /userinfo
             pathType: Prefix
             backend:
               service:
-                name: spring-cloud-gateway
+                name: spring-member-gateway
                 port:
                   number: 8080
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: spring-shell-web
+                name: spring-member-web
                 port:
                   number: 80
 

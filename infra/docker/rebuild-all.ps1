@@ -11,12 +11,12 @@ $composeFile = Join-Path $PSScriptRoot "docker-compose.yml"
 
 $backendServices = @(
     "spring-user-service",
-    "spring-community-service",
-    "spring-stock-service",
+    "spring-member-community-service",
+    "spring-member-stock-service",
     "spring-security-authorization-server",
-    "spring-bff-service",
+    "spring-member-bff-service",
     "spring-admin-bff-service",
-    "spring-cloud-gateway",
+    "spring-member-gateway",
     "spring-admin-gateway"
 )
 

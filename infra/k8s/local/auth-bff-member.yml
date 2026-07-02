@@ -92,23 +92,23 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: spring-bff-service
+  name: spring-member-bff-service
   namespace: spring-msa
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: spring-bff-service
+      app: spring-member-bff-service
   template:
     metadata:
       labels:
-        app: spring-bff-service
+        app: spring-member-bff-service
     spec:
       imagePullSecrets:
         - name: ghcr-secret
       containers:
-        - name: spring-bff-service
-          image: ghcr.io/hyunmyungchoi/spring-bff-service:latest
+        - name: spring-member-bff-service
+          image: ghcr.io/hyunmyungchoi/spring-member-bff-service:latest
           ports:
             - containerPort: 8079
           env:
@@ -131,9 +131,9 @@ spec:
             - name: BFF_OAUTH2_AUTHORIZATION_URI
               value: http://localhost:8080/oauth2/authorize
             - name: BFF_OAUTH2_TOKEN_URI
-              value: http://spring-cloud-gateway:8080/oauth2/token
+              value: http://spring-member-gateway:8080/oauth2/token
             - name: BFF_OAUTH2_USERINFO_URI
-              value: http://spring-cloud-gateway:8080/userinfo
+              value: http://spring-member-gateway:8080/userinfo
             - name: BFF_CLIENT_ID
               valueFrom:
                 secretKeyRef:
@@ -154,23 +154,23 @@ spec:
               value: openid profile
 
             - name: BFF_API_COMMUNITY_ME_URI
-              value: http://spring-cloud-gateway:8080/api/community/me
+              value: http://spring-member-gateway:8080/api/community/me
             - name: BFF_API_USER_ME_URI
-              value: http://spring-cloud-gateway:8080/api/user/me
+              value: http://spring-member-gateway:8080/api/user/me
             - name: BFF_API_USER_SIGNUP_URI
               value: http://spring-user-service:8081/internal/users
             - name: BFF_API_STOCK_ME_URI
-              value: http://spring-cloud-gateway:8080/api/stock/me
+              value: http://spring-member-gateway:8080/api/stock/me
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: spring-bff-service
+  name: spring-member-bff-service
   namespace: spring-msa
 spec:
   selector:
-    app: spring-bff-service
+    app: spring-member-bff-service
   ports:
     - port: 8079
       targetPort: 8079
@@ -179,23 +179,23 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: spring-shell-web
+  name: spring-member-web
   namespace: spring-msa
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: spring-shell-web
+      app: spring-member-web
   template:
     metadata:
       labels:
-        app: spring-shell-web
+        app: spring-member-web
     spec:
       imagePullSecrets:
         - name: ghcr-secret
       containers:
-        - name: spring-shell-web
-          image: ghcr.io/hyunmyungchoi/spring-shell-web:latest
+        - name: spring-member-web
+          image: ghcr.io/hyunmyungchoi/spring-member-web:latest
           ports:
             - containerPort: 80
 
@@ -203,11 +203,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: spring-shell-web
+  name: spring-member-web
   namespace: spring-msa
 spec:
   selector:
-    app: spring-shell-web
+    app: spring-member-web
   ports:
     - port: 80
       targetPort: 80
