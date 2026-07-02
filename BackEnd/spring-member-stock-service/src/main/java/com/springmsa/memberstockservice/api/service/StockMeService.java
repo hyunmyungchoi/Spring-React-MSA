@@ -1,16 +1,14 @@
-package com.springmsa.memberstockservice.api;
+package com.springmsa.memberstockservice.api.service;
 
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Service;
 
 import java.util.Map;
 
-@RestController
-public class StockMeController {
+@Service
+public class StockMeService {
 
-    @GetMapping("/api/stock/me")
     public Map<String, Object> me(JwtAuthenticationToken authentication) {
         Jwt jwt = authentication.getToken();
 

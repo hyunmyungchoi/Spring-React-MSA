@@ -9,6 +9,7 @@ import java.util.List;
 public record SessionUserResponse(
         @Nullable String sub,
         @Nullable String name,
+        @Nullable String username,
         @Nullable Long userId,
         @Nullable String loginId,
         @Nullable String email,

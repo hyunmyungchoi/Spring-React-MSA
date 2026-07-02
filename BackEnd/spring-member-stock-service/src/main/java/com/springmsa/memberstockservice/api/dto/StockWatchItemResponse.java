@@ -1,4 +1,4 @@
-package com.springmsa.memberstockservice.api;
+package com.springmsa.memberstockservice.api.dto;
 
 import java.time.Instant;
 

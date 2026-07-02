@@ -28,3 +28,13 @@ logging:
     console: UTF-8
   level:
     com.springmsa.memberbff: debug
+
+bff:
+  presence:
+    redis:
+      namespace: ${BFF_PRESENCE_REDIS_NAMESPACE:spring:presence:member-bff}
+    heartbeat:
+      ttl-seconds: ${BFF_PRESENCE_HEARTBEAT_TTL_SECONDS:45}
+    stream:
+      key: ${BFF_PRESENCE_STREAM_KEY:spring:presence:member-bff:events}
+      max-length: ${BFF_PRESENCE_STREAM_MAX_LENGTH:1000}

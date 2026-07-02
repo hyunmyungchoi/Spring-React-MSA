@@ -17,6 +17,17 @@ spring:
       redis:
         namespace: spring:session:admin-bff
 
+admin-bff:
+  member-session:
+    redis:
+      namespace: ${ADMIN_BFF_MEMBER_SESSION_REDIS_NAMESPACE:spring:session:bff}
+  member-presence:
+    redis:
+      namespace: ${ADMIN_BFF_MEMBER_PRESENCE_REDIS_NAMESPACE:spring:presence:member-bff}
+    stream:
+      key: ${ADMIN_BFF_MEMBER_PRESENCE_STREAM_KEY:spring:presence:member-bff:events}
+      default-limit: ${ADMIN_BFF_MEMBER_PRESENCE_STREAM_DEFAULT_LIMIT:50}
+
 management:
   endpoints:
     web:

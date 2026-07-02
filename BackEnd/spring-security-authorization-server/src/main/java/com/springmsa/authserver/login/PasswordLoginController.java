@@ -2,6 +2,9 @@ package com.springmsa.authserver.login;
 
 import com.springmsa.authserver.client.UserServiceClient;
 import com.springmsa.authserver.client.dto.AuthUserResponse;
+import com.springmsa.authserver.login.dto.LoginUserResponse;
+import com.springmsa.authserver.login.dto.PasswordLoginRequest;
+import com.springmsa.authserver.login.dto.PasswordLoginResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;

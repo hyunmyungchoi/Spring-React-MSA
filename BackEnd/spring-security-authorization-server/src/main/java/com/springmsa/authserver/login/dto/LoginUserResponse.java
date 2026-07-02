@@ -1,4 +1,4 @@
-package com.springmsa.authserver.login;
+package com.springmsa.authserver.login.dto;
 
 import com.springmsa.authserver.client.dto.AuthUserResponse;
 

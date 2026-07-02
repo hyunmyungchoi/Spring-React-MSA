@@ -1,16 +1,9 @@
-package com.springmsa.memberstockservice.api;
+package com.springmsa.memberstockservice.api.service;
 
+import com.springmsa.memberstockservice.api.dto.StockWatchItemRequest;
+import com.springmsa.memberstockservice.api.dto.StockWatchItemResponse;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
@@ -19,30 +12,26 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-@RestController
-@RequestMapping("/api/stock/watch-items")
-public class StockWatchItemController {
+@Service
+public class StockWatchItemService {
 
     private final AtomicLong sequence = new AtomicLong(0);
     private final ConcurrentHashMap<Long, StockWatchItemResponse> watchItems = new ConcurrentHashMap<>();
 
-    @GetMapping
     public List<StockWatchItemResponse> findAll() {
         return watchItems.values().stream()
                 .sorted(Comparator.comparing(StockWatchItemResponse::id))
                 .toList();
     }
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public StockWatchItemResponse create(@RequestBody StockWatchItemRequest request, Authentication authentication) {
+    public StockWatchItemResponse create(StockWatchItemRequest request, String owner) {
         Long id = sequence.incrementAndGet();
         Instant now = Instant.now();
         StockWatchItemResponse response = new StockWatchItemResponse(
                 id,
                 request.symbol(),
                 request.memo(),
-                authentication.getName(),
+                owner,
                 now,
                 now
         );
@@ -50,8 +39,7 @@ public class StockWatchItemController {
         return response;
     }
 
-    @PutMapping("/{itemId}")
-    public StockWatchItemResponse update(@PathVariable Long itemId, @RequestBody StockWatchItemRequest request) {
+    public StockWatchItemResponse update(Long itemId, StockWatchItemRequest request) {
         StockWatchItemResponse current = watchItems.get(itemId);
 
         if (current == null) {
@@ -70,9 +58,7 @@ public class StockWatchItemController {
         return updated;
     }
 
-    @DeleteMapping("/{itemId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable Long itemId) {
+    public void delete(Long itemId) {
         if (watchItems.remove(itemId) == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Stock watch item not found");
         }

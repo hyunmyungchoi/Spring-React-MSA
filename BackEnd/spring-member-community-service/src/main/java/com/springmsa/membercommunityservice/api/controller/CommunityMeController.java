@@ -1,6 +1,6 @@
-package com.springmsa.membercommunityservice.api;
+package com.springmsa.membercommunityservice.api.controller;
 
-import com.springmsa.membercommunityservice.service.CommunityMeService;
+import com.springmsa.membercommunityservice.api.service.CommunityMeService;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;

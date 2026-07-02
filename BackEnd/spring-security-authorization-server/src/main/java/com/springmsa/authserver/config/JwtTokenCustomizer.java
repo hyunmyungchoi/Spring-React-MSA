@@ -33,6 +33,7 @@ public class JwtTokenCustomizer {
                         .claim("login_id", userPrincipal.getLoginId())
                         .claim("email", userPrincipal.getEmail())
                         .claim("name", userPrincipal.getName())
+                        .claim("username", userPrincipal.getName())
                         .claim("roles", roles);
             }
 
@@ -42,6 +43,7 @@ public class JwtTokenCustomizer {
                         .claim("login_id", userPrincipal.getLoginId())
                         .claim("email", userPrincipal.getEmail())
                         .claim("name", userPrincipal.getName())
+                        .claim("username", userPrincipal.getName())
                         .claim("roles", roles);
             }
         };

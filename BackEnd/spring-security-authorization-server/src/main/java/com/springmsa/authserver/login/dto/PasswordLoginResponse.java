@@ -1,4 +1,4 @@
-package com.springmsa.authserver.login;
+package com.springmsa.authserver.login.dto;
 
 public record PasswordLoginResponse(
         boolean authenticated,

@@ -1,10 +1,22 @@
 server:
   port: 9000
   forward-headers-strategy: framework
+  servlet:
+    session:
+      cookie:
+        name: AUTHSESSIONID
+        http-only: true
+        same-site: lax
 
 spring:
   application:
     name: spring-security-authorization-server
+
+  session:
+    store-type: redis
+    data:
+      redis:
+        namespace: spring:session:auth-server
 
 logging:
   charset:

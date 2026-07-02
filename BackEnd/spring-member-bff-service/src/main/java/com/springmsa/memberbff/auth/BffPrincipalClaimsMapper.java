@@ -21,6 +21,7 @@ public class BffPrincipalClaimsMapper {
         return new SessionUserResponse(
                 stringClaim(attributes.get("sub")),
                 stringClaim(attributes.get("name")),
+                stringClaim(firstClaim(attributes, "username", "name")),
                 longClaim(firstClaim(attributes, "userId", "user_id")),
                 stringClaim(firstClaim(attributes, "loginId", "login_id")),
                 stringClaim(attributes.get("email")),

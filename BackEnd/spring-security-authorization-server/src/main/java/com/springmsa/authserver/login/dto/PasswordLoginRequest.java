@@ -1,4 +1,4 @@
-package com.springmsa.authserver.login;
+package com.springmsa.authserver.login.dto;
 
 import jakarta.validation.constraints.NotBlank;
 

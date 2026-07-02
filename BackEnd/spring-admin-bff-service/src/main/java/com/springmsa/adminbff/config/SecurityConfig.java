@@ -15,6 +15,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -36,6 +37,8 @@ public class SecurityConfig {
 
     private static final String ADMIN_ROLE_REQUIRED = "admin_role_required";
     private static final String OAUTH2_LOGIN_FAILED = "oauth2_login_failed";
+    private static final String CSRF_COOKIE_NAME = "ADMIN-XSRF-TOKEN";
+    private static final String CSRF_HEADER_NAME = "X-ADMIN-XSRF-TOKEN";
 
     private final AdminBffAuthenticationService adminBffAuthenticationService;
     private final SecurityContextLogoutHandler logoutHandler = new SecurityContextLogoutHandler();
@@ -55,7 +58,8 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf
                         // The Admin BFF uses a browser session cookie, so unsafe requests must include a CSRF token.
-                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRepository(csrfTokenRepository())
+                        .csrfTokenRequestHandler(csrfTokenRequestHandler())
                 )
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
@@ -73,6 +77,18 @@ public class SecurityConfig {
                 );
 
         return http.build();
+    }
+
+    private CookieCsrfTokenRepository csrfTokenRepository() {
+        CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+        repository.setCookieName(CSRF_COOKIE_NAME);
+        repository.setHeaderName(CSRF_HEADER_NAME);
+        repository.setCookiePath("/");
+        return repository;
+    }
+
+    private CsrfTokenRequestAttributeHandler csrfTokenRequestHandler() {
+        return new CsrfTokenRequestAttributeHandler();
     }
 
     /**

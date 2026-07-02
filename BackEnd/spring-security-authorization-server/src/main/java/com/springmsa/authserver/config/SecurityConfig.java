@@ -33,6 +33,7 @@ public class SecurityConfig {
 
     private static final String LOGIN_PAGE = "/login";
     private static final String LOGOUT_ENDPOINT = "/logout";
+    private static final String AUTH_SESSION_COOKIE = "AUTHSESSIONID";
     private static final String POST_LOGOUT_REDIRECT_URI = "post_logout_redirect_uri";
     private static final String DEFAULT_LOGOUT_REDIRECT_URI = LOGIN_PAGE + "?logout";
 
@@ -100,7 +101,7 @@ public class SecurityConfig {
                         .logoutSuccessHandler(this::handleLogoutSuccess)
                         .clearAuthentication(true)
                         .invalidateHttpSession(true)
-                        .deleteCookies("JSESSIONID")
+                        .deleteCookies(AUTH_SESSION_COOKIE)
                 );
 
 
@@ -128,6 +129,7 @@ public class SecurityConfig {
             Map<String, Object> userInfo = new LinkedHashMap<>();
             putIfNotNull(userInfo, "sub", claims.get("sub"));
             putIfNotNull(userInfo, "name", claims.get("name"));
+            putIfNotNull(userInfo, "username", claims.get("username"));
             putIfNotNull(userInfo, "userId", claims.get("user_id"));
             putIfNotNull(userInfo, "loginId", claims.get("login_id"));
             putIfNotNull(userInfo, "email", claims.get("email"));
