@@ -30,7 +30,6 @@ spring:
                 - Path=/admin-bff/**
               filters:
                 - StripPrefix=1
-                - RewriteLocationResponseHeader=AS_IN_REQUEST, Location, ${ADMIN_PUBLIC_ORIGIN}
 
             - id: authorization-server
               uri: ${ADMIN_GATEWAY_AUTHORIZATION_SERVER_URI}
@@ -38,4 +37,3 @@ spring:
                 - Path=/oauth2/**,/.well-known/**,/userinfo,/login,/login/**,/logout,/connect/**
               filters:
                 - PreserveHostHeader
-                - RewriteLocationResponseHeader=AS_IN_REQUEST, Location, ${ADMIN_PUBLIC_ORIGIN}

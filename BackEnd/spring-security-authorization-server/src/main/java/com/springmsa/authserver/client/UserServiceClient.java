@@ -34,19 +34,6 @@ public class UserServiceClient {
                 .body(AuthUserResponse.class);
     }
 
-    public AuthUserResponse findAuthUserByWhatsappNumber(String whatsappNumber) {
-        return restClient.get()
-                .uri("/internal/auth/users/whatsapp/{whatsappNumber}", whatsappNumber)
-                .retrieve()
-                .onStatus(HttpStatusCode::is4xxClientError, (request, response) -> {
-                    throw new ResponseStatusException(response.getStatusCode(), "User not found by WhatsApp number");
-                })
-                .onStatus(HttpStatusCode::is5xxServerError, (request, response) -> {
-                    throw new ResponseStatusException(response.getStatusCode(), "User service error");
-                })
-                .body(AuthUserResponse.class);
-    }
-
     public AuthUserResponse findAuthUserByEmail(String email) {
         return restClient.get()
                 .uri("/internal/auth/users/email/{email}", email)

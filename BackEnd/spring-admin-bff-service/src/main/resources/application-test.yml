@@ -8,21 +8,35 @@ spring:
       host: localhost
       port: 16379
 
+  security:
+    oauth2:
+      client:
+        registration:
+          admin-bff:
+            provider: admin-auth-server
+            client-id: admin-bff-client
+            client-secret: test-admin-bff-secret
+            authorization-grant-type: authorization_code
+            redirect-uri: http://localhost:5176/admin-bff/login/oauth2/code/admin-bff
+            scope:
+              - openid
+              - profile
+        provider:
+          admin-auth-server:
+            authorization-uri: http://localhost:5176/oauth2/authorize
+            token-uri: http://localhost:8090/oauth2/token
+            user-info-uri: http://localhost:8090/userinfo
+            jwk-set-uri: http://localhost:8090/oauth2/jwks
+            user-name-attribute: sub
+
 admin-bff:
   frontend:
     redirect-uri: http://localhost:5176
 
   oauth2:
-    authorization-uri: http://localhost:8090/oauth2/authorize
-    token-uri: http://localhost:8090/oauth2/token
-    userinfo-uri: http://localhost:8090/userinfo
-    client-id: admin-bff-client
-    client-secret: test-admin-bff-secret
-    redirect-uri: http://localhost:8090/admin-bff/auth/callback
-    end-session-uri: http://localhost:8090/connect/logout
-    logout-uri: http://localhost:8090/logout
-    scope: openid profile
+    end-session-uri: http://localhost:5176/connect/logout
+    logout-uri: http://localhost:5176/logout
 
   api:
-    user-me-uri: http://localhost:8080/api/user/me
-    user-admin-users-uri: http://localhost:8080/api/user/admin/users
+    user-api-base-url: http://localhost:8080
+    user-internal-base-url: http://localhost:8081

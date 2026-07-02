@@ -1,0 +1,19 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: spring-member-community-service
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+logging:
+  charset:
+    console: UTF-8
+  level:
+    com.springmsa.membercommunityservice: debug
+    org.springframework.security: debug

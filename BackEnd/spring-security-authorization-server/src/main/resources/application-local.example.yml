@@ -23,7 +23,7 @@ spring:
                 - authorization_code
                 - refresh_token
               redirect-uris:
-                - http://localhost:8080/bff/auth/callback
+                - http://localhost:5173/bff/login/oauth2/code/member-bff
               post-logout-redirect-uris:
                 - http://localhost:8080/
                 - http://localhost:5173/auth
@@ -43,7 +43,7 @@ spring:
                 - authorization_code
                 - refresh_token
               redirect-uris:
-                - http://localhost:8090/admin-bff/auth/callback
+                - http://localhost:5176/admin-bff/login/oauth2/code/admin-bff
               post-logout-redirect-uris:
                 - http://localhost:5176
                 - http://localhost:5176/auth

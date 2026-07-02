@@ -3,12 +3,10 @@ package com.springmsa.adminbff.auth.dto;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
-import java.util.Map;
-
 @NullMarked
 public record AdminAuthMeResponse(
         boolean authenticated,
-        @Nullable Map<String, Object> user,
+        @Nullable AdminSessionUserResponse user,
         @Nullable String reason
 ) {
 
@@ -20,7 +18,7 @@ public record AdminAuthMeResponse(
         return new AdminAuthMeResponse(false, null, "admin_role_required");
     }
 
-    public static AdminAuthMeResponse authenticated(Map<String, Object> user) {
+    public static AdminAuthMeResponse authenticated(AdminSessionUserResponse user) {
         return new AdminAuthMeResponse(true, user, null);
     }
 }

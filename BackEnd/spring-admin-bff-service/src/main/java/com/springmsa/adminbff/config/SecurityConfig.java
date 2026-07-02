@@ -1,0 +1,121 @@
+package com.springmsa.adminbff.config;
+
+import com.springmsa.adminbff.auth.AdminBffAuthenticationService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import java.io.IOException;
+
+@Configuration
+@EnableWebSecurity
+@RequiredArgsConstructor
+public class SecurityConfig {
+
+    private static final String[] PUBLIC_ENDPOINTS = {
+            "/actuator/**",
+            "/health",
+            "/auth/me",
+            "/auth/logout",
+            "/oauth2/**",
+            "/login/oauth2/**"
+    };
+
+    private static final String ADMIN_ROLE_REQUIRED = "admin_role_required";
+    private static final String OAUTH2_LOGIN_FAILED = "oauth2_login_failed";
+
+    private final AdminBffAuthenticationService adminBffAuthenticationService;
+    private final SecurityContextLogoutHandler logoutHandler = new SecurityContextLogoutHandler();
+
+    @Value("${admin-bff.frontend.redirect-uri}")
+    private String frontendRedirectUri;
+
+    /**
+     * Configures the Admin BFF security boundary and delegates OAuth2 login to Spring Security.
+     *
+     * @param http Spring Security HTTP builder
+     * @return configured security filter chain
+     * @throws Exception when Spring Security cannot build the filter chain
+     */
+    @Bean
+    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(csrf -> csrf
+                        // The Admin BFF uses a browser session cookie, so unsafe requests must include a CSRF token.
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                )
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+                        .requestMatchers(HttpMethod.POST, "/registration/admin").permitAll()
+                        .anyRequest().authenticated()
+                )
+                .oauth2Login(oauth2 -> oauth2
+                        .successHandler(this::handleLoginSuccess)
+                        .failureHandler(this::handleLoginFailure)
+                )
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint((request, response, exception) ->
+                                response.sendError(HttpStatus.UNAUTHORIZED.value())
+                        )
+                );
+
+        return http.build();
+    }
+
+    /**
+     * Redirects valid admin users back to the Admin frontend after OAuth2 login.
+     *
+     * @param request current HTTP request
+     * @param response current HTTP response
+     * @param authentication completed OAuth2 authentication
+     * @throws IOException when redirect writing fails
+     */
+    private void handleLoginSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
+        if (adminBffAuthenticationService.hasAdminRole(authentication)) {
+            response.sendRedirect(frontendRedirectUri);
+            return;
+        }
+
+        logoutHandler.logout(request, response, authentication);
+        response.sendRedirect(errorRedirectUri(ADMIN_ROLE_REQUIRED));
+    }
+
+    /**
+     * Sends the browser back to the Admin frontend with a login failure marker.
+     *
+     * @param request current HTTP request
+     * @param response current HTTP response
+     * @param exception OAuth2 login failure
+     * @throws IOException when redirect writing fails
+     */
+    private void handleLoginFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException {
+        response.sendRedirect(errorRedirectUri(OAUTH2_LOGIN_FAILED));
+    }
+
+    /**
+     * Builds a browser-facing Admin frontend error redirect URI.
+     *
+     * @param error frontend error code
+     * @return encoded redirect URI
+     */
+    private String errorRedirectUri(String error) {
+        return UriComponentsBuilder.fromUriString(frontendRedirectUri)
+                .queryParam("error", error)
+                .build()
+                .encode()
+                .toUriString();
+    }
+}

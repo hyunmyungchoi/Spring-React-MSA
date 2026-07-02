@@ -1,48 +1,29 @@
 package com.springmsa.adminbff.auth;
 
 import com.springmsa.adminbff.auth.dto.AdminAuthMeResponse;
-import jakarta.servlet.http.HttpSession;
+import com.springmsa.adminbff.auth.dto.AdminLogoutResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestClientResponseException;
-import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.servlet.view.RedirectView;
 import org.springframework.web.util.UriComponentsBuilder;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import tools.jackson.databind.ObjectMapper;
-
-import java.util.Collection;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
-
 
 @RestController
+@RequiredArgsConstructor
 public class AdminBffAuthController {
 
-    private static final String SESSION_OAUTH2_STATE = "ADMIN_OAUTH2_STATE";
-
-    private final AdminBffTokenService adminBffTokenService;
-    private final RestClient restClient;
-    private final ObjectMapper objectMapper;
-
-    @Value("${admin-bff.oauth2.authorization-uri}")
-    private String authorizationUri;
-
-    @Value("${admin-bff.oauth2.client-id}")
-    private String clientId;
-
-    @Value("${admin-bff.oauth2.redirect-uri}")
-    private String redirectUri;
+    private final AdminBffOAuth2ClientService adminBffOAuth2ClientService;
+    private final AdminBffAuthenticationService adminBffAuthenticationService;
 
     @Value("${admin-bff.oauth2.end-session-uri}")
     private String endSessionUri;
@@ -50,153 +31,39 @@ public class AdminBffAuthController {
     @Value("${admin-bff.oauth2.logout-uri}")
     private String logoutUri;
 
-    @Value("${admin-bff.oauth2.scope}")
-    private String scope;
-
-    @Value("${admin-bff.oauth2.userinfo-uri}")
-    private String userInfoUri;
-
     @Value("${admin-bff.frontend.redirect-uri}")
     private String frontendRedirectUri;
 
-    @Value("${admin-bff.api.user-signup-uri:http://localhost:8081/internal/users}")
-    private String userSignupUri;
-
-    private static final String ROLE_ADMIN = "ROLE_ADMIN";
-
-
-    public AdminBffAuthController(AdminBffTokenService adminBffTokenService, RestClient.Builder restClientBuilder, ObjectMapper objectMapper) {
-        this.restClient = restClientBuilder.build();
-        this.adminBffTokenService = adminBffTokenService;
-        this.objectMapper = objectMapper;
-    }
-
-
-    @GetMapping("/auth/login")
-    public RedirectView login(HttpSession session) {
-        String state = UUID.randomUUID().toString();
-        session.setAttribute(SESSION_OAUTH2_STATE, state);
-
-        String authorizeUrl = UriComponentsBuilder.fromUriString(authorizationUri)
-                .queryParam("response_type", "code")
-                .queryParam("client_id", clientId)
-                .queryParam("redirect_uri", redirectUri)
-                .queryParam("scope", scope)
-                .queryParam("state", state)
-                .build()
-                .encode()
-                .toUriString();
-
-        return new RedirectView(authorizeUrl);
-    }
-
-    @GetMapping("/auth/callback")
-    public RedirectView callback(@RequestParam String code, @RequestParam(required = false) String state, HttpSession session) {
-        Object savedState = session.getAttribute(SESSION_OAUTH2_STATE);
-
-        if (!(savedState instanceof String savedStateValue) || !savedStateValue.equals(state)) {
-            return new RedirectView(
-                    UriComponentsBuilder.fromUriString(frontendRedirectUri)
-                            .queryParam("error", "invalid_state")
-                            .build()
-                            .encode()
-                            .toUriString()
-            );
-        }
-
-        session.removeAttribute(SESSION_OAUTH2_STATE);
-
-        OAuth2TokenResponse tokenResponse = adminBffTokenService.exchangeCodeForToken(code);
-
-        if (tokenResponse.accessToken() == null || tokenResponse.accessToken().isBlank()) {
-            session.invalidate();
-
-            return new RedirectView(
-                    UriComponentsBuilder.fromUriString(frontendRedirectUri)
-                            .queryParam("error", "invalid_token_response")
-                            .build()
-                            .encode()
-                            .toUriString()
-            );
-        }
-
-        Map<String, Object> userInfo = requestUserInfoMap(tokenResponse.accessToken());
-
-        if (hasRole(userInfo, ROLE_ADMIN)) {
-            adminBffTokenService.saveTokenResponse(session, tokenResponse);
-            return new RedirectView(frontendRedirectUri);
-        }
-
-        session.invalidate();
-
-        return new RedirectView(
-                UriComponentsBuilder.fromUriString(frontendRedirectUri)
-                        .queryParam("error", "admin_role_required")
-                        .build()
-                        .encode()
-                        .toUriString()
-        );
-    }
-
     @GetMapping("/auth/me")
-    public ResponseEntity<AdminAuthMeResponse> me(HttpSession session) {
-        String accessToken;
+    public ResponseEntity<AdminAuthMeResponse> me(Authentication authentication, CsrfToken csrfToken) {
+        // Touching the token makes CookieCsrfTokenRepository publish XSRF-TOKEN for the SPA.
+        csrfToken.getToken();
 
-        try {
-            accessToken = adminBffTokenService.getAccessTokenOrThrow(session);
-        } catch (ResponseStatusException e) {
-            if (e.getStatusCode().value() == 401) {
-                return ResponseEntity.ok(AdminAuthMeResponse.anonymous());
-            }
-
-            throw e;
-        }
-
-        if (accessToken.isBlank()) {
+        if (!adminBffAuthenticationService.isAuthenticated(authentication)) {
             return ResponseEntity.ok(AdminAuthMeResponse.anonymous());
         }
 
-        try {
-            Map<String, Object> userInfo = requestUserInfoMap(accessToken);
-
-            if (hasRole(userInfo, ROLE_ADMIN)) {
-                return ResponseEntity.ok(AdminAuthMeResponse.authenticated(userInfo));
-            }
-
-            session.invalidate();
-
+        if (!adminBffAuthenticationService.hasAdminRole(authentication)) {
             return ResponseEntity
                     .status(HttpStatus.FORBIDDEN)
                     .body(AdminAuthMeResponse.adminRoleRequired());
-
-        } catch (HttpClientErrorException.Unauthorized e) {
-            try {
-                OAuth2TokenResponse refreshedToken = adminBffTokenService.refreshAccessToken(session);
-                Map<String, Object> userInfo = requestUserInfoMap(refreshedToken.accessToken());
-
-                if (hasRole(userInfo, ROLE_ADMIN)) {
-                    return ResponseEntity.ok(AdminAuthMeResponse.authenticated(userInfo));
-                }
-
-                session.invalidate();
-
-                return ResponseEntity
-                        .status(HttpStatus.FORBIDDEN)
-                        .body(AdminAuthMeResponse.adminRoleRequired());
-
-            } catch (ResponseStatusException refreshFail) {
-                return ResponseEntity.ok(AdminAuthMeResponse.anonymous());
-            }
         }
+
+        return ResponseEntity.ok(
+                AdminAuthMeResponse.authenticated(
+                        adminBffAuthenticationService.getSessionUser(authentication)
+                )
+        );
     }
 
     @PostMapping("/auth/logout")
-    public ResponseEntity<Map<String, Object>> logout(HttpSession session) {
-        Object idTokenObj = session.getAttribute(AdminBffTokenService.SESSION_ID_TOKEN);
+    public ResponseEntity<AdminLogoutResponse> logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
 
-        String idToken = idTokenObj instanceof String token ? token : "";
+        String idToken = adminBffOAuth2ClientService.getIdToken(authentication)
+                .orElse("");
 
-        session.invalidate();
+        new SecurityContextLogoutHandler().logout(request, response, authentication);
+        SecurityContextHolder.clearContext();
 
         String postLogoutRedirectUri = frontendRedirectUri + "/auth";
 
@@ -207,127 +74,13 @@ public class AdminBffAuthController {
                         .build()
                         .encode()
                         .toUriString()
+
                 : UriComponentsBuilder.fromUriString(logoutUri)
                         .queryParam("post_logout_redirect_uri", postLogoutRedirectUri)
                         .build()
                         .encode()
                         .toUriString();
 
-        return ResponseEntity.ok(Map.of(
-                "logout", "success",
-                "authServerLogoutRequired", true,
-                "authServerLogoutUrl", authServerLogoutUrl
-        ));
-    }
-
-    @PostMapping("/auth/signup")
-    public ResponseEntity<Object> signup(@RequestBody SignupRequest request) {
-        SignupRequest signupRequest = request.withRoles(Set.of("ROLE_USER", ROLE_ADMIN));
-
-        try {
-            Object responseBody = restClient.post()
-                    .uri(userSignupUri)
-                    .body(signupRequest)
-                    .retrieve()
-                    .body(Object.class);
-
-            return ResponseEntity.status(HttpStatus.CREATED).body(responseBody);
-
-        } catch (RestClientResponseException e) {
-            return ResponseEntity
-                    .status(e.getStatusCode())
-                    .body(Map.of(
-                            "success", false,
-                            "status", e.getStatusCode().value(),
-                            "message", resolveSignupErrorMessage(e)
-                    ));
-        }
-    }
-
-    private Map<String, Object> requestUserInfoMap(String accessToken) {
-        try {
-            String responseBody = requestUserInfo(accessToken);
-
-            Object parsed = objectMapper.readValue(responseBody, Map.class);
-
-            if (!(parsed instanceof Map<?, ?> parsedMap)) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_GATEWAY,
-                        "OIDC userinfo response is not a JSON object"
-                );
-            }
-
-            Map<String, Object> userInfo = new java.util.LinkedHashMap<>();
-
-            parsedMap.forEach((key, value) ->
-                    userInfo.put(String.valueOf(key), value)
-            );
-
-            return userInfo;
-
-        } catch (ResponseStatusException e) {
-            throw e;
-
-        } catch (Exception e) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_GATEWAY,
-                    "Failed to load admin userinfo",
-                    e
-            );
-        }
-    }
-
-    private String requestUserInfo(String accessToken) {
-        return Objects.requireNonNull(
-                restClient.get()
-                        .uri(userInfoUri)
-                        .headers(headers -> headers.setBearerAuth(accessToken))
-                        .retrieve()
-                        .body(String.class)
-        );
-    }
-
-    private boolean hasRole(Map<String, Object> userInfo, String roleName) {
-        Object roles = userInfo.get("roles");
-
-        if (!(roles instanceof Collection<?> roleValues)) {
-            return false;
-        }
-
-        return roleValues.stream()
-                .map(String::valueOf)
-                .anyMatch(roleName::equals);
-    }
-
-    private String resolveSignupErrorMessage(RestClientResponseException e) {
-        String responseBody = e.getResponseBodyAsString();
-
-        if (StringUtils.hasText(responseBody)) {
-            return responseBody;
-        }
-
-        return "Admin signup request failed";
-    }
-
-    public record SignupRequest(
-            String loginId,
-            String email,
-            String password,
-            String username,
-            String phoneNumber,
-            String whatsappNumber,
-            Set<String> roles
-    ) {
-        SignupRequest withRoles(Set<String> nextRoles) {
-            return new SignupRequest(
-                    loginId,
-                    email,
-                    password,
-                    username,
-                    phoneNumber,
-                    whatsappNumber,
-                    nextRoles
-            );
-        }
+        return ResponseEntity.ok(AdminLogoutResponse.success(authServerLogoutUrl));
     }
 }

@@ -11,7 +11,7 @@ spring:
   security:
     oauth2:
       authorizationserver:
-        issuer: ${AUTH_SERVER_ISSUER:http://spring-cloud-gateway:8080}
+        issuer: ${AUTH_SERVER_ISSUER:http://spring-member-gateway:8080}
         client:
           bff-client:
             registration:
@@ -23,7 +23,7 @@ spring:
                 - authorization_code
                 - refresh_token
               redirect-uris:
-                - ${BFF_OAUTH2_REDIRECT_URI:http://localhost:8080/bff/auth/callback}
+                - ${BFF_OAUTH2_REDIRECT_URI:http://localhost:5173/bff/login/oauth2/code/member-bff}
               post-logout-redirect-uris:
                 - ${BFF_POST_LOGOUT_REDIRECT_URI:http://localhost:5173/auth}
               scopes:
@@ -42,7 +42,7 @@ spring:
                 - authorization_code
                 - refresh_token
               redirect-uris:
-                - ${ADMIN_BFF_OAUTH2_REDIRECT_URI:http://localhost:8090/admin-bff/auth/callback}
+                - ${ADMIN_BFF_OAUTH2_REDIRECT_URI:http://localhost:5176/admin-bff/login/oauth2/code/admin-bff}
               post-logout-redirect-uris:
                 - ${ADMIN_BFF_POST_LOGOUT_REDIRECT_URI:http://localhost:5176}
                 - ${ADMIN_BFF_POST_LOGOUT_LOGIN_REDIRECT_URI:http://localhost:5176/auth}

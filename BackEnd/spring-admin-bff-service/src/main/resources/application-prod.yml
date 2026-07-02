@@ -9,25 +9,38 @@ spring:
       port: ${SPRING_DATA_REDIS_PORT:6379}
       password: ${SPRING_DATA_REDIS_PASSWORD}
 
+  security:
+    oauth2:
+      client:
+        registration:
+          admin-bff:
+            provider: admin-auth-server
+            client-id: ${ADMIN_BFF_CLIENT_ID}
+            client-secret: ${ADMIN_BFF_CLIENT_SECRET}
+            authorization-grant-type: authorization_code
+            redirect-uri: ${ADMIN_BFF_OAUTH2_REDIRECT_URI}
+            scope:
+              - openid
+              - profile
+        provider:
+          admin-auth-server:
+            authorization-uri: ${ADMIN_BFF_OAUTH2_AUTHORIZATION_URI}
+            token-uri: ${ADMIN_BFF_OAUTH2_TOKEN_URI}
+            user-info-uri: ${ADMIN_BFF_OAUTH2_USERINFO_URI}
+            jwk-set-uri: ${ADMIN_BFF_OAUTH2_JWK_SET_URI}
+            user-name-attribute: sub
+
 admin-bff:
   frontend:
     redirect-uri: ${ADMIN_BFF_FRONTEND_REDIRECT_URI}
 
   oauth2:
-    authorization-uri: ${ADMIN_BFF_OAUTH2_AUTHORIZATION_URI}
-    token-uri: ${ADMIN_BFF_OAUTH2_TOKEN_URI}
-    userinfo-uri: ${ADMIN_BFF_OAUTH2_USERINFO_URI}
-    client-id: ${ADMIN_BFF_CLIENT_ID}
-    client-secret: ${ADMIN_BFF_CLIENT_SECRET}
-    redirect-uri: ${ADMIN_BFF_OAUTH2_REDIRECT_URI}
     end-session-uri: ${ADMIN_BFF_OAUTH2_END_SESSION_URI}
     logout-uri: ${ADMIN_BFF_OAUTH2_LOGOUT_URI}
-    scope: ${ADMIN_BFF_OAUTH2_SCOPE:openid profile}
 
   api:
-    user-me-uri: ${ADMIN_BFF_API_USER_ME_URI}
-    user-admin-users-uri: ${ADMIN_BFF_API_USER_ADMIN_USERS_URI}
-    user-signup-uri: ${ADMIN_BFF_API_USER_SIGNUP_URI}
+    user-api-base-url: ${ADMIN_BFF_API_USER_API_BASE_URL}
+    user-internal-base-url: ${ADMIN_BFF_API_USER_INTERNAL_BASE_URL}
 
 logging:
   level:

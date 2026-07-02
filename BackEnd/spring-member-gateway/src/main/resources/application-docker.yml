@@ -1,0 +1,56 @@
+spring:
+  config:
+    activate:
+      on-profile: docker
+
+  cloud:
+    gateway:
+      server:
+        webflux:
+          globalcors:
+            add-to-simple-url-handler-mapping: true
+            cors-configurations:
+              '[/**]':
+                allowedOrigins:
+                  - ${GATEWAY_CORS_ALLOWED_ORIGIN}
+                allowedMethods:
+                  - GET
+                  - POST
+                  - PUT
+                  - DELETE
+                  - OPTIONS
+                allowedHeaders:
+                  - "*"
+                allowCredentials: true
+
+          routes:
+            - id: member-bff-service
+              uri: ${GATEWAY_BFF_URI}
+              predicates:
+                - Path=/bff/**
+              filters:
+                - StripPrefix=1
+                - RewriteLocationResponseHeader=AS_IN_REQUEST, Location, ${PUBLIC_ORIGIN}
+
+            - id: user-service
+              uri: http://spring-user-service:8081
+              predicates:
+                - Path=/api/user/**
+
+            - id: member-community-service
+              uri: http://spring-member-community-service:8083
+              predicates:
+                - Path=/api/community/**
+
+            - id: member-stock-service
+              uri: http://spring-member-stock-service:8084
+              predicates:
+                - Path=/api/stock/**
+
+            - id: authorization-server
+              uri: ${GATEWAY_AUTHORIZATION_SERVER_URI}
+              predicates:
+                - Path=/oauth2/**,/.well-known/**,/userinfo,/login,/login/**,/logout,/connect/**
+              filters:
+                - PreserveHostHeader
+                - RewriteLocationResponseHeader=AS_IN_REQUEST, Location, ${PUBLIC_ORIGIN}

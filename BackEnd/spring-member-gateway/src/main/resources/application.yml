@@ -1,0 +1,19 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: spring-member-gateway
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+
+logging:
+  charset:
+    console: UTF-8
+  level:
+    com.springmsa.membergateway: debug
+    org.springframework.cloud.gateway: debug

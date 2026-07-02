@@ -8,22 +8,35 @@ spring:
       host: redis
       port: 6379
 
+  security:
+    oauth2:
+      client:
+        registration:
+          admin-bff:
+            provider: admin-auth-server
+            client-id: ${ADMIN_BFF_CLIENT_ID:admin-bff-client}
+            client-secret: ${ADMIN_BFF_CLIENT_SECRET:admin-bff-secret}
+            authorization-grant-type: authorization_code
+            redirect-uri: ${ADMIN_BFF_OAUTH2_REDIRECT_URI:http://localhost:5176/admin-bff/login/oauth2/code/admin-bff}
+            scope:
+              - openid
+              - profile
+        provider:
+          admin-auth-server:
+            authorization-uri: ${ADMIN_BFF_OAUTH2_AUTHORIZATION_URI:http://localhost:5176/oauth2/authorize}
+            token-uri: ${ADMIN_BFF_OAUTH2_TOKEN_URI:http://spring-admin-gateway:8090/oauth2/token}
+            user-info-uri: ${ADMIN_BFF_OAUTH2_USERINFO_URI:http://spring-admin-gateway:8090/userinfo}
+            jwk-set-uri: ${ADMIN_BFF_OAUTH2_JWK_SET_URI:http://spring-admin-gateway:8090/oauth2/jwks}
+            user-name-attribute: sub
+
 admin-bff:
   frontend:
     redirect-uri: ${ADMIN_BFF_FRONTEND_REDIRECT_URI:http://localhost:5176}
 
   oauth2:
-    authorization-uri: ${ADMIN_BFF_OAUTH2_AUTHORIZATION_URI:http://localhost:8090/oauth2/authorize}
-    token-uri: ${ADMIN_BFF_OAUTH2_TOKEN_URI:http://spring-admin-gateway:8090/oauth2/token}
-    userinfo-uri: ${ADMIN_BFF_OAUTH2_USERINFO_URI:http://spring-admin-gateway:8090/userinfo}
-    client-id: ${ADMIN_BFF_CLIENT_ID:admin-bff-client}
-    client-secret: ${ADMIN_BFF_CLIENT_SECRET:admin-bff-secret}
-    redirect-uri: ${ADMIN_BFF_OAUTH2_REDIRECT_URI:http://localhost:8090/admin-bff/auth/callback}
-    end-session-uri: ${ADMIN_BFF_OAUTH2_END_SESSION_URI:http://localhost:8090/connect/logout}
-    logout-uri: ${ADMIN_BFF_OAUTH2_LOGOUT_URI:http://localhost:8090/logout}
-    scope: ${ADMIN_BFF_OAUTH2_SCOPE:openid profile}
+    end-session-uri: ${ADMIN_BFF_OAUTH2_END_SESSION_URI:http://localhost:5176/connect/logout}
+    logout-uri: ${ADMIN_BFF_OAUTH2_LOGOUT_URI:http://localhost:5176/logout}
 
   api:
-    user-me-uri: ${ADMIN_BFF_API_USER_ME_URI:http://spring-cloud-gateway:8080/api/user/me}
-    user-admin-users-uri: ${ADMIN_BFF_API_USER_ADMIN_USERS_URI:http://spring-cloud-gateway:8080/api/user/admin/users}
-    user-signup-uri: ${ADMIN_BFF_API_USER_SIGNUP_URI:http://spring-user-service:8081/internal/users}
+    user-api-base-url: ${ADMIN_BFF_API_USER_API_BASE_URL:http://spring-member-gateway:8080}
+    user-internal-base-url: ${ADMIN_BFF_API_USER_INTERNAL_BASE_URL:http://spring-user-service:8081}

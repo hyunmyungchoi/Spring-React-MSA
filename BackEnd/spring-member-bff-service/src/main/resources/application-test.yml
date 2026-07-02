@@ -1,0 +1,44 @@
+spring:
+  config:
+    activate:
+      on-profile: test
+
+  data:
+    redis:
+      host: localhost
+      port: 16379
+
+  security:
+    oauth2:
+      client:
+        registration:
+          member-bff:
+            provider: member-auth-server
+            client-id: bff-client
+            client-secret: test-bff-secret
+            authorization-grant-type: authorization_code
+            redirect-uri: http://localhost:5173/bff/login/oauth2/code/member-bff
+            scope:
+              - openid
+              - profile
+        provider:
+          member-auth-server:
+            authorization-uri: http://localhost:5173/oauth2/authorize
+            token-uri: http://localhost:8080/oauth2/token
+            user-info-uri: http://localhost:8080/userinfo
+            jwk-set-uri: http://localhost:8080/oauth2/jwks
+            user-name-attribute: sub
+
+bff:
+  frontend:
+    redirect-uri: http://localhost:5173
+
+  oauth2:
+    end-session-uri: http://localhost:5173/connect/logout
+    logout-uri: http://localhost:5173/logout
+
+  api:
+    user-api-base-url: http://localhost:8081
+    user-internal-base-url: http://localhost:8081
+    community-api-base-url: http://localhost:8083
+    stock-api-base-url: http://localhost:8084

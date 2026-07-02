@@ -2,8 +2,6 @@ package com.springmsa.authserver.login;
 
 import com.springmsa.authserver.client.UserServiceClient;
 import com.springmsa.authserver.client.dto.AuthUserResponse;
-import com.springmsa.authserver.otp.common.OtpLoginSessionService;
-import com.springmsa.authserver.otp.dto.OtpUserResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -22,16 +20,16 @@ public class PasswordLoginController {
 
     private final UserServiceClient userServiceClient;
     private final PasswordEncoder passwordEncoder;
-    private final OtpLoginSessionService otpLoginSessionService;
+    private final LoginSessionService loginSessionService;
 
     public PasswordLoginController(
             UserServiceClient userServiceClient,
             PasswordEncoder passwordEncoder,
-            OtpLoginSessionService otpLoginSessionService
+            LoginSessionService loginSessionService
     ) {
         this.userServiceClient = userServiceClient;
         this.passwordEncoder = passwordEncoder;
-        this.otpLoginSessionService = otpLoginSessionService;
+        this.loginSessionService = loginSessionService;
     }
 
     @PostMapping
@@ -46,12 +44,12 @@ public class PasswordLoginController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid login ID or password");
         }
 
-        String redirectUrl = otpLoginSessionService.loginWithPassword(user, httpRequest, httpResponse);
+        String redirectUrl = loginSessionService.loginWithPassword(user, httpRequest, httpResponse);
 
         return ResponseEntity.ok(new PasswordLoginResponse(
                 true,
                 redirectUrl,
-                OtpUserResponse.from(user)
+                LoginUserResponse.from(user)
         ));
     }
 }

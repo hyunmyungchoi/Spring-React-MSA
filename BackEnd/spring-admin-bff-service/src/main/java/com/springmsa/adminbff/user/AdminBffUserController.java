@@ -1,218 +1,82 @@
 package com.springmsa.adminbff.user;
 
-import com.springmsa.adminbff.common.proxy.AdminBffApiProxyClient;
-import jakarta.servlet.http.HttpSession;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
+import com.springmsa.adminbff.common.dto.AdminApiResponse;
+import com.springmsa.adminbff.user.dto.AdminCurrentUserResponse;
+import com.springmsa.adminbff.user.dto.AdminUserResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.ResourceAccessException;
-import org.springframework.web.client.RestClientResponseException;
-import org.springframework.web.server.ResponseStatusException;
-import tools.jackson.databind.ObjectMapper;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 @RestController
+@RequiredArgsConstructor
 public class AdminBffUserController {
 
-    private final AdminBffApiProxyClient adminBffApiProxyClient;
-    private final ObjectMapper objectMapper;
+    private final AdminBffUserService adminBffUserService;
 
-    @Value("${admin-bff.api.user-me-uri}")
-    private String userMeUri;
-
-    @Value("${admin-bff.api.user-admin-users-uri}")
-    private String userAdminUsersUri;
-
-    public AdminBffUserController(
-            AdminBffApiProxyClient adminBffApiProxyClient,
-            ObjectMapper objectMapper
-    ) {
-        this.adminBffApiProxyClient = adminBffApiProxyClient;
-        this.objectMapper = objectMapper;
-    }
-
+    /**
+     * Returns the current admin session user through the user-service API.
+     *
+     * @param authentication current Spring Security authentication
+     * @param request current HTTP request
+     * @param response current HTTP response
+     * @return current admin user response
+     */
     @GetMapping("/user/me")
-    public ResponseEntity<Map<String, Object>> me(HttpSession session) {
-        try {
-            String responseBody = adminBffApiProxyClient.get(session, userMeUri);
-            return ResponseEntity.ok(parseJsonObject(responseBody));
-
-        } catch (ResponseStatusException e) {
-            return ResponseEntity
-                    .status(e.getStatusCode())
-                    .body(errorResponse(
-                            e.getStatusCode().value(),
-                            resolveMessage(e, "Admin BFF session is invalid")
-                    ));
-
-        } catch (ResourceAccessException e) {
-            return ResponseEntity
-                    .status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .body(errorResponse(
-                            HttpStatus.SERVICE_UNAVAILABLE.value(),
-                            "User service is unavailable"
-                    ));
-
-        } catch (RestClientResponseException e) {
-            return ResponseEntity
-                    .status(e.getStatusCode())
-                    .body(errorResponse(
-                            e.getStatusCode().value(),
-                            "User service request failed"
-                    ));
-        }
+    public ResponseEntity<AdminApiResponse<AdminCurrentUserResponse>> me(Authentication authentication, HttpServletRequest request, HttpServletResponse response) {
+        return ResponseEntity.ok(
+                AdminApiResponse.ok(adminBffUserService.getCurrentUser(authentication, request, response))
+        );
     }
 
-
+    /**
+     * Lists users visible to an authenticated admin.
+     *
+     * @param authentication current Spring Security authentication
+     * @param request current HTTP request
+     * @param response current HTTP response
+     * @return admin user list response
+     */
     @GetMapping("/user/admin/users")
-    public ResponseEntity<Object> users(HttpSession session) {
-        try {
-            String responseBody = adminBffApiProxyClient.get(session, userAdminUsersUri);
-            return ResponseEntity.ok(parseJsonArray(responseBody));
-
-        } catch (ResponseStatusException e) {
-            return ResponseEntity
-                    .status(e.getStatusCode())
-                    .body(errorResponse(
-                            e.getStatusCode().value(),
-                            resolveMessage(e, "Admin BFF session is invalid")
-                    ));
-
-        } catch (ResourceAccessException e) {
-            return ResponseEntity
-                    .status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .body(errorResponse(
-                            HttpStatus.SERVICE_UNAVAILABLE.value(),
-                            "User service is unavailable"
-                    ));
-
-        } catch (RestClientResponseException e) {
-            return ResponseEntity
-                    .status(e.getStatusCode())
-                    .body(errorResponse(
-                            e.getStatusCode().value(),
-                            "User admin users request failed"
-                    ));
-        }
+    public ResponseEntity<AdminApiResponse<List<AdminUserResponse>>> users(Authentication authentication, HttpServletRequest request, HttpServletResponse response) {
+        return ResponseEntity.ok(
+                AdminApiResponse.ok(adminBffUserService.getAdminUsers(authentication, request, response))
+        );
     }
 
+    /**
+     * Loads one admin-visible user by id.
+     *
+     * @param userId user id to load
+     * @param authentication current Spring Security authentication
+     * @param request current HTTP request
+     * @param response current HTTP response
+     * @return admin user detail response
+     */
     @GetMapping("/user/admin/users/{userId}")
-    public ResponseEntity<Object> user(@PathVariable Long userId, HttpSession session) {
-        try {
-            String responseBody = adminBffApiProxyClient.get(
-                    session,
-                    userAdminUsersUri + "/" + userId
-            );
-
-            return ResponseEntity.ok(parseJsonObject(responseBody));
-
-        } catch (ResponseStatusException e) {
-            return ResponseEntity
-                    .status(e.getStatusCode())
-                    .body(errorResponse(
-                            e.getStatusCode().value(),
-                            resolveMessage(e, "Admin BFF session is invalid")
-                    ));
-
-        } catch (ResourceAccessException e) {
-            return ResponseEntity
-                    .status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .body(errorResponse(
-                            HttpStatus.SERVICE_UNAVAILABLE.value(),
-                            "User service is unavailable"
-                    ));
-
-        } catch (RestClientResponseException e) {
-            return ResponseEntity
-                    .status(e.getStatusCode())
-                    .body(errorResponse(
-                            e.getStatusCode().value(),
-                            "User admin user request failed"
-                    ));
-        }
+    public ResponseEntity<AdminApiResponse<AdminUserResponse>> user(@PathVariable Long userId, Authentication authentication, HttpServletRequest request, HttpServletResponse response) {
+        return ResponseEntity.ok(
+                AdminApiResponse.ok(adminBffUserService.getAdminUser(userId, authentication, request, response))
+        );
     }
 
-
-    private Map<String, Object> parseJsonObject(String responseBody) {
-        try {
-            Object parsed = objectMapper.readValue(responseBody, Map.class);
-
-            if (!(parsed instanceof Map<?, ?> parsedMap)) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_GATEWAY,
-                        "User service response is not a JSON object"
-                );
-            }
-
-            Map<String, Object> response = new LinkedHashMap<>();
-
-            parsedMap.forEach((key, value) ->
-                    response.put(String.valueOf(key), value)
-            );
-
-            return response;
-
-        } catch (ResponseStatusException e) {
-            throw e;
-
-        } catch (Exception e) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_GATEWAY,
-                    "Failed to parse user service response",
-                    e
-            );
-        }
-    }
-
-
-    private List<Object> parseJsonArray(String responseBody) {
-        try {
-            Object parsed = objectMapper.readValue(responseBody, List.class);
-
-            if (!(parsed instanceof List<?> parsedList)) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_GATEWAY,
-                        "User service response is not a JSON array"
-                );
-            }
-
-            return new ArrayList<>(parsedList);
-
-        } catch (ResponseStatusException e) {
-            throw e;
-
-        } catch (Exception e) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_GATEWAY,
-                    "Failed to parse user service response",
-                    e
-            );
-        }
-    }
-
-    private Map<String, Object> errorResponse(int status, String message) {
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("success", false);
-        response.put("status", status);
-        response.put("message", message);
-
-        return response;
-    }
-
-    private String resolveMessage(ResponseStatusException e, String fallbackMessage) {
-        String reason = e.getReason();
-
-        if (reason == null || reason.isBlank()) {
-            return fallbackMessage;
-        }
-
-        return reason;
+    /**
+     * Converts service-layer failures into a stable JSON error response.
+     *
+     * @param e service-layer user exception
+     * @return error response with the exception status code
+     */
+    @ExceptionHandler(AdminBffUserException.class)
+    public ResponseEntity<AdminApiResponse<Void>> handleAdminBffUserException(AdminBffUserException e) {
+        return ResponseEntity
+                .status(e.statusCode())
+                .body(AdminApiResponse.failure(e.statusCode(), e.getMessage()));
     }
 }

@@ -33,7 +33,6 @@ public class SecurityConfig {
 
     private static final String LOGIN_PAGE = "/login";
     private static final String LOGOUT_ENDPOINT = "/logout";
-    private static final String WHATSAPP_WEBHOOK_ENDPOINT = "/webhooks/whatsapp";
     private static final String POST_LOGOUT_REDIRECT_URI = "post_logout_redirect_uri";
     private static final String DEFAULT_LOGOUT_REDIRECT_URI = LOGIN_PAGE + "?logout";
 
@@ -82,8 +81,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf
                         .ignoringRequestMatchers(
-                                pathPattern(HttpMethod.POST, "/login/**"),
-                                pathPattern(HttpMethod.POST, WHATSAPP_WEBHOOK_ENDPOINT)
+                                pathPattern(HttpMethod.POST, "/login/**")
                         )
                 )
                 .securityContext(securityContext -> securityContext
@@ -91,7 +89,6 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(LOGIN_PAGE, "/login/**", "/error").permitAll()
-                        .requestMatchers(WHATSAPP_WEBHOOK_ENDPOINT).permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form

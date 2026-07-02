@@ -1,0 +1,19 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: spring-member-stock-service
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+logging:
+  charset:
+    console: UTF-8
+  level:
+    com.springmsa.memberstockservice: debug
+    org.springframework.security: debug

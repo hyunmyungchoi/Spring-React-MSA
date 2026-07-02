@@ -1,0 +1,44 @@
+spring:
+  config:
+    activate:
+      on-profile: docker
+
+  data:
+    redis:
+      host: redis
+      port: 6379
+
+  security:
+    oauth2:
+      client:
+        registration:
+          member-bff:
+            provider: member-auth-server
+            client-id: ${BFF_CLIENT_ID:bff-client}
+            client-secret: ${BFF_CLIENT_SECRET:bff-secret}
+            authorization-grant-type: authorization_code
+            redirect-uri: ${BFF_OAUTH2_REDIRECT_URI:http://localhost:5173/bff/login/oauth2/code/member-bff}
+            scope:
+              - openid
+              - profile
+        provider:
+          member-auth-server:
+            authorization-uri: ${BFF_OAUTH2_AUTHORIZATION_URI:http://localhost:5173/oauth2/authorize}
+            token-uri: ${BFF_OAUTH2_TOKEN_URI:http://spring-member-gateway:8080/oauth2/token}
+            user-info-uri: ${BFF_OAUTH2_USERINFO_URI:http://spring-member-gateway:8080/userinfo}
+            jwk-set-uri: ${BFF_OAUTH2_JWK_SET_URI:http://spring-member-gateway:8080/oauth2/jwks}
+            user-name-attribute: sub
+
+bff:
+  frontend:
+    redirect-uri: ${BFF_FRONTEND_REDIRECT_URI:http://localhost:5173}
+
+  oauth2:
+    end-session-uri: ${BFF_OAUTH2_END_SESSION_URI:http://localhost:5173/connect/logout}
+    logout-uri: ${BFF_OAUTH2_LOGOUT_URI:http://localhost:5173/logout}
+
+  api:
+    user-api-base-url: ${BFF_API_USER_API_BASE_URL:http://spring-user-service:8081}
+    user-internal-base-url: ${BFF_API_USER_INTERNAL_BASE_URL:http://spring-user-service:8081}
+    community-api-base-url: ${BFF_API_COMMUNITY_API_BASE_URL:http://spring-member-community-service:8083}
+    stock-api-base-url: ${BFF_API_STOCK_API_BASE_URL:http://spring-member-stock-service:8084}
