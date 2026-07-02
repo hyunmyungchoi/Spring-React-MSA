@@ -11,6 +11,9 @@
     "build:docker": "tsc -b && vite build --mode docker",
     "build:prod": "tsc -b && vite build --mode prod",
     "build:k8s": "tsc -b && vite build --mode k8s",
+    "build:all": "tsc -b && vite build --mode prod && vite build --mode users && vite build --mode logs",
+    "build:users": "tsc -b && vite build --mode users",
+    "build:logs": "tsc -b && vite build --mode logs",
     "lint": "eslint .",
     "preview": "vite preview"
   },

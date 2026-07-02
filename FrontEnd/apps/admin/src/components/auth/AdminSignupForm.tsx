@@ -33,7 +33,6 @@ function AdminSignupForm({ pending, onPendingChange, onMessageChange, onSignupSu
         password,
         username,
         phoneNumber,
-        whatsappNumber: phoneNumber,
       })
 
       onSignupSuccess(response)

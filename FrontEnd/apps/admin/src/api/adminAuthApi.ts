@@ -1,15 +1,14 @@
-import { ADMIN_GATEWAY_BASE_URL } from '../config/adminEnv'
-import { ADMIN_ERROR_MESSAGES } from '../messages/adminErrorMessages'
 import type {
-  AdminEmailOtpSendResponse,
-  AdminEmailOtpVerifyResponse,
   AdminLogoutResponse,
   AdminPasswordLoginResponse,
   AdminSignupRequest,
   AdminSignupResponse,
 } from '../types/adminAuth'
+import type { AdminApiResponse } from '../types/adminResponse'
 import type { AdminMeResponse } from '../types/adminSession'
 import { adminFetchJson } from './adminFetch'
+
+const ADMIN_OAUTH2_LOGIN_PATH = '/admin-bff/oauth2/authorization/admin-bff'
 
 // Loads the current admin authentication session.
 export function fetchAdminMe(signal?: AbortSignal): Promise<AdminMeResponse> {
@@ -24,17 +23,16 @@ export function requestAdminLogout(): Promise<AdminLogoutResponse> {
 }
 
 // Creates an admin account through the BFF.
-export function signupAdmin(request: AdminSignupRequest): Promise<AdminSignupResponse> {
-  return adminFetchJson<AdminSignupResponse>('/admin-bff/auth/signup', {
+export async function signupAdmin(request: AdminSignupRequest): Promise<AdminSignupResponse> {
+  const response = await adminFetchJson<AdminApiResponse<AdminSignupResponse>>('/admin-bff/registration/admin', {
     method: 'POST',
     body: request,
   })
+  return response.data
 }
 
 // Starts an admin password login and redirects to the authorization flow.
 export async function loginAdminWithPassword(loginId: string, password: string): Promise<AdminPasswordLoginResponse> {
-  await prepareAdminAuthorizationRequest()
-
   const existingSession = await fetchAdminMe()
 
   if (existingSession.authenticated) {
@@ -51,49 +49,15 @@ export async function loginAdminWithPassword(loginId: string, password: string):
     body: { loginId, password },
   })
 
-  if (!response.redirectUrl) {
-    throw new Error(ADMIN_ERROR_MESSAGES.LOGIN_REDIRECT_PATH_NOT_FOUND)
-  }
+  const redirectUrl = response.redirectUrl ?? ADMIN_OAUTH2_LOGIN_PATH
+  redirectToAdminOAuth2Login(redirectUrl)
 
-  window.location.href = response.redirectUrl
-  return response
+  return {
+    ...response,
+    redirectUrl,
+  }
 }
 
-// Sends an email OTP for admin login.
-export async function sendAdminEmailOtp(email: string): Promise<AdminEmailOtpSendResponse> {
-  await prepareAdminAuthorizationRequest()
-
-  return adminFetchJson<AdminEmailOtpSendResponse>('/login/email/send-otp', {
-    method: 'POST',
-    body: { email },
-  })
-}
-
-// Verifies an admin email OTP and redirects to the authorization flow.
-export async function verifyAdminEmailOtp(email: string, otp: string): Promise<AdminEmailOtpVerifyResponse> {
-  const response = await adminFetchJson<AdminEmailOtpVerifyResponse>('/login/email/verify', {
-    method: 'POST',
-    body: { email, otp },
-  })
-
-  if (!response.redirectUrl) {
-    throw new Error(ADMIN_ERROR_MESSAGES.LOGIN_REDIRECT_PATH_NOT_FOUND)
-  }
-
-  window.location.href = response.redirectUrl
-  return response
-}
-
-// Prepares the server-side authorization request before credential submission.
-async function prepareAdminAuthorizationRequest() {
-  const response = await fetch(`${ADMIN_GATEWAY_BASE_URL}/admin-bff/auth/login`, {
-    credentials: 'include',
-    headers: {
-      Accept: 'text/html',
-    },
-  })
-
-  if (!response.ok) {
-    throw new Error(ADMIN_ERROR_MESSAGES.LOGIN_SESSION_CREATE_FAILED)
-  }
+function redirectToAdminOAuth2Login(redirectUrl: string) {
+  window.location.href = redirectUrl
 }

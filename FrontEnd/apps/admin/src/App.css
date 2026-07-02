@@ -76,28 +76,6 @@
   margin-bottom: 22px;
 }
 
-.admin-method-control {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-  margin-bottom: 14px;
-}
-
-.admin-method-control button {
-  min-height: 40px;
-  border: 1px solid rgba(148, 163, 184, 0.24);
-  border-radius: 8px;
-  color: #8f9bb7;
-  background: rgba(15, 23, 42, 0.78);
-  font-weight: 800;
-}
-
-.admin-method-control button.active {
-  color: #ffffff;
-  border-color: rgba(107, 92, 255, 0.7);
-  background: #6254f3;
-}
-
 .admin-segmented button {
   min-height: 42px;
   border: 0;
@@ -144,14 +122,6 @@
   box-shadow: 0 0 0 3px rgba(107, 92, 255, 0.2);
 }
 
-.admin-inline-field {
-  display: grid;
-  grid-template-columns: 1fr 84px;
-  gap: 10px;
-  align-items: end;
-}
-
-.admin-inline-field button,
 .admin-primary-button,
 .admin-secondary-button,
 .admin-account button,
@@ -162,7 +132,6 @@
   font-weight: 800;
 }
 
-.admin-inline-field button,
 .admin-secondary-button,
 .admin-account button,
 .admin-user-actions button {
@@ -496,10 +465,6 @@
 @media (max-width: 520px) {
   .admin-auth-page {
     padding: 18px 12px;
-  }
-
-  .admin-inline-field {
-    grid-template-columns: 1fr;
   }
 
   .admin-profile-panel dl div,

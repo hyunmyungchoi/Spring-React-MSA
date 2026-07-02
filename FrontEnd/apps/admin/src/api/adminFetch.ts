@@ -1,5 +1,9 @@
 import { ADMIN_GATEWAY_BASE_URL } from '../config/adminEnv'
-import type { AdminApiErrorBody } from '../types/adminResponse'
+import { resolveAdminApiErrorMessage } from './adminApiContract'
+
+const CSRF_COOKIE_NAME = 'XSRF-TOKEN'
+const CSRF_HEADER_NAME = 'X-XSRF-TOKEN'
+const CSRF_BOOTSTRAP_PATH = '/admin-bff/auth/me'
 
 type AdminFetchOptions = Omit<RequestInit, 'body' | 'credentials'> & {
   body?: unknown
@@ -17,20 +21,18 @@ export class AdminFetchError extends Error {
 
 // Sends a JSON request to the admin gateway with cookie credentials.
 export async function adminFetchJson<T>(path: string, options: AdminFetchOptions = {}): Promise<T> {
+  const headers = await resolveAdminHeaders(path, options)
+
   const response = await fetch(`${ADMIN_GATEWAY_BASE_URL}${path}`, {
     ...options,
     credentials: 'include',
-    headers: {
-      Accept: 'application/json',
-      ...(options.body === undefined ? {} : { 'Content-Type': 'application/json' }),
-      ...options.headers,
-    },
+    headers,
     body: options.body === undefined ? undefined : JSON.stringify(options.body),
   })
 
   if (!response.ok) {
     const errorBody = await response.text().catch(() => '')
-    throw new AdminFetchError(response.status, resolveAdminErrorMessage(errorBody, response.status))
+    throw new AdminFetchError(response.status, resolveAdminApiErrorMessage(errorBody, response.status))
   }
 
   if (response.status === 204) {
@@ -41,16 +43,61 @@ export async function adminFetchJson<T>(path: string, options: AdminFetchOptions
   return text ? (JSON.parse(text) as T) : (undefined as T)
 }
 
-// Extracts the most useful error text from a failed admin gateway response.
-function resolveAdminErrorMessage(errorBody: string, status: number) {
-  if (!errorBody) {
-    return `Admin API request failed: ${status}`
+async function resolveAdminHeaders(path: string, options: AdminFetchOptions) {
+  const headers: HeadersInit = {
+    Accept: 'application/json',
+    ...(options.body === undefined ? {} : { 'Content-Type': 'application/json' }),
+    ...options.headers,
   }
 
-  try {
-    const parsed = JSON.parse(errorBody) as AdminApiErrorBody
-    return parsed.message ?? parsed.detail ?? parsed.error ?? errorBody
-  } catch {
-    return errorBody
+  if (!isUnsafeMethod(options.method) || !isAdminBffPath(path)) {
+    return headers
   }
+
+  let csrfToken = readCookie(CSRF_COOKIE_NAME)
+
+  if (!csrfToken && path !== CSRF_BOOTSTRAP_PATH) {
+    await fetch(`${ADMIN_GATEWAY_BASE_URL}${CSRF_BOOTSTRAP_PATH}`, {
+      credentials: 'include',
+      headers: {
+        Accept: 'application/json',
+      },
+    }).catch(() => undefined)
+
+    csrfToken = readCookie(CSRF_COOKIE_NAME)
+  }
+
+  if (csrfToken) {
+    return {
+      ...headers,
+      [CSRF_HEADER_NAME]: csrfToken,
+    }
+  }
+
+  return headers
+}
+
+function isUnsafeMethod(method?: string) {
+  const resolvedMethod = method?.toUpperCase() ?? 'GET'
+  return !['GET', 'HEAD', 'OPTIONS', 'TRACE'].includes(resolvedMethod)
+}
+
+function isAdminBffPath(path: string) {
+  return path.startsWith('/admin-bff/')
+}
+
+function readCookie(name: string) {
+  if (typeof document === 'undefined') {
+    return null
+  }
+
+  const cookie = document.cookie
+    .split('; ')
+    .find((entry) => entry.startsWith(`${name}=`))
+
+  if (!cookie) {
+    return null
+  }
+
+  return decodeURIComponent(cookie.substring(name.length + 1))
 }

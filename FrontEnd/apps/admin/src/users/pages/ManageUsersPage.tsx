@@ -1,6 +1,6 @@
-import AdminUserActionPanel from '../components/users/AdminUserActionPanel'
-import AdminUserDetailCard from '../components/users/AdminUserDetailCard'
-import AdminUserTable from '../components/users/AdminUserTable'
+import AdminUserActionPanel from '../components/AdminUserActionPanel'
+import AdminUserDetailCard from '../components/AdminUserDetailCard'
+import AdminUserTable from '../components/AdminUserTable'
 import { useAdminUsers } from '../hooks/useAdminUsers'
 
 // Renders admin user management tools.
@@ -19,7 +19,7 @@ function ManageUsersPage() {
     <>
       <section className="admin-page-heading">
         <span>Manage</span>
-        <h2>유저 관리</h2>
+        <h2>User management</h2>
       </section>
 
       <AdminUserActionPanel
@@ -33,7 +33,7 @@ function ManageUsersPage() {
         <section className="admin-section admin-users-list-section">
           <div className="admin-section-heading">
             <span>Manage</span>
-            <h2>유저 목록</h2>
+            <h2>User list</h2>
           </div>
           <AdminUserTable users={users} />
         </section>
@@ -41,7 +41,7 @@ function ManageUsersPage() {
         <section className="admin-section">
           <div className="admin-section-heading">
             <span>Detail</span>
-            <h2>유저 상세</h2>
+            <h2>User detail</h2>
           </div>
           <AdminUserDetailCard user={userDetail} />
         </section>

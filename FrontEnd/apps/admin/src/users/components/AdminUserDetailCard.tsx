@@ -7,7 +7,7 @@ type AdminUserDetailCardProps = {
 // Renders one admin-managed user detail record.
 function AdminUserDetailCard({ user }: AdminUserDetailCardProps) {
   if (!user) {
-    return <p className="admin-empty">상세 조회 결과가 없습니다.</p>
+    return <p className="admin-empty">No user detail loaded.</p>
   }
 
   return (

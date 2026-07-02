@@ -4,5 +4,5 @@ export type UserLogoutResponse = {
     authServerLogoutUrl?: string;
 };
 
-export type { EmailOtpSendResponse, EmailOtpVerifyResponse, PasswordLoginResponse } from "./login";
+export type { PasswordLoginResponse } from "./login";
 export type { SignupRequest, SignupResponse } from "./signup";

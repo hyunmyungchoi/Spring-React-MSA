@@ -7,7 +7,7 @@ type AdminUserTableProps = {
 // Renders the admin-managed users table.
 function AdminUserTable({ users }: AdminUserTableProps) {
   if (!users || users.length === 0) {
-    return <p className="admin-empty">조회된 유저가 없습니다.</p>
+    return <p className="admin-empty">No users loaded.</p>
   }
 
   return (

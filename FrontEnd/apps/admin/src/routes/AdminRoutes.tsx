@@ -1,10 +1,10 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import AdminAuthLayout from '../layouts/AdminAuthLayout'
 import AdminLayout from '../layouts/AdminLayout'
+import ManageLogsPage from '../logs/pages/ManageLogsPage'
 import AdminAuthPage from '../pages/AdminAuthPage'
 import ManageHomePage from '../pages/ManageHomePage'
-import ManageLogsPage from '../pages/ManageLogsPage'
-import ManageUsersPage from '../pages/ManageUsersPage'
+import ManageUsersPage from '../users/pages/ManageUsersPage'
 
 // Defines the admin web page routes.
 function AdminRoutes() {

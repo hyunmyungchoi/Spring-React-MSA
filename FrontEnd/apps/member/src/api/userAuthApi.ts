@@ -1,35 +1,38 @@
-import { USER_GATEWAY_BASE_URL } from "../config/userEnv";
-import { USER_ERROR_MESSAGES } from "../messages/userErrorMessages";
-import type { EmailOtpSendResponse, EmailOtpVerifyResponse, PasswordLoginResponse } from "../types/login";
+import type { PasswordLoginResponse } from "../types/login";
 import type { SignupRequest, SignupResponse } from "../types/signup";
 import type { UserAuthMeResponse } from "../types/userSession";
 import type { UserLogoutResponse } from "../types/userAuth";
-import { userFetchJson } from "./userFetch";
+import { memberRequest } from "./memberApiClient";
+
+const MEMBER_OAUTH2_LOGIN_PATH = "/bff/oauth2/authorization/member-bff";
 
 // Loads the current user authentication session.
 export function fetchUserAuthMe(signal?: AbortSignal): Promise<UserAuthMeResponse> {
-    return userFetchJson<UserAuthMeResponse>("/bff/auth/me", { signal });
+    return memberRequest<UserAuthMeResponse>({ 
+        url: "/bff/auth/me", 
+        signal 
+    });
 }
 
 // Requests user logout from the BFF.
 export function requestUserLogout(): Promise<UserLogoutResponse> {
-    return userFetchJson<UserLogoutResponse>("/bff/auth/logout", {
+    return memberRequest<UserLogoutResponse>({
+        url: "/bff/auth/logout",
         method: "POST",
     });
 }
 
 // Creates a user account through the BFF.
 export function signupUser(request: SignupRequest): Promise<SignupResponse> {
-    return userFetchJson<SignupResponse>("/bff/auth/signup", {
+    return memberRequest<SignupResponse>({
+        url: "/bff/registration/member",
         method: "POST",
-        body: request,
+        data: request,
     });
 }
 
 // Starts a password login and redirects to the authorization flow.
 export async function loginUserWithPassword(loginId: string, password: string): Promise<PasswordLoginResponse> {
-    await prepareUserAuthorizationRequest();
-
     const existingSession = await fetchUserAuthMe();
 
     if (existingSession.authenticated) {
@@ -41,54 +44,12 @@ export async function loginUserWithPassword(loginId: string, password: string): 
         };
     }
 
-    const response = await userFetchJson<PasswordLoginResponse>("/login/password", {
+    const response = await memberRequest<PasswordLoginResponse>({
+        url: "/login/password",
         method: "POST",
-        body: { loginId, password },
+        data: { loginId, password },
     });
 
-    if (!response.redirectUrl) {
-        throw new Error(USER_ERROR_MESSAGES.LOGIN_REDIRECT_PATH_NOT_FOUND);
-    }
-
-    window.location.href = response.redirectUrl;
+    window.location.href = response.redirectUrl ?? MEMBER_OAUTH2_LOGIN_PATH;
     return response;
-}
-
-// Sends an email OTP for user login.
-export async function sendUserEmailOtp(email: string): Promise<EmailOtpSendResponse> {
-    await prepareUserAuthorizationRequest();
-
-    return userFetchJson<EmailOtpSendResponse>("/login/email/send-otp", {
-        method: "POST",
-        body: { email },
-    });
-}
-
-// Verifies an email OTP and redirects to the authorization flow.
-export async function verifyUserEmailOtp(email: string, otp: string): Promise<EmailOtpVerifyResponse> {
-    const response = await userFetchJson<EmailOtpVerifyResponse>("/login/email/verify", {
-        method: "POST",
-        body: { email, otp },
-    });
-
-    if (!response.redirectUrl) {
-        throw new Error(USER_ERROR_MESSAGES.LOGIN_REDIRECT_PATH_NOT_FOUND);
-    }
-
-    window.location.href = response.redirectUrl;
-    return response;
-}
-
-// Prepares the server-side authorization request before credential submission.
-async function prepareUserAuthorizationRequest() {
-    const response = await fetch(`${USER_GATEWAY_BASE_URL}/bff/auth/login`, {
-        credentials: "include",
-        headers: {
-            Accept: "text/html",
-        },
-    });
-
-    if (!response.ok) {
-        throw new Error(USER_ERROR_MESSAGES.LOGIN_SESSION_CREATE_FAILED);
-    }
 }

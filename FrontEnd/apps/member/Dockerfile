@@ -4,14 +4,14 @@ WORKDIR /app
 
 RUN corepack enable
 
-COPY FrontEnd/apps/shell/package.json FrontEnd/apps/shell/pnpm-lock.yaml ./
+COPY FrontEnd/apps/member/package.json FrontEnd/apps/member/pnpm-lock.yaml ./
 RUN if [ -f pnpm-lock.yaml ]; then pnpm install --frozen-lockfile; else pnpm install; fi
 
-COPY FrontEnd/apps/shell .
+COPY FrontEnd/apps/member .
 
 ARG VITE_MODE=prod
-ARG VITE_USER_GATEWAY_BASE_URL=
-RUN if [ -n "$VITE_USER_GATEWAY_BASE_URL" ]; then export VITE_USER_GATEWAY_BASE_URL="$VITE_USER_GATEWAY_BASE_URL"; fi; \
+ARG VITE_MEMBER_GATEWAY_BASE_URL=
+RUN if [ -n "$VITE_MEMBER_GATEWAY_BASE_URL" ]; then export VITE_MEMBER_GATEWAY_BASE_URL="$VITE_MEMBER_GATEWAY_BASE_URL"; fi; \
     pnpm exec tsc -b && pnpm exec vite build --mode ${VITE_MODE}
 
 FROM nginx:1.27-alpine

@@ -12,7 +12,6 @@ export type AdminSignupRequest = {
   password: string
   username: string
   phoneNumber?: string
-  whatsappNumber?: string
 }
 
 export type AdminSignupResponse = {
@@ -22,19 +21,6 @@ export type AdminSignupResponse = {
   username: string
   enabled: boolean
   roles: string[]
-}
-
-export type AdminEmailOtpSendResponse = {
-  sent: boolean
-  expiresInSeconds: number
-  devOtp?: string
-}
-
-export type AdminEmailOtpVerifyResponse = {
-  verified: boolean
-  authenticated: boolean
-  redirectUrl?: string
-  user?: AdminSessionMe
 }
 
 export type AdminPasswordLoginResponse = {

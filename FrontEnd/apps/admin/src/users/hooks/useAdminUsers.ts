@@ -1,10 +1,10 @@
 import { useState } from 'react'
+import { ADMIN_ERROR_MESSAGES } from '../../messages/adminErrorMessages'
+import { ADMIN_VALIDATION_MESSAGES } from '../../messages/adminValidationMessages'
+import type { AdminUserResponse } from '../../types/adminUser'
+import { getAdminErrorMessage } from '../../utils/adminErrorHandler'
+import { isValidAdminUserId, normalizeAdminUserId } from '../../utils/adminRouteUtils'
 import { fetchAdminUserDetail, fetchAdminUsers } from '../api/adminUserApi'
-import { ADMIN_ERROR_MESSAGES } from '../messages/adminErrorMessages'
-import { ADMIN_VALIDATION_MESSAGES } from '../messages/adminValidationMessages'
-import type { AdminUserResponse } from '../types/adminUser'
-import { getAdminErrorMessage } from '../utils/adminErrorHandler'
-import { isValidAdminUserId, normalizeAdminUserId } from '../utils/adminRouteUtils'
 
 // Manages admin user list and user detail lookup state.
 export function useAdminUsers() {
@@ -13,7 +13,6 @@ export function useAdminUsers() {
   const [userDetail, setUserDetail] = useState<AdminUserResponse | null>(null)
   const [userId, setUserId] = useState('1')
 
-  // Loads the full admin user list.
   const loadUsers = async () => {
     setMessage('')
 
@@ -26,7 +25,6 @@ export function useAdminUsers() {
     }
   }
 
-  // Loads a single admin user detail after validation.
   const loadUserDetail = async () => {
     setMessage('')
 
@@ -45,13 +43,12 @@ export function useAdminUsers() {
     try {
       const data = await fetchAdminUserDetail(trimmedUserId)
       setUserDetail(data)
-      setMessage('유저 상세를 조회했습니다.')
+      setMessage('User detail loaded.')
     } catch (error) {
       setMessage(getAdminErrorMessage(error, ADMIN_ERROR_MESSAGES.USER_DETAIL_LOAD_FAILED))
     }
   }
 
-  // Updates the selected user ID and clears stale detail data.
   const changeUserId = (nextUserId: string) => {
     setUserId(nextUserId)
     setUserDetail(null)

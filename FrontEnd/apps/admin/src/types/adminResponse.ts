@@ -1,5 +1,1 @@
-export type AdminApiErrorBody = {
-  message?: string
-  detail?: string
-  error?: string
-}
+export type { AdminApiErrorBody, AdminApiResponse } from '../api/adminApiContract'

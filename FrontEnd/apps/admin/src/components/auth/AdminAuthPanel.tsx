@@ -9,14 +9,12 @@ type AdminAuthMode = 'login' | 'signup'
 function AdminAuthPanel() {
   const [mode, setMode] = useState<AdminAuthMode>('login')
   const [defaultLoginId, setDefaultLoginId] = useState('admin')
-  const [defaultEmail, setDefaultEmail] = useState('admin@test.com')
   const [message, setMessage] = useState('')
   const [pending, setPending] = useState(false)
 
   // Moves successful signup admins back to the login form.
   const handleSignupSuccess = (response: AdminSignupResponse) => {
     setDefaultLoginId(response.loginId)
-    setDefaultEmail(response.email)
     setMode('login')
     setMessage('관리자 회원가입이 완료되었습니다. 로그인해주세요.')
   }
@@ -50,7 +48,6 @@ function AdminAuthPanel() {
         {mode === 'login' ? (
           <AdminLoginForm
             defaultLoginId={defaultLoginId}
-            defaultEmail={defaultEmail}
             pending={pending}
             onPendingChange={setPending}
             onMessageChange={setMessage}

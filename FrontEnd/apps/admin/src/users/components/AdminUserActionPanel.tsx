@@ -14,7 +14,7 @@ function AdminUserActionPanel({ userId, onUserIdChange, onLoadUsers, onLoadUserD
   return (
     <div className="admin-user-actions">
       <button type="button" onClick={onLoadUsers}>
-        유저 목록 조회
+        Load users
       </button>
 
       <label>
@@ -29,7 +29,7 @@ function AdminUserActionPanel({ userId, onUserIdChange, onLoadUsers, onLoadUserD
       </label>
 
       <button type="button" onClick={onLoadUserDetail} disabled={isUserDetailDisabled}>
-        상세 조회
+        Load detail
       </button>
     </div>
   )

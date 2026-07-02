@@ -4,7 +4,6 @@ export type SignupRequest = {
     password: string;
     username: string;
     phoneNumber?: string;
-    whatsappNumber?: string;
 };
 
 export type SignupResponse = {

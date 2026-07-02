@@ -1,9 +1,9 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import UserAuthLayout from "../layouts/UserAuthLayout";
 import UserLayout from "../layouts/UserLayout";
-import CommunityEntryPage from "../pages/CommunityEntryPage";
+import CommunityEntryPage from "../community/pages/CommunityEntryPage";
 import ServiceSelectPage from "../pages/ServiceSelectPage";
-import StockEntryPage from "../pages/StockEntryPage";
+import StockEntryPage from "../stock/pages/StockEntryPage";
 import UserAuthPage from "../pages/UserAuthPage";
 
 // Defines the user web page routes.

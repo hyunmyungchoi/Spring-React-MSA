@@ -10,16 +10,3 @@ export type PasswordLoginResponse = {
     redirectUrl?: string;
     user?: UserSessionMe;
 };
-
-export type EmailOtpSendResponse = {
-    sent: boolean;
-    expiresInSeconds: number;
-    devOtp?: string;
-};
-
-export type EmailOtpVerifyResponse = {
-    verified: boolean;
-    authenticated: boolean;
-    redirectUrl?: string;
-    user?: UserSessionMe;
-};

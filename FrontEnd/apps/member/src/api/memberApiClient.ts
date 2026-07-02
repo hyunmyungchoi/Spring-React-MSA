@@ -1,56 +1,46 @@
-import { USER_GATEWAY_BASE_URL } from "../config/userEnv";
-import type { UserApiErrorBody } from "../types/userResponse";
+import axios from "axios";
+import type { AxiosError, AxiosRequestConfig } from "axios";
+import { MEMBER_GATEWAY_BASE_URL } from "../config/userEnv";
+import { resolveMemberApiErrorMessage, unwrapMemberApiResponse } from "./memberApiContract";
 
-type UserFetchOptions = Omit<RequestInit, "body" | "credentials"> & {
-    body?: unknown;
-};
-
-export class UserFetchError extends Error {
+export class MemberApiError extends Error {
     status: number;
 
     constructor(status: number, message: string) {
         super(message);
         this.status = status;
-        this.name = "UserFetchError";
+        this.name = "MemberApiError";
     }
 }
 
-// Sends a JSON request to the user BFF with cookie credentials.
-export async function userFetchJson<T>(path: string, options: UserFetchOptions = {}): Promise<T> {
-    const response = await fetch(`${USER_GATEWAY_BASE_URL}${path}`, {
-        ...options,
-        credentials: "include",
-        headers: {
-            Accept: "application/json",
-            ...(options.body === undefined ? {} : { "Content-Type": "application/json" }),
-            ...options.headers,
-        },
-        body: options.body === undefined ? undefined : JSON.stringify(options.body),
-    });
+export const memberApiClient = axios.create({
+    baseURL: MEMBER_GATEWAY_BASE_URL,
+    withCredentials: true,
+    xsrfCookieName: "XSRF-TOKEN",
+    xsrfHeaderName: "X-XSRF-TOKEN",
+    headers: {
+        Accept: "application/json",
+    },
+});
 
-    if (!response.ok) {
-        const errorBody = await response.text().catch(() => "");
-        throw new UserFetchError(response.status, resolveUserErrorMessage(errorBody, response.status));
-    }
-
-    if (response.status === 204) {
-        return undefined as T;
-    }
-
-    const text = await response.text();
-    return text ? (JSON.parse(text) as T) : (undefined as T);
-}
-
-// Extracts the most useful error text from a failed user BFF response.
-function resolveUserErrorMessage(errorBody: string, status: number) {
-    if (!errorBody) {
-        return `User API request failed: ${status}`;
-    }
-
+// Sends a typed JSON request through the member gateway.
+export async function memberRequest<T>(config: AxiosRequestConfig): Promise<T> {
     try {
-        const parsed = JSON.parse(errorBody) as UserApiErrorBody;
-        return parsed.message ?? parsed.detail ?? parsed.error ?? errorBody;
-    } catch {
-        return errorBody;
+        const response = await memberApiClient.request<T>(config);
+        return unwrapMemberApiResponse<T>(response.data);
+    } catch (error) {
+        throw toMemberApiError(error);
     }
+}
+
+// Extracts the most useful error text from a failed member BFF response.
+function toMemberApiError(error: unknown) {
+    if (!axios.isAxiosError(error)) {
+        return error;
+    }
+
+    const axiosError = error as AxiosError<unknown>;
+    const status = axiosError.response?.status ?? 0;
+    const message = resolveMemberApiErrorMessage(axiosError.response?.data, status);
+    return new MemberApiError(status, message);
 }

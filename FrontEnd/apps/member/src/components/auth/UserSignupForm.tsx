@@ -11,7 +11,7 @@ type UserSignupFormProps = {
     onSignupSuccess: (response: SignupResponse) => void;
 };
 
-// Renders the user signup form.
+// Renders the member signup form.
 function UserSignupForm({ pending, onPendingChange, onMessageChange, onSignupSuccess }: UserSignupFormProps) {
     const { signup } = useUserSignup();
     const [loginId, setLoginId] = useState("");
@@ -20,7 +20,6 @@ function UserSignupForm({ pending, onPendingChange, onMessageChange, onSignupSuc
     const [username, setUsername] = useState("");
     const [phoneNumber, setPhoneNumber] = useState("");
 
-    // Submits a new user signup request.
     const handleSignup = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         onPendingChange(true);
@@ -32,8 +31,7 @@ function UserSignupForm({ pending, onPendingChange, onMessageChange, onSignupSuc
                 email,
                 password,
                 username,
-                phoneNumber,
-                whatsappNumber: phoneNumber,
+                phoneNumber: phoneNumber || undefined,
             });
 
             onSignupSuccess(response);
@@ -47,7 +45,7 @@ function UserSignupForm({ pending, onPendingChange, onMessageChange, onSignupSuc
     return (
         <form className="auth-form" onSubmit={handleSignup}>
             <label>
-                아이디
+                Login ID
                 <input
                     type="text"
                     value={loginId}
@@ -57,7 +55,7 @@ function UserSignupForm({ pending, onPendingChange, onMessageChange, onSignupSuc
                 />
             </label>
             <label>
-                이메일
+                Email
                 <input
                     type="email"
                     value={email}
@@ -67,7 +65,7 @@ function UserSignupForm({ pending, onPendingChange, onMessageChange, onSignupSuc
                 />
             </label>
             <label>
-                비밀번호
+                Password
                 <input
                     type="password"
                     value={password}
@@ -78,17 +76,17 @@ function UserSignupForm({ pending, onPendingChange, onMessageChange, onSignupSuc
                 />
             </label>
             <label>
-                이름
+                Name
                 <input
                     type="text"
                     value={username}
                     onChange={(event) => setUsername(event.target.value)}
-                    placeholder="홍길동"
+                    placeholder="Member name"
                     required
                 />
             </label>
             <label>
-                휴대폰
+                Phone
                 <input
                     type="tel"
                     value={phoneNumber}
@@ -98,7 +96,7 @@ function UserSignupForm({ pending, onPendingChange, onMessageChange, onSignupSuc
             </label>
 
             <button className="primary-button" type="submit" disabled={pending}>
-                회원가입
+                Create member
             </button>
         </form>
     );
