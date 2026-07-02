@@ -1,19 +1,6 @@
-import type { UserServiceMeResponse } from "../../types/userSession";
-import { memberRequest } from "../../api/memberApiClient";
-
-export type StockWatchItem = {
-    id: number;
-    symbol: string;
-    memo: string;
-    owner: string;
-    createdAt: string;
-    updatedAt: string;
-};
-
-export type StockWatchItemRequest = {
-    symbol: string;
-    memo: string;
-};
+import { memberRequest } from "../../common/api/memberApiClient";
+import type { UserServiceMeResponse } from "../../common/types/userSession";
+import type { StockWatchItem, StockWatchItemPayload } from "../types/stockWatchItem";
 
 // Loads the current user profile from the stock service.
 export function fetchStockMe(signal?: AbortSignal): Promise<UserServiceMeResponse> {
@@ -24,19 +11,19 @@ export function fetchStockWatchItems(signal?: AbortSignal): Promise<StockWatchIt
     return memberRequest<StockWatchItem[]>({ url: "/bff/stock/watch-items", signal });
 }
 
-export function createStockWatchItem(request: StockWatchItemRequest): Promise<StockWatchItem> {
+export function createStockWatchItem(payload: StockWatchItemPayload): Promise<StockWatchItem> {
     return memberRequest<StockWatchItem>({
         url: "/bff/stock/watch-items",
         method: "POST",
-        data: request,
+        data: payload,
     });
 }
 
-export function updateStockWatchItem(itemId: number, request: StockWatchItemRequest): Promise<StockWatchItem> {
+export function updateStockWatchItem(itemId: number, payload: StockWatchItemPayload): Promise<StockWatchItem> {
     return memberRequest<StockWatchItem>({
         url: `/bff/stock/watch-items/${itemId}`,
         method: "PUT",
-        data: request,
+        data: payload,
     });
 }
 

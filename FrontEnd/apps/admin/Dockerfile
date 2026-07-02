@@ -10,9 +10,7 @@ RUN if [ -f pnpm-lock.yaml ]; then pnpm install --frozen-lockfile; else pnpm ins
 COPY FrontEnd/apps/admin .
 
 ARG VITE_MODE=prod
-ARG VITE_ADMIN_GATEWAY_BASE_URL=
-RUN if [ -n "$VITE_ADMIN_GATEWAY_BASE_URL" ]; then export VITE_ADMIN_GATEWAY_BASE_URL="$VITE_ADMIN_GATEWAY_BASE_URL"; fi; \
-    pnpm exec tsc -b && pnpm exec vite build --mode ${VITE_MODE}
+RUN pnpm exec tsc -b && pnpm exec vite build --mode ${VITE_MODE}
 
 FROM nginx:1.27-alpine
 

@@ -6,7 +6,7 @@ import {
     fetchStockWatchItems,
     updateStockWatchItem,
 } from "../api/stockApi";
-import type { StockWatchItem } from "../api/stockApi";
+import type { StockWatchItem } from "../types/stockWatchItem";
 
 // Renders the stock CRUD workspace.
 function StockEntryPage() {
@@ -22,9 +22,23 @@ function StockEntryPage() {
     };
 
     useEffect(() => {
-        void loadItems().catch((error) => {
-            setMessage(error instanceof Error ? error.message : "Stock watch items load failed");
-        });
+        let ignore = false;
+
+        fetchStockWatchItems()
+            .then((data) => {
+                if (!ignore) {
+                    setItems(data);
+                }
+            })
+            .catch((error) => {
+                if (!ignore) {
+                    setMessage(error instanceof Error ? error.message : "Stock watch items load failed");
+                }
+            });
+
+        return () => {
+            ignore = true;
+        };
     }, []);
 
     const resetForm = () => {

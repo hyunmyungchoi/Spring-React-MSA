@@ -1,19 +1,6 @@
-import type { UserServiceMeResponse } from "../../types/userSession";
-import { memberRequest } from "../../api/memberApiClient";
-
-export type CommunityPost = {
-    id: number;
-    title: string;
-    content: string;
-    author: string;
-    createdAt: string;
-    updatedAt: string;
-};
-
-export type CommunityPostRequest = {
-    title: string;
-    content: string;
-};
+import { memberRequest } from "../../common/api/memberApiClient";
+import type { UserServiceMeResponse } from "../../common/types/userSession";
+import type { CommunityPost, CommunityPostPayload } from "../types/communityPost";
 
 // Loads the current user profile from the community service.
 export function fetchCommunityMe(signal?: AbortSignal): Promise<UserServiceMeResponse> {
@@ -24,19 +11,19 @@ export function fetchCommunityPosts(signal?: AbortSignal): Promise<CommunityPost
     return memberRequest<CommunityPost[]>({ url: "/bff/community/posts", signal });
 }
 
-export function createCommunityPost(request: CommunityPostRequest): Promise<CommunityPost> {
+export function createCommunityPost(payload: CommunityPostPayload): Promise<CommunityPost> {
     return memberRequest<CommunityPost>({
         url: "/bff/community/posts",
         method: "POST",
-        data: request,
+        data: payload,
     });
 }
 
-export function updateCommunityPost(postId: number, request: CommunityPostRequest): Promise<CommunityPost> {
+export function updateCommunityPost(postId: number, payload: CommunityPostPayload): Promise<CommunityPost> {
     return memberRequest<CommunityPost>({
         url: `/bff/community/posts/${postId}`,
         method: "PUT",
-        data: request,
+        data: payload,
     });
 }
 

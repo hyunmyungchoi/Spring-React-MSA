@@ -1,5 +1,7 @@
 import AdminUserActionPanel from '../components/AdminUserActionPanel'
 import AdminUserDetailCard from '../components/AdminUserDetailCard'
+import AdminMemberPresenceEventTable from '../components/AdminMemberPresenceEventTable'
+import AdminMemberSessionTable from '../components/AdminMemberSessionTable'
 import AdminUserTable from '../components/AdminUserTable'
 import { useAdminUsers } from '../hooks/useAdminUsers'
 
@@ -9,10 +11,14 @@ function ManageUsersPage() {
     message,
     users,
     userDetail,
+    memberSessions,
+    memberPresenceEvents,
     userId,
     setUserId,
     loadUsers,
     loadUserDetail,
+    loadMemberSessions,
+    loadMemberPresenceEvents,
   } = useAdminUsers()
 
   return (
@@ -27,6 +33,8 @@ function ManageUsersPage() {
         onUserIdChange={setUserId}
         onLoadUsers={loadUsers}
         onLoadUserDetail={loadUserDetail}
+        onLoadMemberSessions={loadMemberSessions}
+        onLoadMemberPresenceEvents={loadMemberPresenceEvents}
       />
 
       <div className="admin-users-grid">
@@ -44,6 +52,22 @@ function ManageUsersPage() {
             <h2>User detail</h2>
           </div>
           <AdminUserDetailCard user={userDetail} />
+        </section>
+
+        <section className="admin-section admin-member-sessions-section">
+          <div className="admin-section-heading">
+            <span>Sessions</span>
+            <h2>Member sessions</h2>
+          </div>
+          <AdminMemberSessionTable sessions={memberSessions} />
+        </section>
+
+        <section className="admin-section admin-member-sessions-section">
+          <div className="admin-section-heading">
+            <span>Events</span>
+            <h2>Member presence events</h2>
+          </div>
+          <AdminMemberPresenceEventTable events={memberPresenceEvents} />
         </section>
 
         {message && <p className="admin-message admin-section-message">{message}</p>}

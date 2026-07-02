@@ -1,4 +1,4 @@
-import type { AdminUserResponse } from '../../types/adminUser'
+import type { AdminUserResponse } from '../../common/types/adminUser'
 
 type AdminUserDetailCardProps = {
   user: AdminUserResponse | null

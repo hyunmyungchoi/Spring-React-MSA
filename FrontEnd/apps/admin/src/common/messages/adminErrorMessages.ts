@@ -1,0 +1,12 @@
+export const ADMIN_ERROR_MESSAGES = {
+  LOGIN_REDIRECT_PATH_NOT_FOUND: '관리자 로그인 이동 경로를 찾지 못했습니다.',
+  LOGIN_SESSION_CREATE_FAILED: '관리자 로그인 세션을 만들지 못했습니다.',
+  LOGIN_FAILED: '관리자 로그인에 실패했습니다.',
+  SIGNUP_FAILED: '관리자 회원가입에 실패했습니다.',
+  LOGOUT_FAILED: '관리자 로그아웃에 실패했습니다.',
+  SESSION_LOAD_FAILED: '관리자 세션을 불러오지 못했습니다.',
+  USER_LIST_LOAD_FAILED: '유저 목록 조회에 실패했습니다.',
+  USER_DETAIL_LOAD_FAILED: '유저 상세 조회에 실패했습니다.',
+  MEMBER_SESSION_LIST_LOAD_FAILED: '멤버 로그인 세션 목록 조회에 실패했습니다.',
+  MEMBER_PRESENCE_EVENT_LIST_LOAD_FAILED: 'Member presence events load failed.',
+} as const

@@ -6,7 +6,7 @@ import {
     fetchCommunityPosts,
     updateCommunityPost,
 } from "../api/communityApi";
-import type { CommunityPost } from "../api/communityApi";
+import type { CommunityPost } from "../types/communityPost";
 
 // Renders the community CRUD workspace.
 function CommunityEntryPage() {
@@ -22,9 +22,23 @@ function CommunityEntryPage() {
     };
 
     useEffect(() => {
-        void loadPosts().catch((error) => {
-            setMessage(error instanceof Error ? error.message : "Community posts load failed");
-        });
+        let ignore = false;
+
+        fetchCommunityPosts()
+            .then((data) => {
+                if (!ignore) {
+                    setPosts(data);
+                }
+            })
+            .catch((error) => {
+                if (!ignore) {
+                    setMessage(error instanceof Error ? error.message : "Community posts load failed");
+                }
+            });
+
+        return () => {
+            ignore = true;
+        };
     }, []);
 
     const resetForm = () => {

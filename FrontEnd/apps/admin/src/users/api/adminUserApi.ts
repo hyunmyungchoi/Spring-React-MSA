@@ -1,7 +1,7 @@
-import { adminFetchJson } from '../../api/adminFetch'
-import { unwrapAdminApiResponse } from '../../api/adminApiContract'
-import type { AdminApiResponse } from '../../types/adminResponse'
-import type { AdminUserResponse } from '../../types/adminUser'
+import { unwrapAdminApiResponse } from '../../common/api/adminApiContract'
+import { adminFetchJson } from '../../common/api/adminFetch'
+import type { AdminApiResponse } from '../../common/types/adminResponse'
+import type { AdminUserResponse, MemberPresenceEventResponse, MemberSessionResponse } from '../../common/types/adminUser'
 
 // Loads the current admin user profile from the user service.
 export async function fetchAdminUserMe(signal?: AbortSignal): Promise<unknown> {
@@ -20,5 +20,22 @@ export async function fetchAdminUserDetail(userId: string, signal?: AbortSignal)
   const response = await adminFetchJson<AdminApiResponse<AdminUserResponse>>(`/admin-bff/user/admin/users/${userId}`, {
     signal,
   })
+  return unwrapAdminApiResponse(response)
+}
+
+// Loads member BFF login sessions stored through Spring Session Redis.
+export async function fetchMemberSessions(signal?: AbortSignal): Promise<MemberSessionResponse[]> {
+  const response = await adminFetchJson<AdminApiResponse<MemberSessionResponse[]>>('/admin-bff/sessions/member', {
+    signal,
+  })
+  return unwrapAdminApiResponse(response)
+}
+
+// Loads recent member BFF presence events stored in Redis Stream.
+export async function fetchMemberPresenceEvents(signal?: AbortSignal): Promise<MemberPresenceEventResponse[]> {
+  const response = await adminFetchJson<AdminApiResponse<MemberPresenceEventResponse[]>>(
+    '/admin-bff/sessions/member/events',
+    { signal },
+  )
   return unwrapAdminApiResponse(response)
 }

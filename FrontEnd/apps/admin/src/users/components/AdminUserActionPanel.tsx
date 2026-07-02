@@ -1,14 +1,23 @@
-import { isValidAdminUserId } from '../../utils/adminRouteUtils'
+import { isValidAdminUserId } from '../../common/utils/adminRouteUtils'
 
 type AdminUserActionPanelProps = {
   userId: string
   onUserIdChange: (userId: string) => void
   onLoadUsers: () => void
   onLoadUserDetail: () => void
+  onLoadMemberSessions: () => void
+  onLoadMemberPresenceEvents: () => void
 }
 
 // Renders admin user lookup actions.
-function AdminUserActionPanel({ userId, onUserIdChange, onLoadUsers, onLoadUserDetail }: AdminUserActionPanelProps) {
+function AdminUserActionPanel({
+  userId,
+  onUserIdChange,
+  onLoadUsers,
+  onLoadUserDetail,
+  onLoadMemberSessions,
+  onLoadMemberPresenceEvents,
+}: AdminUserActionPanelProps) {
   const isUserDetailDisabled = !isValidAdminUserId(userId)
 
   return (
@@ -30,6 +39,14 @@ function AdminUserActionPanel({ userId, onUserIdChange, onLoadUsers, onLoadUserD
 
       <button type="button" onClick={onLoadUserDetail} disabled={isUserDetailDisabled}>
         Load detail
+      </button>
+
+      <button type="button" onClick={onLoadMemberSessions}>
+        Load member sessions
+      </button>
+
+      <button type="button" onClick={onLoadMemberPresenceEvents}>
+        Load member events
       </button>
     </div>
   )

@@ -346,7 +346,7 @@
 
 .admin-user-actions {
   display: grid;
-  grid-template-columns: auto minmax(160px, 240px) auto;
+  grid-template-columns: auto minmax(160px, 240px) auto auto auto;
   gap: 12px;
   align-items: end;
   margin-bottom: 18px;
@@ -376,6 +376,11 @@
   min-width: 0;
 }
 
+.admin-member-sessions-section {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
 .admin-section-heading {
   margin-bottom: 16px;
 }
@@ -389,6 +394,61 @@
   width: 100%;
   min-width: 760px;
   border-collapse: collapse;
+}
+
+.admin-sessions-table {
+  min-width: 1260px;
+}
+
+.admin-events-table {
+  min-width: 1320px;
+}
+
+.admin-status-pill {
+  min-width: 68px;
+  display: inline-flex;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 5px 9px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.admin-status-pill.online {
+  color: #bbf7d0;
+  background: rgba(34, 197, 94, 0.16);
+  border: 1px solid rgba(34, 197, 94, 0.32);
+}
+
+.admin-status-pill.offline {
+  color: #fecdd3;
+  background: rgba(244, 63, 94, 0.13);
+  border: 1px solid rgba(244, 63, 94, 0.28);
+}
+
+.admin-event-pill {
+  min-width: 82px;
+  display: inline-flex;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 5px 9px;
+  font-size: 12px;
+  font-weight: 900;
+  color: #dbeafe;
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.admin-event-pill.login {
+  color: #bbf7d0;
+  background: rgba(34, 197, 94, 0.16);
+  border-color: rgba(34, 197, 94, 0.32);
+}
+
+.admin-event-pill.logout {
+  color: #fecdd3;
+  background: rgba(244, 63, 94, 0.13);
+  border-color: rgba(244, 63, 94, 0.28);
 }
 
 .admin-users-table th,
