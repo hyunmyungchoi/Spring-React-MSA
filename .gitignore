@@ -31,6 +31,8 @@ target/
 *.log
 logs/
 log/
+!FrontEnd/apps/admin/src/logs/
+!FrontEnd/apps/admin/src/logs/**
 
 # =========================
 # Environment / Secrets

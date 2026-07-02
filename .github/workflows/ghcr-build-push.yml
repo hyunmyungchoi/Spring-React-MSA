@@ -25,13 +25,13 @@ jobs:
       fail-fast: false
       matrix:
         service:
-          - spring-cloud-gateway
+          - spring-member-gateway
           - spring-admin-gateway
           - spring-security-authorization-server
           - spring-user-service
-          - spring-community-service
-          - spring-stock-service
-          - spring-bff-service
+          - spring-member-community-service
+          - spring-member-stock-service
+          - spring-member-bff-service
           - spring-admin-bff-service
 
     steps:
@@ -74,8 +74,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - service: spring-shell-web
-            dockerfile: FrontEnd/apps/shell/Dockerfile
+          - service: spring-member-web
+            dockerfile: FrontEnd/apps/member/Dockerfile
           - service: spring-admin-web
             dockerfile: FrontEnd/apps/admin/Dockerfile
 
