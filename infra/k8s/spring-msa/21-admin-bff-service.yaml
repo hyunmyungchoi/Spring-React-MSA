@@ -1,0 +1,91 @@
+﻿apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spring-admin-bff-service
+  namespace: spring-msa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spring-admin-bff-service
+  template:
+    metadata:
+      labels:
+        app: spring-admin-bff-service
+    spec:
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: spring-admin-bff-service
+          image: ghcr.io/hyunmyungchoi/spring-admin-bff-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8087
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: prod
+            - name: SERVER_TOMCAT_ACCESSLOG_ENABLED
+              value: "true"
+            - name: SERVER_TOMCAT_ACCESSLOG_DIRECTORY
+              value: /dev
+            - name: SERVER_TOMCAT_ACCESSLOG_PREFIX
+              value: stdout
+            - name: SERVER_TOMCAT_ACCESSLOG_SUFFIX
+              value: ""
+            - name: SERVER_TOMCAT_ACCESSLOG_FILE_DATE_FORMAT
+              value: ""
+            - name: SERVER_TOMCAT_ACCESSLOG_BUFFERED
+              value: "false"
+            - name: SPRING_DATA_REDIS_HOST
+              value: redis
+            - name: SPRING_DATA_REDIS_PORT
+              value: "6379"
+            - name: SPRING_DATA_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: spring-msa-secret
+                  key: REDIS_PASSWORD
+            - name: ADMIN_BFF_FRONTEND_REDIRECT_URI
+              value: http://admin.localtest.me
+            - name: ADMIN_BFF_OAUTH2_AUTHORIZATION_URI
+              value: http://admin.localtest.me/oauth2/authorize
+            - name: ADMIN_BFF_OAUTH2_TOKEN_URI
+              value: http://spring-admin-gateway:8090/oauth2/token
+            - name: ADMIN_BFF_OAUTH2_USERINFO_URI
+              value: http://spring-admin-gateway:8090/userinfo
+            - name: ADMIN_BFF_OAUTH2_JWK_SET_URI
+              value: http://spring-security-authorization-server:9000/oauth2/jwks
+            - name: ADMIN_BFF_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: spring-msa-oauth-secret
+                  key: ADMIN_BFF_CLIENT_ID
+            - name: ADMIN_BFF_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: spring-msa-oauth-secret
+                  key: ADMIN_BFF_CLIENT_SECRET
+            - name: ADMIN_BFF_OAUTH2_REDIRECT_URI
+              value: http://admin.localtest.me/admin-bff/login/oauth2/code/admin-bff
+            - name: ADMIN_BFF_OAUTH2_END_SESSION_URI
+              value: http://admin.localtest.me/connect/logout
+            - name: ADMIN_BFF_OAUTH2_LOGOUT_URI
+              value: http://admin.localtest.me/logout
+            - name: ADMIN_BFF_API_USER_API_BASE_URL
+              value: http://spring-user-service:8081
+            - name: ADMIN_BFF_API_USER_INTERNAL_BASE_URL
+              value: http://spring-user-service:8081
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spring-admin-bff-service
+  namespace: spring-msa
+spec:
+  type: ClusterIP
+  selector:
+    app: spring-admin-bff-service
+  ports:
+    - port: 8087
+      targetPort: 8087
+

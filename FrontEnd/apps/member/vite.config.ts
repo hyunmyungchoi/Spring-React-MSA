@@ -44,6 +44,7 @@ export default defineConfig(({ mode }) => {
         '/bff': {
           target: gatewayTarget,
           changeOrigin: true,
+          ws: true,
         },
         '/oauth2': {
           target: gatewayTarget,

@@ -1,14 +1,79 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: spring-msa-user-web
+  name: spring-msa-user-bff-legacy-login
   namespace: spring-msa
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /oauth2/authorization/member-bff
 spec:
+  ingressClassName: nginx
   rules:
-    - host: user.localhost
+    - host: user.localtest.me
       http:
         paths:
-          - path: /bff
+          - path: /bff/auth/login
+            pathType: Exact
+            backend:
+              service:
+                name: spring-member-bff-service
+                port:
+                  number: 8079
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: spring-msa-user-bff-legacy-signup
+  namespace: spring-msa
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /registration/member
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: user.localtest.me
+      http:
+        paths:
+          - path: /bff/auth/signup
+            pathType: Exact
+            backend:
+              service:
+                name: spring-member-bff-service
+                port:
+                  number: 8079
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: spring-msa-user-bff
+  namespace: spring-msa
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: user.localtest.me
+      http:
+        paths:
+          - path: /bff(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: spring-member-bff-service
+                port:
+                  number: 8079
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: spring-msa-user
+  namespace: spring-msa
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: user.localtest.me
+      http:
+        paths:
+          - path: /api
             pathType: Prefix
             backend:
               service:
@@ -64,16 +129,16 @@ spec:
                 name: spring-member-web
                 port:
                   number: 80
-
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: spring-msa-admin-web
+  name: spring-msa-admin
   namespace: spring-msa
 spec:
+  ingressClassName: nginx
   rules:
-    - host: admin.localhost
+    - host: admin.localtest.me
       http:
         paths:
           - path: /admin-bff

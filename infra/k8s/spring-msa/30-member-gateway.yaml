@@ -1,0 +1,53 @@
+﻿apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spring-member-gateway
+  namespace: spring-msa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spring-member-gateway
+  template:
+    metadata:
+      labels:
+        app: spring-member-gateway
+    spec:
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: spring-member-gateway
+          image: ghcr.io/hyunmyungchoi/spring-member-gateway:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: prod
+            - name: JAVA_OPTS
+              value: -Dreactor.netty.http.server.accessLogEnabled=true
+            - name: GATEWAY_CORS_ALLOWED_ORIGIN
+              value: http://user.localtest.me
+            - name: GATEWAY_BFF_URI
+              value: http://spring-member-bff-service:8079
+            - name: GATEWAY_USER_SERVICE_URI
+              value: http://spring-user-service:8081
+            - name: GATEWAY_COMMUNITY_SERVICE_URI
+              value: http://spring-member-community-service:8083
+            - name: GATEWAY_STOCK_SERVICE_URI
+              value: http://spring-member-stock-service:8084
+            - name: GATEWAY_AUTHORIZATION_SERVER_URI
+              value: http://spring-security-authorization-server:9000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spring-member-gateway
+  namespace: spring-msa
+spec:
+  type: ClusterIP
+  selector:
+    app: spring-member-gateway
+  ports:
+    - port: 8080
+      targetPort: 8080

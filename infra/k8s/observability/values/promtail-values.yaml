@@ -1,0 +1,21 @@
+config:
+  logLevel: info
+  clients:
+    - url: http://loki-gateway/loki/api/v1/push
+  snippets:
+    pipelineStages:
+      - cri: {}
+    extraRelabelConfigs:
+      - action: keep
+        source_labels:
+          - __meta_kubernetes_namespace
+        regex: spring-msa|observability|ingress-nginx
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 300m
+    memory: 256Mi
+

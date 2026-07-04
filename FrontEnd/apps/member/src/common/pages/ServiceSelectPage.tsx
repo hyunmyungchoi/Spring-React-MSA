@@ -5,6 +5,11 @@ function ServiceSelectPage() {
     return (
         <section className="service-grid">
             <ServiceSelectCard
+                to="/chat"
+                label="Realtime service"
+                title="Chat"
+            />
+            <ServiceSelectCard
                 to="/community"
                 label="Member service"
                 title="Community"

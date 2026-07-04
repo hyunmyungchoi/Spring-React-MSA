@@ -1,0 +1,79 @@
+﻿apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spring-member-community-service
+  namespace: spring-msa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spring-member-community-service
+  template:
+    metadata:
+      labels:
+        app: spring-member-community-service
+    spec:
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: spring-member-community-service
+          image: ghcr.io/hyunmyungchoi/spring-member-community-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8083
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: prod
+            - name: SERVER_TOMCAT_ACCESSLOG_ENABLED
+              value: "true"
+            - name: SERVER_TOMCAT_ACCESSLOG_DIRECTORY
+              value: /dev
+            - name: SERVER_TOMCAT_ACCESSLOG_PREFIX
+              value: stdout
+            - name: SERVER_TOMCAT_ACCESSLOG_SUFFIX
+              value: ""
+            - name: SERVER_TOMCAT_ACCESSLOG_FILE_DATE_FORMAT
+              value: ""
+            - name: SERVER_TOMCAT_ACCESSLOG_BUFFERED
+              value: "false"
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://postgres:5432/msa
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: spring-msa-config
+                  key: POSTGRES_USER
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: spring-msa-secret
+                  key: POSTGRES_PASSWORD
+            - name: SPRING_DATA_REDIS_HOST
+              value: redis
+            - name: SPRING_DATA_REDIS_PORT
+              value: "6379"
+            - name: SPRING_DATA_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: spring-msa-secret
+                  key: REDIS_PASSWORD
+            - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI
+              value: http://user.localtest.me
+            - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI
+              value: http://spring-security-authorization-server:9000/oauth2/jwks
+            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+              value: update
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spring-member-community-service
+  namespace: spring-msa
+spec:
+  type: ClusterIP
+  selector:
+    app: spring-member-community-service
+  ports:
+    - port: 8083
+      targetPort: 8083
+

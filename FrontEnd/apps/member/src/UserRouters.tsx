@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import ChatEntryPage from "./chat/pages/ChatEntryPage";
 import CommunityEntryPage from "./community/pages/CommunityEntryPage";
 import UserAuthLayout from "./common/layouts/UserAuthLayout";
 import UserLayout from "./common/layouts/UserLayout";
@@ -16,6 +17,7 @@ function UserRouters() {
 
             <Route element={<UserLayout />}>
                 <Route path="/" element={<ServiceSelectPage />} />
+                <Route path="/chat" element={<ChatEntryPage />} />
                 <Route path="/community" element={<CommunityEntryPage />} />
                 <Route path="/stock" element={<StockEntryPage />} />
             </Route>

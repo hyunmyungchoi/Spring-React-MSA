@@ -15,6 +15,7 @@ function UserNavbar() {
                 <h1>Choose service</h1>
                 <nav className="user-nav" aria-label="member navigation">
                     <NavLink to="/">Home</NavLink>
+                    <NavLink to="/chat">Chat</NavLink>
                     <NavLink to="/community">Community</NavLink>
                     <NavLink to="/stock">Stock</NavLink>
                 </nav>

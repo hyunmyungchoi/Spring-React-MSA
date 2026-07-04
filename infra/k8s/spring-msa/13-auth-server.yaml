@@ -1,0 +1,99 @@
+﻿apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spring-security-authorization-server
+  namespace: spring-msa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spring-security-authorization-server
+  template:
+    metadata:
+      labels:
+        app: spring-security-authorization-server
+    spec:
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: spring-security-authorization-server
+          image: ghcr.io/hyunmyungchoi/spring-security-authorization-server:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 9000
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: prod
+            - name: SERVER_TOMCAT_ACCESSLOG_ENABLED
+              value: "true"
+            - name: SERVER_TOMCAT_ACCESSLOG_DIRECTORY
+              value: /dev
+            - name: SERVER_TOMCAT_ACCESSLOG_PREFIX
+              value: stdout
+            - name: SERVER_TOMCAT_ACCESSLOG_SUFFIX
+              value: ""
+            - name: SERVER_TOMCAT_ACCESSLOG_FILE_DATE_FORMAT
+              value: ""
+            - name: SERVER_TOMCAT_ACCESSLOG_BUFFERED
+              value: "false"
+            - name: SPRING_DATA_REDIS_HOST
+              value: redis
+            - name: SPRING_DATA_REDIS_PORT
+              value: "6379"
+            - name: SPRING_DATA_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: spring-msa-secret
+                  key: REDIS_PASSWORD
+            - name: AUTH_SERVER_ISSUER
+              value: http://user.localtest.me
+            - name: USER_FRONTEND_LOGIN_URI
+              value: http://user.localtest.me/auth
+            - name: ADMIN_FRONTEND_LOGIN_URI
+              value: http://admin.localtest.me/auth
+            - name: USER_SERVICE_BASE_URL
+              value: http://spring-user-service:8081
+            - name: BFF_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: spring-msa-oauth-secret
+                  key: BFF_CLIENT_ID
+            - name: BFF_CLIENT_SECRET_HASH
+              valueFrom:
+                secretKeyRef:
+                  name: spring-msa-oauth-secret
+                  key: BFF_CLIENT_SECRET_HASH
+            - name: BFF_OAUTH2_REDIRECT_URI
+              value: http://user.localtest.me/bff/login/oauth2/code/member-bff
+            - name: BFF_POST_LOGOUT_REDIRECT_URI
+              value: http://user.localtest.me/auth
+            - name: ADMIN_BFF_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: spring-msa-oauth-secret
+                  key: ADMIN_BFF_CLIENT_ID
+            - name: ADMIN_BFF_CLIENT_SECRET_HASH
+              valueFrom:
+                secretKeyRef:
+                  name: spring-msa-oauth-secret
+                  key: ADMIN_BFF_CLIENT_SECRET_HASH
+            - name: ADMIN_BFF_OAUTH2_REDIRECT_URI
+              value: http://admin.localtest.me/admin-bff/login/oauth2/code/admin-bff
+            - name: ADMIN_BFF_POST_LOGOUT_REDIRECT_URI
+              value: http://admin.localtest.me/auth
+            - name: ADMIN_BFF_POST_LOGOUT_LOGIN_REDIRECT_URI
+              value: http://admin.localtest.me/login
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spring-security-authorization-server
+  namespace: spring-msa
+spec:
+  type: ClusterIP
+  selector:
+    app: spring-security-authorization-server
+  ports:
+    - port: 9000
+      targetPort: 9000
+

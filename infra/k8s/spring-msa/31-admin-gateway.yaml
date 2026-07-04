@@ -1,0 +1,48 @@
+﻿apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spring-admin-gateway
+  namespace: spring-msa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spring-admin-gateway
+  template:
+    metadata:
+      labels:
+        app: spring-admin-gateway
+    spec:
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: spring-admin-gateway
+          image: ghcr.io/hyunmyungchoi/spring-admin-gateway:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8090
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: prod
+            - name: JAVA_OPTS
+              value: -Dreactor.netty.http.server.accessLogEnabled=true
+            - name: ADMIN_GATEWAY_CORS_ALLOWED_ORIGIN
+              value: http://admin.localtest.me
+            - name: ADMIN_GATEWAY_ADMIN_BFF_URI
+              value: http://spring-admin-bff-service:8087
+            - name: ADMIN_GATEWAY_AUTHORIZATION_SERVER_URI
+              value: http://spring-security-authorization-server:9000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spring-admin-gateway
+  namespace: spring-msa
+spec:
+  type: ClusterIP
+  selector:
+    app: spring-admin-gateway
+  ports:
+    - port: 8090
+      targetPort: 8090
+
