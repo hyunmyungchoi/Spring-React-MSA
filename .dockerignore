@@ -7,6 +7,8 @@ infra/argocd
 infra/k8s
 infra/prod
 infra/docker
+!infra/nginx/
+!infra/nginx/*.conf
 
 **/node_modules
 **/dist
