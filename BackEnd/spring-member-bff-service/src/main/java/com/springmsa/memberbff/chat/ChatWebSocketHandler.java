@@ -3,6 +3,7 @@ package com.springmsa.memberbff.chat;
 import com.springmsa.memberbff.auth.BffAuthenticationService;
 import com.springmsa.memberbff.auth.dto.SessionUserResponse;
 import com.springmsa.memberbff.chat.dto.ChatClientMessage;
+import com.springmsa.memberbff.chat.dto.ChatMessageResponse;
 import com.springmsa.memberbff.chat.dto.ChatServerMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +34,6 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     private final BffAuthenticationService bffAuthenticationService;
     private final ChatMessageService chatMessageService;
     private final ChatWebSocketSessionRegistry chatWebSocketSessionRegistry;
-    private final ChatStreamBroadcastScheduler chatStreamBroadcastScheduler;
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
@@ -48,7 +48,6 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         SessionUserResponse user = bffAuthenticationService.getSessionUser(authentication);
 
         chatWebSocketSessionRegistry.add(roomId, session, new ChatConnection(roomId, user));
-        chatStreamBroadcastScheduler.watchRoom(roomId);
 
         chatWebSocketSessionRegistry.send(session, ChatServerMessage.connected(roomId));
         chatWebSocketSessionRegistry.send(session, ChatServerMessage.history(
@@ -75,7 +74,15 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
                 return;
             }
 
-            chatMessageService.appendMessage(connection.roomId(), connection.user(), clientMessage.content());
+            ChatMessageResponse savedMessage = chatMessageService.appendMessage(
+                    connection.roomId(),
+                    connection.user(),
+                    clientMessage.content()
+            );
+            chatWebSocketSessionRegistry.broadcast(
+                    connection.roomId(),
+                    ChatServerMessage.chat(connection.roomId(), savedMessage)
+            );
 
         } catch (ResponseStatusException e) {
             chatWebSocketSessionRegistry.send(session, ChatServerMessage.error(connection.roomId(), errorMessage(e)));

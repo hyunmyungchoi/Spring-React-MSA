@@ -11,6 +11,16 @@ spring:
   application:
     name: spring-member-bff-service
 
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:15432}/${POSTGRES_DB:msa}}
+    username: ${SPRING_DATASOURCE_USERNAME:${POSTGRES_USER:msa}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${POSTGRES_PASSWORD:msa}}
+
+  jpa:
+    hibernate:
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
+    open-in-view: false
+
   session:
     store-type: redis
     data:
@@ -41,10 +51,6 @@ bff:
   chat:
     websocket:
       allowed-origin-patterns: ${BFF_CHAT_WEBSOCKET_ALLOWED_ORIGIN_PATTERNS:http://localhost:*,http://user.localtest.me}
-    stream:
-      namespace: ${BFF_CHAT_STREAM_NAMESPACE:spring:chat}
-      max-length: ${BFF_CHAT_STREAM_MAX_LENGTH:1000}
-      poll-delay-ms: ${BFF_CHAT_STREAM_POLL_DELAY_MS:500}
     message:
       default-history-limit: ${BFF_CHAT_DEFAULT_HISTORY_LIMIT:50}
       max-content-length: ${BFF_CHAT_MAX_CONTENT_LENGTH:1000}
