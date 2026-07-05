@@ -4,7 +4,7 @@ metadata:
   name: spring-member-bff-service
   namespace: spring-msa
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: spring-member-bff-service
@@ -59,6 +59,8 @@ spec:
                 secretKeyRef:
                   name: spring-msa-secret
                   key: REDIS_PASSWORD
+            - name: BFF_CHAT_PUBSUB_CHANNEL
+              value: spring:chat:broadcast
             - name: BFF_FRONTEND_REDIRECT_URI
               value: http://user.localtest.me
             - name: BFF_OAUTH2_AUTHORIZATION_URI

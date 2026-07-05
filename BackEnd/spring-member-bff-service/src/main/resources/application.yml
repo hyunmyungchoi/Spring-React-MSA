@@ -51,6 +51,8 @@ bff:
   chat:
     websocket:
       allowed-origin-patterns: ${BFF_CHAT_WEBSOCKET_ALLOWED_ORIGIN_PATTERNS:http://localhost:*,http://user.localtest.me}
+    pubsub:
+      channel: ${BFF_CHAT_PUBSUB_CHANNEL:spring:chat:broadcast}
     message:
       default-history-limit: ${BFF_CHAT_DEFAULT_HISTORY_LIMIT:50}
       max-content-length: ${BFF_CHAT_MAX_CONTENT_LENGTH:1000}

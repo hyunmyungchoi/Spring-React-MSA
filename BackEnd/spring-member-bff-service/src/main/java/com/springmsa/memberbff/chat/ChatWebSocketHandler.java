@@ -5,6 +5,7 @@ import com.springmsa.memberbff.auth.dto.SessionUserResponse;
 import com.springmsa.memberbff.chat.dto.ChatClientMessage;
 import com.springmsa.memberbff.chat.dto.ChatMessageResponse;
 import com.springmsa.memberbff.chat.dto.ChatServerMessage;
+import com.springmsa.memberbff.chat.pubsub.ChatRedisPubSubPublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
@@ -34,6 +35,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     private final BffAuthenticationService bffAuthenticationService;
     private final ChatMessageService chatMessageService;
     private final ChatWebSocketSessionRegistry chatWebSocketSessionRegistry;
+    private final ChatRedisPubSubPublisher chatRedisPubSubPublisher;
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
@@ -79,10 +81,15 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
                     connection.user(),
                     clientMessage.content()
             );
-            chatWebSocketSessionRegistry.broadcast(
-                    connection.roomId(),
-                    ChatServerMessage.chat(connection.roomId(), savedMessage)
-            );
+            ChatServerMessage serverMessage = ChatServerMessage.chat(connection.roomId(), savedMessage);
+
+            try {
+                chatRedisPubSubPublisher.publish(serverMessage);
+
+            } catch (RuntimeException e) {
+                log.warn("Failed to publish chat message. Falling back to local broadcast. roomId={}", connection.roomId(), e);
+                chatWebSocketSessionRegistry.broadcast(connection.roomId(), serverMessage);
+            }
 
         } catch (ResponseStatusException e) {
             chatWebSocketSessionRegistry.send(session, ChatServerMessage.error(connection.roomId(), errorMessage(e)));
