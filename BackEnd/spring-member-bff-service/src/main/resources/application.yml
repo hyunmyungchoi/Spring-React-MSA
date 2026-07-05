@@ -67,6 +67,12 @@ bff:
       allowed-origin-patterns: ${BFF_CHAT_WEBSOCKET_ALLOWED_ORIGIN_PATTERNS:http://localhost:*,http://user.localtest.me}
     pubsub:
       channel: ${BFF_CHAT_PUBSUB_CHANNEL:spring:chat:broadcast}
+    cache:
+      recent-messages:
+        enabled: ${BFF_CHAT_RECENT_MESSAGES_CACHE_ENABLED:true}
+        namespace: ${BFF_CHAT_RECENT_MESSAGES_CACHE_NAMESPACE:spring:chat:cache}
+        max-size: ${BFF_CHAT_RECENT_MESSAGES_CACHE_MAX_SIZE:200}
+        ttl-seconds: ${BFF_CHAT_RECENT_MESSAGES_CACHE_TTL_SECONDS:3600}
     message:
       default-history-limit: ${BFF_CHAT_DEFAULT_HISTORY_LIMIT:50}
       max-content-length: ${BFF_CHAT_MAX_CONTENT_LENGTH:1000}

@@ -1,6 +1,7 @@
 package com.springmsa.memberbff.chat;
 
 import com.springmsa.memberbff.auth.dto.SessionUserResponse;
+import com.springmsa.memberbff.chat.cache.ChatRecentMessageCacheRepository;
 import com.springmsa.memberbff.chat.dto.ChatMessageResponse;
 import com.springmsa.memberbff.chat.event.ChatMessageSavedEvent;
 import com.springmsa.memberbff.chat.persistence.ChatMessageEntity;
@@ -30,6 +31,7 @@ public class ChatMessageService {
     private final ChatRoomJpaRepository chatRoomJpaRepository;
     private final ChatMessageJpaRepository chatMessageJpaRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final ChatRecentMessageCacheRepository chatRecentMessageCacheRepository;
 
     private final Object roomCreationLock = new Object();
 
@@ -64,6 +66,14 @@ public class ChatMessageService {
     public List<ChatMessageResponse> findRecentMessages(String roomId, Integer limit) {
         String resolvedRoomId = resolveRoomId(roomId);
         int resolvedLimit = resolveLimit(limit);
+
+        List<ChatMessageResponse> cachedMessages = chatRecentMessageCacheRepository
+                .findRecentMessages(resolvedRoomId, resolvedLimit)
+                .orElse(null);
+        if (cachedMessages != null) {
+            return cachedMessages;
+        }
+
         List<ChatMessageEntity> messages = new ArrayList<>(chatMessageJpaRepository.findRecentMessages(
                 resolvedRoomId,
                 PageRequest.of(0, resolvedLimit)
@@ -71,9 +81,12 @@ public class ChatMessageService {
 
         Collections.reverse(messages);
 
-        return messages.stream()
+        List<ChatMessageResponse> recentMessages = messages.stream()
                 .map(this::toResponse)
                 .toList();
+        chatRecentMessageCacheRepository.replaceRecentMessages(resolvedRoomId, recentMessages);
+
+        return recentMessages;
     }
 
     public String resolveRoomId(String roomId) {
