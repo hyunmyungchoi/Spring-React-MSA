@@ -9,11 +9,10 @@ export type ChatMessage = {
 };
 
 export type ChatServerMessage = {
-    type: "CONNECTED" | "HISTORY" | "CHAT_MESSAGE" | "ERROR";
+    type: "CONNECTED" | "HISTORY" | "CHAT_MESSAGE" | "PONG" | "ERROR";
     roomId: string;
     message?: ChatMessage | null;
     messages?: ChatMessage[];
     detail?: string | null;
     occurredAt: string;
 };
-

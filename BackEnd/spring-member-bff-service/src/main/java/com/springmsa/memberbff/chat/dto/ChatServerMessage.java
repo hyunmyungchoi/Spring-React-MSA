@@ -28,8 +28,11 @@ public record ChatServerMessage(
         return new ChatServerMessage("CHAT_MESSAGE", roomId, message, List.of(), null, Instant.now());
     }
 
+    public static ChatServerMessage pong(String roomId) {
+        return new ChatServerMessage("PONG", roomId, null, List.of(), null, Instant.now());
+    }
+
     public static ChatServerMessage error(String roomId, String detail) {
         return new ChatServerMessage("ERROR", roomId, null, List.of(), detail, Instant.now());
     }
 }
-

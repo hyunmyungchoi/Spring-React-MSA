@@ -6,6 +6,7 @@ import com.springmsa.memberbff.chat.dto.ChatClientMessage;
 import com.springmsa.memberbff.chat.dto.ChatServerMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
@@ -19,7 +20,6 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.security.Principal;
-import java.util.List;
 
 @Slf4j
 @Component
@@ -27,6 +27,7 @@ import java.util.List;
 public class ChatWebSocketHandler extends TextWebSocketHandler {
 
     private static final String MESSAGE_TYPE_CHAT = "CHAT_MESSAGE";
+    private static final String MESSAGE_TYPE_PING = "PING";
 
     private final ObjectMapper objectMapper;
     private final BffAuthenticationService bffAuthenticationService;
@@ -57,12 +58,17 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     }
 
     @Override
-    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+    protected void handleTextMessage(@NonNull WebSocketSession session, @NonNull TextMessage message) throws Exception {
         ChatConnection connection = chatWebSocketSessionRegistry.findConnection(session)
                 .orElseThrow(() -> new IllegalStateException("Chat websocket session is not registered"));
 
         try {
             ChatClientMessage clientMessage = objectMapper.readValue(message.getPayload(), ChatClientMessage.class);
+
+            if (MESSAGE_TYPE_PING.equals(clientMessage.type())) {
+                chatWebSocketSessionRegistry.send(session, ChatServerMessage.pong(connection.roomId()));
+                return;
+            }
 
             if (!MESSAGE_TYPE_CHAT.equals(clientMessage.type())) {
                 chatWebSocketSessionRegistry.send(session, ChatServerMessage.error(connection.roomId(), "Unsupported chat message type"));
@@ -81,12 +87,12 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     }
 
     @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
+    public void afterConnectionClosed(@NonNull WebSocketSession session, @NonNull CloseStatus status) {
         chatWebSocketSessionRegistry.remove(session);
     }
 
     @Override
-    public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
+    public void handleTransportError(WebSocketSession session, @NonNull Throwable exception) throws Exception {
         log.warn("Chat websocket transport error. sessionId={}", session.getId(), exception);
         chatWebSocketSessionRegistry.remove(session);
         closeQuietly(session);

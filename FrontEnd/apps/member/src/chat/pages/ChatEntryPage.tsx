@@ -6,10 +6,19 @@ import { useUserMe } from "../../common/hooks/useUserMe";
 
 const ROOM_ID = "global";
 const MAX_RENDERED_MESSAGES = 200;
+const HEARTBEAT_INTERVAL_MS = 25_000;
+const HEARTBEAT_TIMEOUT_MS = 10_000;
+const RECONNECT_INITIAL_DELAY_MS = 1_000;
+const RECONNECT_MAX_DELAY_MS = 10_000;
 
 function ChatEntryPage() {
     const { me } = useUserMe();
     const socketRef = useRef<WebSocket | null>(null);
+    const heartbeatIntervalRef = useRef<number | null>(null);
+    const heartbeatTimeoutRef = useRef<number | null>(null);
+    const reconnectTimerRef = useRef<number | null>(null);
+    const reconnectDelayRef = useRef(RECONNECT_INITIAL_DELAY_MS);
+    const shouldReconnectRef = useRef(true);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [draft, setDraft] = useState("");
     const [connected, setConnected] = useState(false);
@@ -32,34 +41,134 @@ function ChatEntryPage() {
     }, []);
 
     useEffect(() => {
-        const socket = new WebSocket(chatWebSocketUrl(ROOM_ID));
-        socketRef.current = socket;
+        shouldReconnectRef.current = true;
 
-        socket.onopen = () => {
-            setConnected(true);
-            setStatus("Connected");
+        const connect = () => {
+            if (!shouldReconnectRef.current) {
+                return;
+            }
+
+            setStatus("Connecting...");
+
+            const socket = new WebSocket(chatWebSocketUrl(ROOM_ID));
+            socketRef.current = socket;
+
+            socket.onopen = () => {
+                reconnectDelayRef.current = RECONNECT_INITIAL_DELAY_MS;
+                setConnected(true);
+                setStatus("Connected");
+                startHeartbeat(socket);
+            };
+
+            socket.onmessage = (event) => {
+                markHeartbeatReceived();
+                handleServerMessage(event.data);
+            };
+
+            socket.onerror = () => {
+                setStatus("Chat connection error");
+            };
+
+            socket.onclose = (event) => {
+                if (socketRef.current === socket) {
+                    socketRef.current = null;
+                }
+
+                clearHeartbeat();
+                setConnected(false);
+
+                if (!shouldReconnectRef.current) {
+                    setStatus("Disconnected");
+                    return;
+                }
+
+                if (event.code === 1008) {
+                    setStatus(event.reason || "Member session is required");
+                    return;
+                }
+
+                scheduleReconnect(connect);
+            };
         };
 
-        socket.onmessage = (event) => {
-            handleServerMessage(event.data);
-        };
-
-        socket.onerror = () => {
-            setStatus("Chat connection error");
-        };
-
-        socket.onclose = () => {
-            setConnected(false);
-            setStatus("Disconnected");
-        };
+        connect();
 
         return () => {
-            socket.close();
-            if (socketRef.current === socket) {
+            shouldReconnectRef.current = false;
+            clearReconnectTimer();
+            clearHeartbeat();
+
+            if (socketRef.current) {
+                socketRef.current.close();
                 socketRef.current = null;
             }
         };
     }, []);
+
+    const startHeartbeat = (socket: WebSocket) => {
+        clearHeartbeat();
+
+        heartbeatIntervalRef.current = window.setInterval(() => {
+            if (socket.readyState !== WebSocket.OPEN) {
+                return;
+            }
+
+            try {
+                socket.send(JSON.stringify({ type: "PING" }));
+            } catch {
+                socket.close();
+                return;
+            }
+
+            clearHeartbeatTimeout();
+
+            heartbeatTimeoutRef.current = window.setTimeout(() => {
+                setStatus("Chat heartbeat timeout");
+                socket.close();
+            }, HEARTBEAT_TIMEOUT_MS);
+        }, HEARTBEAT_INTERVAL_MS);
+    };
+
+    const markHeartbeatReceived = () => {
+        clearHeartbeatTimeout();
+    };
+
+    const clearHeartbeat = () => {
+        if (heartbeatIntervalRef.current !== null) {
+            window.clearInterval(heartbeatIntervalRef.current);
+            heartbeatIntervalRef.current = null;
+        }
+
+        clearHeartbeatTimeout();
+    };
+
+    const clearHeartbeatTimeout = () => {
+        if (heartbeatTimeoutRef.current !== null) {
+            window.clearTimeout(heartbeatTimeoutRef.current);
+            heartbeatTimeoutRef.current = null;
+        }
+    };
+
+    const scheduleReconnect = (connect: () => void) => {
+        clearReconnectTimer();
+
+        const delay = reconnectDelayRef.current;
+        setStatus(`Reconnecting in ${Math.ceil(delay / 1000)}s...`);
+
+        reconnectTimerRef.current = window.setTimeout(() => {
+            reconnectTimerRef.current = null;
+            connect();
+        }, delay);
+
+        reconnectDelayRef.current = Math.min(delay * 2, RECONNECT_MAX_DELAY_MS);
+    };
+
+    const clearReconnectTimer = () => {
+        if (reconnectTimerRef.current !== null) {
+            window.clearTimeout(reconnectTimerRef.current);
+            reconnectTimerRef.current = null;
+        }
+    };
 
     const handleServerMessage = (payload: string) => {
         try {
@@ -71,6 +180,11 @@ function ChatEntryPage() {
             }
 
             if (serverMessage.type === "CONNECTED") {
+                setStatus("Connected");
+                return;
+            }
+
+            if (serverMessage.type === "PONG") {
                 setStatus("Connected");
                 return;
             }
@@ -207,4 +321,3 @@ function formatTime(value: string) {
 }
 
 export default ChatEntryPage;
-
