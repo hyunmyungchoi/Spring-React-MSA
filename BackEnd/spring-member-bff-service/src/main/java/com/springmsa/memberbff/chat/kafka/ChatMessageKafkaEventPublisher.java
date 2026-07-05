@@ -10,6 +10,8 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 import java.time.Instant;
 
@@ -18,13 +20,15 @@ import java.time.Instant;
 @RequiredArgsConstructor
 public class ChatMessageKafkaEventPublisher {
 
-    private final KafkaTemplate<String, ChatMessageCreatedEvent> kafkaTemplate;
+    private final KafkaTemplate<Object, Object> kafkaTemplate;
+    private final ObjectMapper objectMapper;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void publish(ChatMessageSavedEvent event) {
         ChatMessageCreatedEvent payload = toPayload(event.message());
+        String serializedPayload = serialize(payload);
 
-        kafkaTemplate.send(MsaKafkaTopics.CHAT_MESSAGE_CREATED, payload.roomId(), payload)
+        kafkaTemplate.send(MsaKafkaTopics.CHAT_MESSAGE_CREATED, payload.roomId(), serializedPayload)
                 .whenComplete((result, exception) -> {
                     if (exception != null) {
                         log.warn("Failed to publish chat message event. eventId={}", payload.eventId(), exception);
@@ -63,6 +67,15 @@ public class ChatMessageKafkaEventPublisher {
 
         } catch (NumberFormatException e) {
             return null;
+        }
+    }
+
+    private String serialize(ChatMessageCreatedEvent event) {
+        try {
+            return objectMapper.writeValueAsString(event);
+
+        } catch (JacksonException e) {
+            throw new IllegalStateException("Failed to serialize chat message event", e);
         }
     }
 }
