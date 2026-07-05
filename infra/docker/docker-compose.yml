@@ -150,8 +150,8 @@ services:
     image: spring-react-msa/spring-member-bff-service:latest
     container_name: spring-member-bff-service
     build:
-      context: ../../BackEnd/spring-member-bff-service
-      dockerfile: Dockerfile
+      context: ../../BackEnd
+      dockerfile: spring-member-bff-service/Dockerfile
     environment:
       SPRING_PROFILES_ACTIVE: docker
 

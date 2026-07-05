@@ -2,11 +2,13 @@ package com.springmsa.memberbff.chat;
 
 import com.springmsa.memberbff.auth.dto.SessionUserResponse;
 import com.springmsa.memberbff.chat.dto.ChatMessageResponse;
+import com.springmsa.memberbff.chat.event.ChatMessageSavedEvent;
 import com.springmsa.memberbff.chat.persistence.ChatMessageEntity;
 import com.springmsa.memberbff.chat.persistence.ChatMessageJpaRepository;
 import com.springmsa.memberbff.chat.persistence.ChatRoomEntity;
 import com.springmsa.memberbff.chat.persistence.ChatRoomJpaRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -27,6 +29,7 @@ public class ChatMessageService {
     private final ChatRoomValidator chatRoomValidator;
     private final ChatRoomJpaRepository chatRoomJpaRepository;
     private final ChatMessageJpaRepository chatMessageJpaRepository;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     private final Object roomCreationLock = new Object();
 
@@ -51,7 +54,10 @@ public class ChatMessageService {
                 sentAt
         ));
 
-        return toResponse(message);
+        ChatMessageResponse response = toResponse(message);
+        applicationEventPublisher.publishEvent(new ChatMessageSavedEvent(response));
+
+        return response;
     }
 
     @Transactional(readOnly = true)

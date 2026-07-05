@@ -24,6 +24,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-session-data-redis'
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+    implementation 'org.springframework.kafka:spring-kafka'
+    implementation 'com.springmsa:spring-msa-kafka-common:0.0.1-SNAPSHOT'
 
     runtimeOnly 'org.postgresql:postgresql'
 

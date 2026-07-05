@@ -46,9 +46,21 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push Docker image
+        if: matrix.service != 'spring-member-bff-service'
         uses: docker/build-push-action@v6
         with:
           context: BackEnd/${{ matrix.service }}
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.service }}:${{ env.IMAGE_TAG }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.service }}:${{ github.sha }}
+
+      - name: Build and push member BFF Docker image
+        if: matrix.service == 'spring-member-bff-service'
+        uses: docker/build-push-action@v6
+        with:
+          context: BackEnd
+          file: BackEnd/spring-member-bff-service/Dockerfile
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.service }}:${{ env.IMAGE_TAG }}

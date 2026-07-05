@@ -12,6 +12,4 @@ dependencyResolutionManagement {
     }
 }
 
-includeBuild('../spring-msa-kafka-common')
-
-rootProject.name = 'spring-member-bff-service'
+rootProject.name = 'spring-msa-kafka-common'

@@ -21,6 +21,20 @@ spring:
       ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
     open-in-view: false
 
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.springmsa.kafka.event
+    listener:
+      ack-mode: record
+
   session:
     store-type: redis
     data:
@@ -56,3 +70,14 @@ bff:
     message:
       default-history-limit: ${BFF_CHAT_DEFAULT_HISTORY_LIMIT:50}
       max-content-length: ${BFF_CHAT_MAX_CONTENT_LENGTH:1000}
+  kafka:
+    topics:
+      partitions: ${BFF_KAFKA_TOPIC_PARTITIONS:3}
+      replicas: ${BFF_KAFKA_TOPIC_REPLICAS:1}
+    retry:
+      interval-ms: ${BFF_KAFKA_RETRY_INTERVAL_MS:1000}
+      max-attempts: ${BFF_KAFKA_RETRY_MAX_ATTEMPTS:3}
+    consumer:
+      notification-group: ${BFF_KAFKA_NOTIFICATION_GROUP:spring-member-bff-chat-notification}
+      analytics-group: ${BFF_KAFKA_ANALYTICS_GROUP:spring-member-bff-chat-analytics}
+      dlt-group: ${BFF_KAFKA_DLT_GROUP:spring-member-bff-chat-dlt}
