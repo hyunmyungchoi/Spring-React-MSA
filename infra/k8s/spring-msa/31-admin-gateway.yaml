@@ -17,7 +17,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: spring-admin-gateway
-          image: ghcr.io/hyunmyungchoi/spring-admin-gateway:latest
+          image: ghcr.io/hyunmyungchoi/spring-admin-gateway:ccb419cbfc03bb2189211eabce95a1d7dcae5bf3
           imagePullPolicy: Always
           ports:
             - containerPort: 8090

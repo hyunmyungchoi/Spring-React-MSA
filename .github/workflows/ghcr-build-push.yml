@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   packages: write
 
 env:
@@ -101,3 +101,74 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.service }}:${{ env.IMAGE_TAG }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.service }}:${{ github.sha }}
+
+  update-k8s-manifests:
+    name: Update Kubernetes image tags
+    runs-on: ubuntu-latest
+    needs:
+      - build-backend
+      - build-frontend
+    if: github.event_name == 'push' && github.actor != 'github-actions[bot]'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Update spring-msa image tags
+        shell: bash
+        run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+
+          sha = "${{ github.sha }}"
+          manifest_dir = Path("infra/k8s/spring-msa")
+          manifests = {
+              "10-user-service.yaml": ["spring-user-service"],
+              "11-community-service.yaml": ["spring-member-community-service"],
+              "12-stock-service.yaml": ["spring-member-stock-service"],
+              "13-auth-server.yaml": ["spring-security-authorization-server"],
+              "20-member-bff-service.yaml": ["spring-member-bff-service"],
+              "21-admin-bff-service.yaml": ["spring-admin-bff-service"],
+              "30-member-gateway.yaml": ["spring-member-gateway"],
+              "31-admin-gateway.yaml": ["spring-admin-gateway"],
+              "40-web.yaml": ["spring-member-web", "spring-admin-web"],
+          }
+
+          for file_name, image_names in manifests.items():
+              path = manifest_dir / file_name
+              text = path.read_text(encoding="utf-8")
+
+              for image_name in image_names:
+                  pattern = rf"(image:\s*ghcr\.io/hyunmyungchoi/{re.escape(image_name)}:)[^\s]+"
+                  text, count = re.subn(pattern, rf"\g<1>{sha}", text)
+
+                  if count != 1:
+                      raise SystemExit(f"Expected one image line for {image_name} in {path}, found {count}")
+
+              path.write_text(text, encoding="utf-8")
+          PY
+
+      - name: Verify fixed image tags
+        shell: bash
+        run: |
+          if grep -R "image: ghcr.io/${IMAGE_OWNER}/.*:latest" infra/k8s/spring-msa; then
+            echo "latest image tag remains in Kubernetes manifests"
+            exit 1
+          fi
+
+      - name: Commit manifest tag update
+        shell: bash
+        run: |
+          if git diff --quiet -- infra/k8s/spring-msa; then
+            echo "No Kubernetes image tag changes"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add infra/k8s/spring-msa
+          git commit -m "chore(k8s): update image tags to ${GITHUB_SHA} [skip ci]"
+          git push

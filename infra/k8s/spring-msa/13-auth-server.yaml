@@ -17,7 +17,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: spring-security-authorization-server
-          image: ghcr.io/hyunmyungchoi/spring-security-authorization-server:latest
+          image: ghcr.io/hyunmyungchoi/spring-security-authorization-server:ccb419cbfc03bb2189211eabce95a1d7dcae5bf3
           imagePullPolicy: Always
           ports:
             - containerPort: 9000
