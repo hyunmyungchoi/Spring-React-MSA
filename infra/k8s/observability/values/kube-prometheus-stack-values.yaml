@@ -32,11 +32,11 @@ grafana:
         maxLines: 1000
   resources:
     requests:
-      cpu: 50m
-      memory: 128Mi
+      cpu: 100m
+      memory: 256Mi
     limits:
-      cpu: 500m
-      memory: 512Mi
+      cpu: 1000m
+      memory: 1Gi
 
 alertmanager:
   enabled: false
@@ -68,4 +68,3 @@ prometheus:
       limits:
         cpu: 1000m
         memory: 2Gi
-

@@ -1,0 +1,11 @@
+{
+  "name": "spring-msa-load-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "chat:ws": "node chat-ws-replica2.mjs"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

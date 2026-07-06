@@ -1,8 +1,55 @@
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-jmx-exporter-config
+  namespace: kafka
+data:
+  kafka-jmx.yml: |
+    lowercaseOutputName: true
+    lowercaseOutputLabelNames: true
+    rules:
+      - pattern: "kafka.server<type=(.+), name=(.+)><>Value"
+        name: kafka_server_$1_$2
+        type: GAUGE
+      - pattern: "kafka.server<type=(.+), name=(.+)PerSec><>Count"
+        name: kafka_server_$1_$2_total
+        type: COUNTER
+      - pattern: "kafka.server<type=(.+), name=(.+)PerSec, topic=(.+)><>Count"
+        name: kafka_server_$1_$2_total
+        labels:
+          topic: "$3"
+        type: COUNTER
+      - pattern: "kafka.server<type=(.+), name=(.+), topic=(.+), partition=(.+)><>Value"
+        name: kafka_server_$1_$2
+        labels:
+          topic: "$3"
+          partition: "$4"
+        type: GAUGE
+      - pattern: "kafka.network<type=(.+), name=(.+)><>Value"
+        name: kafka_network_$1_$2
+        type: GAUGE
+      - pattern: "kafka.network<type=(.+), name=(.+)PerSec><>Count"
+        name: kafka_network_$1_$2_total
+        type: COUNTER
+      - pattern: "kafka.controller<type=(.+), name=(.+)><>Value"
+        name: kafka_controller_$1_$2
+        type: GAUGE
+      - pattern: "java.lang<type=Memory><(.+)>(.+)"
+        name: jvm_memory_$1_$2
+        type: GAUGE
+      - pattern: "java.lang<type=GarbageCollector, name=(.+)><>(CollectionCount|CollectionTime)"
+        name: jvm_gc_$2
+        labels:
+          gc: "$1"
+        type: COUNTER
+---
+apiVersion: v1
 kind: Service
 metadata:
   name: kafka-headless
   namespace: kafka
+  labels:
+    app: kafka
 spec:
   clusterIP: None
   selector:
@@ -20,6 +67,8 @@ kind: Service
 metadata:
   name: kafka
   namespace: kafka
+  labels:
+    app: kafka
 spec:
   type: ClusterIP
   selector:
@@ -28,6 +77,9 @@ spec:
     - name: broker
       port: 9092
       targetPort: 9092
+    - name: jmx-metrics
+      port: 9404
+      targetPort: 9404
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -47,6 +99,22 @@ spec:
     spec:
       securityContext:
         fsGroup: 1000
+      initContainers:
+        - name: jmx-exporter-download
+          image: curlimages/curl:8.8.0
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsUser: 0
+          command:
+            - sh
+            - -c
+            - |
+              set -eu
+              curl -fL "https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/1.0.1/jmx_prometheus_javaagent-1.0.1.jar" \
+                -o /opt/jmx-exporter/jmx_prometheus_javaagent.jar
+          volumeMounts:
+            - name: jmx-exporter
+              mountPath: /opt/jmx-exporter
       containers:
         - name: kafka
           image: apache/kafka:3.7.0
@@ -56,7 +124,11 @@ spec:
               containerPort: 9092
             - name: controller
               containerPort: 9093
+            - name: jmx-metrics
+              containerPort: 9404
           env:
+            - name: KAFKA_OPTS
+              value: -javaagent:/opt/jmx-exporter/jmx_prometheus_javaagent.jar=9404:/etc/jmx-exporter/kafka-jmx.yml
             - name: CLUSTER_ID
               value: 5L6g3nShT-eMCtK--X86sw
             - name: KAFKA_NODE_ID
@@ -95,6 +167,16 @@ spec:
           volumeMounts:
             - name: kafka-data
               mountPath: /var/lib/kafka/data
+            - name: jmx-exporter
+              mountPath: /opt/jmx-exporter
+            - name: kafka-jmx-exporter-config
+              mountPath: /etc/jmx-exporter
+      volumes:
+        - name: jmx-exporter
+          emptyDir: {}
+        - name: kafka-jmx-exporter-config
+          configMap:
+            name: kafka-jmx-exporter-config
   volumeClaimTemplates:
     - metadata:
         name: kafka-data
@@ -104,3 +186,23 @@ spec:
         resources:
           requests:
             storage: 1Gi
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kafka-jmx
+  namespace: kafka
+  labels:
+    app: kafka
+spec:
+  namespaceSelector:
+    matchNames:
+      - kafka
+  selector:
+    matchLabels:
+      app: kafka
+  endpoints:
+    - port: jmx-metrics
+      path: /metrics
+      interval: 15s
+      scrapeTimeout: 10s
