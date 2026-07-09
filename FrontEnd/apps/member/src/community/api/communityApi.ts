@@ -2,7 +2,7 @@ import { memberRequest } from "../../common/api/memberApiClient";
 import type { UserServiceMeResponse } from "../../common/types/userSession";
 import type { CommunityPost, CommunityPostPayload } from "../types/communityPost";
 
-// Loads the current user profile from the community service.
+// Loads the current user profile from the community service. 주석테스트
 export function fetchCommunityMe(signal?: AbortSignal): Promise<UserServiceMeResponse> {
     return memberRequest<UserServiceMeResponse>({ url: "/bff/community/me", signal });
 }
