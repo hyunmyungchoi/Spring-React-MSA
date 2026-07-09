@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 @FeignClient(name = "member-community-api-client", url = "${bff.api.community-api-base-url}")
-public interface CommunityBffServiceClient {
+public interface CommunityServiceClient {
 
     @GetMapping("/api/community/me")
     Map<String, Object> me(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorization);
