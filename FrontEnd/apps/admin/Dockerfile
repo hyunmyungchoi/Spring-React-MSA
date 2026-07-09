@@ -38,7 +38,7 @@ RUN pnpm exec tsc -b \
 
 FROM nginx:1.27-alpine
 
-COPY infra/nginx/admin-web.conf /etc/nginx/conf.d/default.conf
+COPY infra/nginx/web/admin-web.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html
 
 EXPOSE 80

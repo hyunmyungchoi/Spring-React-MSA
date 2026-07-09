@@ -4,6 +4,7 @@ import com.springmsa.adminbff.registration.dto.AdminRegistrationRequest;
 import com.springmsa.adminbff.registration.dto.AdminRegistrationResponse;
 import com.springmsa.adminbff.registration.service.AdminBffRegistrationService;
 import com.springmsa.common.web.response.MsaResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +25,7 @@ public class AdminBffRegistrationController {
      * @return created admin registration response
      */
     @PostMapping("/registration/admin")
-    public ResponseEntity<MsaResponse<AdminRegistrationResponse>> registerAdmin(@RequestBody AdminRegistrationRequest request) {
+    public ResponseEntity<MsaResponse<AdminRegistrationResponse>> registerAdmin(@Valid @RequestBody AdminRegistrationRequest request) {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(MsaResponse.created(adminBffRegistrationService.registerAdmin(request)));

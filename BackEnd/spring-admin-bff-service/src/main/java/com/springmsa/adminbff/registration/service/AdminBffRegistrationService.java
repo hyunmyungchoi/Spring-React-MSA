@@ -6,6 +6,8 @@ import com.springmsa.adminbff.registration.client.dto.AdminUserCreateResponse;
 import com.springmsa.adminbff.registration.dto.AdminRegistrationRequest;
 import com.springmsa.adminbff.registration.dto.AdminRegistrationResponse;
 import com.springmsa.adminbff.registration.exception.AdminBffRegistrationException;
+import com.springmsa.common.web.error.DownstreamErrorResponse;
+import com.springmsa.common.web.error.MsaErrorResponseParser;
 import com.springmsa.common.web.response.MsaResponse;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
@@ -51,9 +53,13 @@ public class AdminBffRegistrationService {
             return new AdminBffRegistrationException(statusCode, "User service is unavailable", e);
         }
 
+        DownstreamErrorResponse downstreamError = resolveFeignError(e);
+
         return new AdminBffRegistrationException(
                 statusCode,
-                resolveFeignErrorMessage(e),
+                downstreamError.code(),
+                downstreamError.message(),
+                downstreamError.errors(),
                 e
         );
     }
@@ -66,13 +72,11 @@ public class AdminBffRegistrationService {
         return HttpStatus.SERVICE_UNAVAILABLE;
     }
 
-    private String resolveFeignErrorMessage(FeignException e) {
-        String responseBody = e.contentUTF8();
-
-        if (responseBody != null && !responseBody.isBlank()) {
-            return responseBody;
-        }
-
-        return "Admin registration request failed";
+    private DownstreamErrorResponse resolveFeignError(FeignException e) {
+        return MsaErrorResponseParser.parseOrDefault(
+                e.contentUTF8(),
+                AdminBffRegistrationException.CODE,
+                "Admin registration request failed"
+        );
     }
 }

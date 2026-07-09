@@ -5,6 +5,8 @@ import com.springmsa.adminbff.user.client.AdminUserApiClient;
 import com.springmsa.adminbff.user.dto.AdminCurrentUserResponse;
 import com.springmsa.adminbff.user.dto.AdminUserResponse;
 import com.springmsa.adminbff.user.exception.AdminBffUserException;
+import com.springmsa.common.web.error.DownstreamErrorResponse;
+import com.springmsa.common.web.error.MsaErrorResponseParser;
 import com.springmsa.common.web.response.MsaResponse;
 import feign.FeignException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -97,9 +99,13 @@ public class AdminBffUserService {
             return new AdminBffUserException(statusCode, "User service is unavailable", e);
         }
 
+        DownstreamErrorResponse downstreamError = resolveFeignError(e, fallbackMessage);
+
         return new AdminBffUserException(
                 statusCode,
-                resolveFeignErrorMessage(e, fallbackMessage),
+                downstreamError.code(),
+                downstreamError.message(),
+                downstreamError.errors(),
                 e
         );
     }
@@ -112,14 +118,12 @@ public class AdminBffUserService {
         return HttpStatus.SERVICE_UNAVAILABLE;
     }
 
-    private String resolveFeignErrorMessage(FeignException e, String fallbackMessage) {
-        String responseBody = e.contentUTF8();
-
-        if (responseBody != null && !responseBody.isBlank()) {
-            return responseBody;
-        }
-
-        return fallbackMessage;
+    private DownstreamErrorResponse resolveFeignError(FeignException e, String fallbackMessage) {
+        return MsaErrorResponseParser.parseOrDefault(
+                e.contentUTF8(),
+                AdminBffUserException.CODE,
+                fallbackMessage
+        );
     }
 
     private String resolveMessage(ResponseStatusException e, String fallbackMessage) {

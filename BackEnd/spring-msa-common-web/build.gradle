@@ -20,6 +20,15 @@ dependencyManagement {
 }
 
 dependencies {
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+
     api 'org.springframework:spring-context'
     api 'org.springframework:spring-web'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
 }

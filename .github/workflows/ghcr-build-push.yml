@@ -47,15 +47,31 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        service:
-          - spring-member-gateway
-          - spring-admin-gateway
-          - spring-security-authorization-server
-          - spring-user-service
-          - spring-member-community-service
-          - spring-member-stock-service
-          - spring-member-bff-service
-          - spring-admin-bff-service
+        include:
+          - service: spring-member-gateway
+            context: BackEnd/spring-member-gateway
+            dockerfile: BackEnd/spring-member-gateway/Dockerfile
+          - service: spring-admin-gateway
+            context: BackEnd/spring-admin-gateway
+            dockerfile: BackEnd/spring-admin-gateway/Dockerfile
+          - service: spring-security-authorization-server
+            context: BackEnd
+            dockerfile: BackEnd/spring-security-authorization-server/Dockerfile
+          - service: spring-user-service
+            context: BackEnd
+            dockerfile: BackEnd/spring-user-service/Dockerfile
+          - service: spring-member-community-service
+            context: BackEnd/spring-member-community-service
+            dockerfile: BackEnd/spring-member-community-service/Dockerfile
+          - service: spring-member-stock-service
+            context: BackEnd/spring-member-stock-service
+            dockerfile: BackEnd/spring-member-stock-service/Dockerfile
+          - service: spring-member-bff-service
+            context: BackEnd
+            dockerfile: BackEnd/spring-member-bff-service/Dockerfile
+          - service: spring-admin-bff-service
+            context: BackEnd
+            dockerfile: BackEnd/spring-admin-bff-service/Dockerfile
 
     steps:
       - name: Checkout
@@ -70,21 +86,11 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push Docker image
-        if: (env.DEPLOY_TARGET == 'all' || env.DEPLOY_TARGET == matrix.service) && matrix.service != 'spring-member-bff-service'
+        if: env.DEPLOY_TARGET == 'all' || env.DEPLOY_TARGET == matrix.service
         uses: docker/build-push-action@v6
         with:
-          context: BackEnd/${{ matrix.service }}
-          push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.service }}:${{ env.IMAGE_TAG }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.service }}:${{ github.sha }}
-
-      - name: Build and push member BFF Docker image
-        if: (env.DEPLOY_TARGET == 'all' || env.DEPLOY_TARGET == matrix.service) && matrix.service == 'spring-member-bff-service'
-        uses: docker/build-push-action@v6
-        with:
-          context: BackEnd
-          file: BackEnd/spring-member-bff-service/Dockerfile
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.service }}:${{ env.IMAGE_TAG }}
@@ -166,60 +172,12 @@ jobs:
       - name: Update spring-msa image tags
         shell: bash
         run: |
-          python - <<'PY'
-          import re
-          from pathlib import Path
-
-          sha = "${{ github.sha }}"
-          target = "${{ env.DEPLOY_TARGET }}"
-          manifest_dir = Path("infra/k8s/spring-msa")
-          manifests = {
-              "10-user-service.yaml": ["spring-user-service"],
-              "11-community-service.yaml": ["spring-member-community-service"],
-              "12-stock-service.yaml": ["spring-member-stock-service"],
-              "13-auth-server.yaml": ["spring-security-authorization-server"],
-              "20-member-bff-service.yaml": ["spring-member-bff-service"],
-              "21-admin-bff-service.yaml": ["spring-admin-bff-service"],
-              "30-member-gateway.yaml": ["spring-member-gateway"],
-              "31-admin-gateway.yaml": ["spring-admin-gateway"],
-              "40-web.yaml": [
-                  "spring-member-web",
-                  "spring-community-web",
-                  "spring-stock-web",
-                  "spring-admin-web",
-                  "spring-admin-users-web",
-                  "spring-admin-logs-web",
-              ],
-          }
-
-          known_images = {image for images in manifests.values() for image in images}
-          if target != "all" and target not in known_images:
-              raise SystemExit(f"Unknown deploy target: {target}")
-
-          updates = 0
-          for file_name, image_names in manifests.items():
-              selected_images = image_names if target == "all" else [target] if target in image_names else []
-              if not selected_images:
-                  continue
-
-              path = manifest_dir / file_name
-              text = path.read_text(encoding="utf-8")
-
-              for image_name in selected_images:
-                  pattern = rf"(- name:\s*{re.escape(image_name)}\n\s*image:\s*)[^\s]+"
-                  replacement = rf"\g<1>ghcr.io/hyunmyungchoi/{image_name}:{sha}"
-                  text, count = re.subn(pattern, replacement, text)
-
-                  if count != 1:
-                      raise SystemExit(f"Expected one image line for {image_name} in {path}, found {count}")
-
-                  updates += count
-
-              path.write_text(text, encoding="utf-8")
-
-          if updates == 0:
-              raise SystemExit(f"No Kubernetes image tag updates were made for target: {target}")
-          PY
+          python infra/ci/update-k8s-image-tags.py \
+            --sha "${{ github.sha }}" \
+            --target "${{ env.DEPLOY_TARGET }}" \
+            --manifest-dir infra/k8s/spring-msa \
+            --registry "${{ env.REGISTRY }}" \
+            --image-owner "${{ env.IMAGE_OWNER }}"
 
       - name: Verify fixed image tags
         shell: bash

@@ -17,7 +17,7 @@ public abstract class AbstractMsaExceptionHandler {
 
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<MsaResponse<Void>> handleApiException(ApiException exception) {
-        return errorResponse(exception.status(), exception.code(), exception.getMessage(), List.of());
+        return errorResponse(exception.status(), exception.code(), exception.getMessage(), exception.errors());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
