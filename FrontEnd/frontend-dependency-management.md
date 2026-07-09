@@ -144,45 +144,33 @@ pnpm -v
 pnpm list
 ```
 
-## Docker Entry Modes
+## Docker Entry Images
 
-Member web can be built as the full SPA or as a single entry app.
-
-```bash
-MEMBER_WEB_VITE_MODE=prod docker compose up --build spring-member-web
-MEMBER_WEB_VITE_MODE=stock docker compose up --build spring-member-web
-MEMBER_WEB_VITE_MODE=community docker compose up --build spring-member-web
-```
-
-PowerShell:
-
-```powershell
-$env:MEMBER_WEB_VITE_MODE = "stock"; docker compose up --build spring-member-web
-```
-
-Admin web follows the same pattern.
+Frontend deployable entries use separate Dockerfiles. The default compose services build the full member/admin SPAs.
 
 ```bash
-ADMIN_WEB_VITE_MODE=prod docker compose up --build spring-admin-web
-ADMIN_WEB_VITE_MODE=users docker compose up --build spring-admin-web
-ADMIN_WEB_VITE_MODE=logs docker compose up --build spring-admin-web
+docker compose up --build spring-member-web
+docker compose up --build spring-admin-web
 ```
 
-PowerShell:
+Build a single entry image directly when you need the same target as CI.
 
-```powershell
-$env:ADMIN_WEB_VITE_MODE = "users"; docker compose up --build spring-admin-web
+```bash
+docker build -f FrontEnd/apps/member/Dockerfile.community -t spring-react-msa/spring-community-web:local .
+docker build -f FrontEnd/apps/member/Dockerfile.stock -t spring-react-msa/spring-stock-web:local .
+docker build -f FrontEnd/apps/admin/Dockerfile.users -t spring-react-msa/spring-admin-users-web:local .
+docker build -f FrontEnd/apps/admin/Dockerfile.logs -t spring-react-msa/spring-admin-logs-web:local .
 ```
 
 Kubernetes frontend deployments use separate images for independently deployable entries.
 
-| Deployment | Vite mode | Mount path |
+| Deployment | Dockerfile | Mount path |
 |---|---|---|
-| `spring-member-web` | `prod` | `/` |
-| `spring-community-web` | `community` | `/community` |
-| `spring-stock-web` | `stock` | `/stock` |
-| `spring-admin-web` | `prod` | `/` |
-| `spring-admin-users-web` | `users` | `/manage/users` |
-| `spring-admin-logs-web` | `logs` | `/manage/logs` |
+| `spring-member-web` | `FrontEnd/apps/member/Dockerfile.member` | `/` |
+| `spring-community-web` | `FrontEnd/apps/member/Dockerfile.community` | `/community` |
+| `spring-stock-web` | `FrontEnd/apps/member/Dockerfile.stock` | `/stock` |
+| `spring-admin-web` | `FrontEnd/apps/admin/Dockerfile.admin` | `/` |
+| `spring-admin-users-web` | `FrontEnd/apps/admin/Dockerfile.users` | `/manage/users` |
+| `spring-admin-logs-web` | `FrontEnd/apps/admin/Dockerfile.logs` | `/manage/logs` |
 
-GitHub Actions passes `WEB_MOUNT_PATH` for the entry-specific images so the static assets live under the same path that Ingress routes to that Deployment.
+Each entry Dockerfile fixes its own Vite mode and output mount path, so GitHub Actions does not pass `VITE_MODE` or `WEB_MOUNT_PATH`.

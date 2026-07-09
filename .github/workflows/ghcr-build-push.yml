@@ -105,29 +105,17 @@ jobs:
       matrix:
         include:
           - service: spring-member-web
-            dockerfile: FrontEnd/apps/member/Dockerfile
-            vite_mode: prod
-            web_mount_path: /
+            dockerfile: FrontEnd/apps/member/Dockerfile.member
           - service: spring-community-web
-            dockerfile: FrontEnd/apps/member/Dockerfile
-            vite_mode: community
-            web_mount_path: /community
+            dockerfile: FrontEnd/apps/member/Dockerfile.community
           - service: spring-stock-web
-            dockerfile: FrontEnd/apps/member/Dockerfile
-            vite_mode: stock
-            web_mount_path: /stock
+            dockerfile: FrontEnd/apps/member/Dockerfile.stock
           - service: spring-admin-web
-            dockerfile: FrontEnd/apps/admin/Dockerfile
-            vite_mode: prod
-            web_mount_path: /
+            dockerfile: FrontEnd/apps/admin/Dockerfile.admin
           - service: spring-admin-users-web
-            dockerfile: FrontEnd/apps/admin/Dockerfile
-            vite_mode: users
-            web_mount_path: /manage/users
+            dockerfile: FrontEnd/apps/admin/Dockerfile.users
           - service: spring-admin-logs-web
-            dockerfile: FrontEnd/apps/admin/Dockerfile
-            vite_mode: logs
-            web_mount_path: /manage/logs
+            dockerfile: FrontEnd/apps/admin/Dockerfile.logs
 
     steps:
       - name: Checkout
@@ -148,9 +136,6 @@ jobs:
           context: .
           file: ${{ matrix.dockerfile }}
           push: true
-          build-args: |
-            VITE_MODE=${{ matrix.vite_mode }}
-            WEB_MOUNT_PATH=${{ matrix.web_mount_path }}
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.service }}:${{ env.IMAGE_TAG }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.service }}:${{ github.sha }}

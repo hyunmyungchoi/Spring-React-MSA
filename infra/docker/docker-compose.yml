@@ -300,9 +300,7 @@ services:
     container_name: spring-member-web
     build:
       context: ../..
-      dockerfile: FrontEnd/apps/member/Dockerfile
-      args:
-        VITE_MODE: ${MEMBER_WEB_VITE_MODE:-prod}
+      dockerfile: FrontEnd/apps/member/Dockerfile.member
     ports:
       - "5173:80"
     volumes:
@@ -319,9 +317,7 @@ services:
     container_name: spring-admin-web
     build:
       context: ../..
-      dockerfile: FrontEnd/apps/admin/Dockerfile
-      args:
-        VITE_MODE: ${ADMIN_WEB_VITE_MODE:-prod}
+      dockerfile: FrontEnd/apps/admin/Dockerfile.admin
     ports:
       - "5176:80"
     volumes:
