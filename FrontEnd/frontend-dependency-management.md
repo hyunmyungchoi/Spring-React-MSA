@@ -86,7 +86,7 @@ Add this field to `package.json`.
 Create `.nvmrc`.
 
 ```text
-22.11.0
+24.18.0
 ```
 
 ## Development Commands

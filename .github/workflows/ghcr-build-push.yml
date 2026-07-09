@@ -40,54 +40,54 @@ env:
   DEPLOY_TARGET: ${{ github.event.inputs.deploy_target || 'all' }}
 
 jobs:
-  build-backend:
-    name: Build backend images
+  prepare-build-matrix:
+    name: Prepare build matrix
     runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - service: spring-member-gateway
-            context: BackEnd/spring-member-gateway
-            dockerfile: BackEnd/spring-member-gateway/Dockerfile
-          - service: spring-admin-gateway
-            context: BackEnd/spring-admin-gateway
-            dockerfile: BackEnd/spring-admin-gateway/Dockerfile
-          - service: spring-security-authorization-server
-            context: BackEnd
-            dockerfile: BackEnd/spring-security-authorization-server/Dockerfile
-          - service: spring-user-service
-            context: BackEnd
-            dockerfile: BackEnd/spring-user-service/Dockerfile
-          - service: spring-member-community-service
-            context: BackEnd/spring-member-community-service
-            dockerfile: BackEnd/spring-member-community-service/Dockerfile
-          - service: spring-member-stock-service
-            context: BackEnd/spring-member-stock-service
-            dockerfile: BackEnd/spring-member-stock-service/Dockerfile
-          - service: spring-member-bff-service
-            context: BackEnd
-            dockerfile: BackEnd/spring-member-bff-service/Dockerfile
-          - service: spring-admin-bff-service
-            context: BackEnd
-            dockerfile: BackEnd/spring-admin-bff-service/Dockerfile
+    outputs:
+      backend_matrix: ${{ steps.matrix.outputs.backend_matrix }}
+      frontend_matrix: ${{ steps.matrix.outputs.frontend_matrix }}
+      has_backend: ${{ steps.matrix.outputs.has_backend }}
+      has_frontend: ${{ steps.matrix.outputs.has_frontend }}
+      update_targets: ${{ steps.matrix.outputs.update_targets }}
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Select deploy target
+        id: matrix
+        shell: bash
+        run: |
+          python infra/ci/select-build-matrix.py
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+
+  build-backend:
+    name: Build backend image (${{ matrix.service }})
+    runs-on: ubuntu-latest
+    needs:
+      - prepare-build-matrix
+    if: needs.prepare-build-matrix.outputs.has_backend == 'true'
+
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare-build-matrix.outputs.backend_matrix) }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
 
       - name: Login to GHCR
-        if: env.DEPLOY_TARGET == 'all' || env.DEPLOY_TARGET == matrix.service
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push Docker image
-        if: env.DEPLOY_TARGET == 'all' || env.DEPLOY_TARGET == matrix.service
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
@@ -97,41 +97,29 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.service }}:${{ github.sha }}
 
   build-frontend:
-    name: Build frontend images
+    name: Build frontend image (${{ matrix.service }})
     runs-on: ubuntu-latest
+    needs:
+      - prepare-build-matrix
+    if: needs.prepare-build-matrix.outputs.has_frontend == 'true'
 
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - service: spring-member-web
-            dockerfile: FrontEnd/apps/member/Dockerfile.member
-          - service: spring-community-web
-            dockerfile: FrontEnd/apps/member/Dockerfile.community
-          - service: spring-stock-web
-            dockerfile: FrontEnd/apps/member/Dockerfile.stock
-          - service: spring-admin-web
-            dockerfile: FrontEnd/apps/admin/Dockerfile.admin
-          - service: spring-admin-users-web
-            dockerfile: FrontEnd/apps/admin/Dockerfile.users
-          - service: spring-admin-logs-web
-            dockerfile: FrontEnd/apps/admin/Dockerfile.logs
+      matrix: ${{ fromJSON(needs.prepare-build-matrix.outputs.frontend_matrix) }}
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Login to GHCR
-        if: env.DEPLOY_TARGET == 'all' || env.DEPLOY_TARGET == matrix.service
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push Docker image
-        if: env.DEPLOY_TARGET == 'all' || env.DEPLOY_TARGET == matrix.service
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ${{ matrix.dockerfile }}
@@ -144,25 +132,39 @@ jobs:
     name: Update Kubernetes image tags
     runs-on: ubuntu-latest
     needs:
+      - prepare-build-matrix
       - build-backend
       - build-frontend
-    if: github.actor != 'github-actions[bot]' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    env:
+      UPDATE_TARGETS: ${{ needs.prepare-build-matrix.outputs.update_targets }}
+    if: >
+      ${{
+        always()
+        && github.actor != 'github-actions[bot]'
+        && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+        && needs.prepare-build-matrix.result == 'success'
+        && (needs.prepare-build-matrix.outputs.has_backend == 'true' || needs.prepare-build-matrix.outputs.has_frontend == 'true')
+        && (needs.build-backend.result == 'success' || needs.build-backend.result == 'skipped')
+        && (needs.build-frontend.result == 'success' || needs.build-frontend.result == 'skipped')
+      }}
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.ref_name }}
 
       - name: Update spring-msa image tags
         shell: bash
         run: |
-          python infra/ci/update-k8s-image-tags.py \
-            --sha "${{ github.sha }}" \
-            --target "${{ env.DEPLOY_TARGET }}" \
-            --manifest-dir infra/k8s/spring-msa \
-            --registry "${{ env.REGISTRY }}" \
-            --image-owner "${{ env.IMAGE_OWNER }}"
+          for target in ${UPDATE_TARGETS}; do
+            python infra/ci/update-k8s-image-tags.py \
+              --sha "${{ github.sha }}" \
+              --target "${target}" \
+              --manifest-dir infra/k8s/spring-msa \
+              --registry "${{ env.REGISTRY }}" \
+              --image-owner "${{ env.IMAGE_OWNER }}"
+          done
 
       - name: Verify fixed image tags
         shell: bash
@@ -183,5 +185,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add infra/k8s/spring-msa
-          git commit -m "chore(k8s): update ${DEPLOY_TARGET} image tag to ${GITHUB_SHA} [skip ci]"
+          git commit -m "chore(k8s): update ${UPDATE_TARGETS} image tag to ${GITHUB_SHA} [skip ci]"
           git push
