@@ -1,81 +1,25 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: spring-msa-user-bff-legacy-login
-  namespace: spring-msa
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /oauth2/authorization/member-bff
-spec:
-  ingressClassName: nginx
-  rules:
-    - host: user.localtest.me
-      http:
-        paths:
-          - path: /bff/auth/login
-            pathType: Exact
-            backend:
-              service:
-                name: spring-member-bff-service
-                port:
-                  number: 8079
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: spring-msa-user-bff-legacy-signup
-  namespace: spring-msa
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /registration/member
-spec:
-  ingressClassName: nginx
-  rules:
-    - host: user.localtest.me
-      http:
-        paths:
-          - path: /bff/auth/signup
-            pathType: Exact
-            backend:
-              service:
-                name: spring-member-bff-service
-                port:
-                  number: 8079
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: spring-msa-user-bff
+  name: spring-msa-user
   namespace: spring-msa
   annotations:
     nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
-    nginx.ingress.kubernetes.io/use-regex: "true"
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
 spec:
   ingressClassName: nginx
   rules:
     - host: user.localtest.me
       http:
         paths:
-          - path: /bff(/|$)(.*)
-            pathType: ImplementationSpecific
+          - path: /bff
+            pathType: Prefix
             backend:
               service:
-                name: spring-member-bff-service
+                name: spring-member-gateway
                 port:
-                  number: 8079
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: spring-msa-user
-  namespace: spring-msa
-spec:
-  ingressClassName: nginx
-  rules:
-    - host: user.localtest.me
-      http:
-        paths:
+                  number: 8080
           - path: /api
             pathType: Prefix
             backend:
@@ -125,6 +69,20 @@ spec:
                 name: spring-member-gateway
                 port:
                   number: 8080
+          - path: /community
+            pathType: Prefix
+            backend:
+              service:
+                name: spring-community-web
+                port:
+                  number: 80
+          - path: /stock
+            pathType: Prefix
+            backend:
+              service:
+                name: spring-stock-web
+                port:
+                  number: 80
           - path: /
             pathType: Prefix
             backend:
@@ -193,6 +151,20 @@ spec:
                 name: spring-admin-gateway
                 port:
                   number: 8090
+          - path: /manage/users
+            pathType: Prefix
+            backend:
+              service:
+                name: spring-admin-users-web
+                port:
+                  number: 80
+          - path: /manage/logs
+            pathType: Prefix
+            backend:
+              service:
+                name: spring-admin-logs-web
+                port:
+                  number: 80
           - path: /
             pathType: Prefix
             backend:

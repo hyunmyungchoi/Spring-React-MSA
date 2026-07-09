@@ -6,6 +6,28 @@ on:
       - main
       - master
   workflow_dispatch:
+    inputs:
+      deploy_target:
+        description: Service or frontend entry to build and deploy
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - spring-user-service
+          - spring-member-community-service
+          - spring-member-stock-service
+          - spring-security-authorization-server
+          - spring-member-bff-service
+          - spring-admin-bff-service
+          - spring-member-gateway
+          - spring-admin-gateway
+          - spring-member-web
+          - spring-community-web
+          - spring-stock-web
+          - spring-admin-web
+          - spring-admin-users-web
+          - spring-admin-logs-web
 
 permissions:
   contents: write
@@ -15,6 +37,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_OWNER: hyunmyungchoi
   IMAGE_TAG: latest
+  DEPLOY_TARGET: ${{ github.event.inputs.deploy_target || 'all' }}
 
 jobs:
   build-backend:
@@ -39,6 +62,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Login to GHCR
+        if: env.DEPLOY_TARGET == 'all' || env.DEPLOY_TARGET == matrix.service
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
@@ -46,7 +70,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push Docker image
-        if: matrix.service != 'spring-member-bff-service'
+        if: (env.DEPLOY_TARGET == 'all' || env.DEPLOY_TARGET == matrix.service) && matrix.service != 'spring-member-bff-service'
         uses: docker/build-push-action@v6
         with:
           context: BackEnd/${{ matrix.service }}
@@ -56,7 +80,7 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.service }}:${{ github.sha }}
 
       - name: Build and push member BFF Docker image
-        if: matrix.service == 'spring-member-bff-service'
+        if: (env.DEPLOY_TARGET == 'all' || env.DEPLOY_TARGET == matrix.service) && matrix.service == 'spring-member-bff-service'
         uses: docker/build-push-action@v6
         with:
           context: BackEnd
@@ -76,14 +100,35 @@ jobs:
         include:
           - service: spring-member-web
             dockerfile: FrontEnd/apps/member/Dockerfile
+            vite_mode: prod
+            web_mount_path: /
+          - service: spring-community-web
+            dockerfile: FrontEnd/apps/member/Dockerfile
+            vite_mode: community
+            web_mount_path: /community
+          - service: spring-stock-web
+            dockerfile: FrontEnd/apps/member/Dockerfile
+            vite_mode: stock
+            web_mount_path: /stock
           - service: spring-admin-web
             dockerfile: FrontEnd/apps/admin/Dockerfile
+            vite_mode: prod
+            web_mount_path: /
+          - service: spring-admin-users-web
+            dockerfile: FrontEnd/apps/admin/Dockerfile
+            vite_mode: users
+            web_mount_path: /manage/users
+          - service: spring-admin-logs-web
+            dockerfile: FrontEnd/apps/admin/Dockerfile
+            vite_mode: logs
+            web_mount_path: /manage/logs
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Login to GHCR
+        if: env.DEPLOY_TARGET == 'all' || env.DEPLOY_TARGET == matrix.service
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
@@ -91,13 +136,15 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push Docker image
+        if: env.DEPLOY_TARGET == 'all' || env.DEPLOY_TARGET == matrix.service
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ${{ matrix.dockerfile }}
           push: true
           build-args: |
-            VITE_MODE=prod
+            VITE_MODE=${{ matrix.vite_mode }}
+            WEB_MOUNT_PATH=${{ matrix.web_mount_path }}
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.service }}:${{ env.IMAGE_TAG }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.service }}:${{ github.sha }}
@@ -108,7 +155,7 @@ jobs:
     needs:
       - build-backend
       - build-frontend
-    if: github.event_name == 'push' && github.actor != 'github-actions[bot]'
+    if: github.actor != 'github-actions[bot]' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
 
     steps:
       - name: Checkout
@@ -124,6 +171,7 @@ jobs:
           from pathlib import Path
 
           sha = "${{ github.sha }}"
+          target = "${{ env.DEPLOY_TARGET }}"
           manifest_dir = Path("infra/k8s/spring-msa")
           manifests = {
               "10-user-service.yaml": ["spring-user-service"],
@@ -134,21 +182,43 @@ jobs:
               "21-admin-bff-service.yaml": ["spring-admin-bff-service"],
               "30-member-gateway.yaml": ["spring-member-gateway"],
               "31-admin-gateway.yaml": ["spring-admin-gateway"],
-              "40-web.yaml": ["spring-member-web", "spring-admin-web"],
+              "40-web.yaml": [
+                  "spring-member-web",
+                  "spring-community-web",
+                  "spring-stock-web",
+                  "spring-admin-web",
+                  "spring-admin-users-web",
+                  "spring-admin-logs-web",
+              ],
           }
 
+          known_images = {image for images in manifests.values() for image in images}
+          if target != "all" and target not in known_images:
+              raise SystemExit(f"Unknown deploy target: {target}")
+
+          updates = 0
           for file_name, image_names in manifests.items():
+              selected_images = image_names if target == "all" else [target] if target in image_names else []
+              if not selected_images:
+                  continue
+
               path = manifest_dir / file_name
               text = path.read_text(encoding="utf-8")
 
-              for image_name in image_names:
-                  pattern = rf"(image:\s*ghcr\.io/hyunmyungchoi/{re.escape(image_name)}:)[^\s]+"
-                  text, count = re.subn(pattern, rf"\g<1>{sha}", text)
+              for image_name in selected_images:
+                  pattern = rf"(- name:\s*{re.escape(image_name)}\n\s*image:\s*)[^\s]+"
+                  replacement = rf"\g<1>ghcr.io/hyunmyungchoi/{image_name}:{sha}"
+                  text, count = re.subn(pattern, replacement, text)
 
                   if count != 1:
                       raise SystemExit(f"Expected one image line for {image_name} in {path}, found {count}")
 
+                  updates += count
+
               path.write_text(text, encoding="utf-8")
+
+          if updates == 0:
+              raise SystemExit(f"No Kubernetes image tag updates were made for target: {target}")
           PY
 
       - name: Verify fixed image tags
@@ -170,5 +240,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add infra/k8s/spring-msa
-          git commit -m "chore(k8s): update image tags to ${GITHUB_SHA} [skip ci]"
+          git commit -m "chore(k8s): update ${DEPLOY_TARGET} image tag to ${GITHUB_SHA} [skip ci]"
           git push

@@ -4,7 +4,6 @@ import type {
   AdminSignupRequest,
   AdminSignupResponse,
 } from '../types/adminAuth'
-import type { AdminApiResponse } from '../types/adminResponse'
 import type { AdminMeResponse } from '../types/adminSession'
 import { adminFetchJson } from './adminFetch'
 
@@ -23,12 +22,11 @@ export function requestAdminLogout(): Promise<AdminLogoutResponse> {
 }
 
 // Creates an admin account through the BFF.
-export async function signupAdmin(request: AdminSignupRequest): Promise<AdminSignupResponse> {
-  const response = await adminFetchJson<AdminApiResponse<AdminSignupResponse>>('/admin-bff/registration/admin', {
+export function signupAdmin(request: AdminSignupRequest): Promise<AdminSignupResponse> {
+  return adminFetchJson<AdminSignupResponse>('/admin-bff/registration/admin', {
     method: 'POST',
     body: request,
   })
-  return response.data
 }
 
 // Starts an admin password login and redirects to the authorization flow.

@@ -42,3 +42,8 @@ bff:
     user-internal-base-url: http://localhost:8081
     community-api-base-url: http://localhost:8083
     stock-api-base-url: http://localhost:8084
+
+springmsa:
+  internal-api:
+    header-name: X-Internal-Token
+    token: local-dev-internal-token

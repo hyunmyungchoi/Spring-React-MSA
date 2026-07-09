@@ -12,4 +12,6 @@ dependencyResolutionManagement {
     }
 }
 
+includeBuild('../spring-msa-common-web')
+
 rootProject.name = 'spring-admin-bff-service'

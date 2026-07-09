@@ -65,3 +65,7 @@ logging:
   level:
     com.springmsa.authserver: info
     org.springframework.security: warn
+
+springmsa:
+  internal-api:
+    token: ${SPRING_MSA_INTERNAL_API_TOKEN}

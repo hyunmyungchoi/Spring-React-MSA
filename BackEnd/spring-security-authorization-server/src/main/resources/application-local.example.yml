@@ -60,3 +60,8 @@ app:
 
   user-service:
     base-url: "http://localhost:8081"
+
+springmsa:
+  internal-api:
+    header-name: X-Internal-Token
+    token: local-dev-internal-token

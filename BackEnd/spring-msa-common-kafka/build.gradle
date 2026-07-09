@@ -1,0 +1,13 @@
+plugins {
+    id 'java-library'
+}
+
+group = 'com.springmsa'
+version = '0.0.1-SNAPSHOT'
+description = 'Spring MSA Common Kafka Event Contracts'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}

@@ -1,6 +1,6 @@
 package com.springmsa.authserver.login.dto;
 
-import com.springmsa.authserver.client.dto.AuthUserResponse;
+import com.springmsa.authserver.user.dto.AuthUserResponse;
 
 import java.util.Set;
 

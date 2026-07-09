@@ -1,6 +1,7 @@
 package com.springmsa.authserver.login;
 
-import com.springmsa.authserver.client.dto.AuthUserResponse;
+import com.springmsa.authserver.login.service.LoginAuthenticationFactory;
+import com.springmsa.authserver.user.dto.AuthUserResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.core.Authentication;

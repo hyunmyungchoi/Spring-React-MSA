@@ -1,6 +1,6 @@
 package com.springmsa.adminbff.config;
 
-import com.springmsa.adminbff.auth.AdminBffAuthenticationService;
+import com.springmsa.adminbff.auth.service.AdminBffAuthenticationService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

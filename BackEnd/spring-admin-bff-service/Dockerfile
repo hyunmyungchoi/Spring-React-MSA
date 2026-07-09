@@ -2,11 +2,13 @@ FROM eclipse-temurin:17-jdk-alpine AS build
 
 WORKDIR /workspace
 
-COPY gradlew gradlew
-COPY gradle gradle
-COPY build.gradle settings.gradle ./
-COPY src src
+COPY spring-admin-bff-service/gradlew spring-admin-bff-service/gradlew
+COPY spring-admin-bff-service/gradle spring-admin-bff-service/gradle
+COPY spring-admin-bff-service/build.gradle spring-admin-bff-service/settings.gradle spring-admin-bff-service/
+COPY spring-admin-bff-service/src spring-admin-bff-service/src
+COPY spring-msa-common-web spring-msa-common-web
 
+WORKDIR /workspace/spring-admin-bff-service
 RUN sed -i 's/\r$//' gradlew \
     && chmod +x gradlew \
     && ./gradlew clean bootJar -x test --no-daemon
@@ -19,7 +21,7 @@ FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /app
 
-COPY --from=build /workspace/app.jar app.jar
+COPY --from=build /workspace/spring-admin-bff-service/app.jar app.jar
 
 ENV SPRING_PROFILES_ACTIVE=docker
 ENV JAVA_OPTS=""

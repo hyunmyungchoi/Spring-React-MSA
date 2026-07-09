@@ -28,6 +28,8 @@ spring:
               uri: ${GATEWAY_BFF_URI}
               predicates:
                 - Path=/bff/**
+              filters:
+                - StripPrefix=1
 
             - id: user-service
               uri: ${GATEWAY_USER_SERVICE_URI}

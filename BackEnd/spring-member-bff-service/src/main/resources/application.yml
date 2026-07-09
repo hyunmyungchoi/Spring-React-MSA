@@ -53,6 +53,11 @@ logging:
   level:
     com.springmsa.memberbff: debug
 
+springmsa:
+  internal-api:
+    header-name: ${SPRING_MSA_INTERNAL_API_HEADER_NAME:X-Internal-Token}
+    token: ${SPRING_MSA_INTERNAL_API_TOKEN:local-dev-internal-token}
+
 bff:
   presence:
     redis:

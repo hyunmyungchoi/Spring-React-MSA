@@ -53,6 +53,11 @@ spec:
               value: http://admin.localtest.me/auth
             - name: USER_SERVICE_BASE_URL
               value: http://spring-user-service:8081
+            - name: SPRING_MSA_INTERNAL_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: spring-msa-secret
+                  key: SPRING_MSA_INTERNAL_API_TOKEN
             - name: BFF_CLIENT_ID
               valueFrom:
                 secretKeyRef:

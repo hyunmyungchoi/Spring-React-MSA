@@ -42,3 +42,7 @@ bff:
     user-internal-base-url: ${BFF_API_USER_INTERNAL_BASE_URL:http://spring-user-service:8081}
     community-api-base-url: ${BFF_API_COMMUNITY_API_BASE_URL:http://spring-member-community-service:8083}
     stock-api-base-url: ${BFF_API_STOCK_API_BASE_URL:http://spring-member-stock-service:8084}
+
+springmsa:
+  internal-api:
+    token: ${SPRING_MSA_INTERNAL_API_TOKEN}

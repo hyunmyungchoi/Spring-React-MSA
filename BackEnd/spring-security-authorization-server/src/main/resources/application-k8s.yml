@@ -12,3 +12,7 @@ app:
   frontend:
     user-login-uri: ${USER_FRONTEND_LOGIN_URI}
     admin-login-uri: ${ADMIN_FRONTEND_LOGIN_URI}
+
+springmsa:
+  internal-api:
+    token: ${SPRING_MSA_INTERNAL_API_TOKEN}

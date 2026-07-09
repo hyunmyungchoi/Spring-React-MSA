@@ -1,6 +1,6 @@
 package com.springmsa.memberbff.registration.dto;
 
-import com.springmsa.memberbff.client.dto.UserCreateResponse;
+import com.springmsa.memberbff.registration.client.dto.UserCreateResponse;
 
 import java.util.Set;
 

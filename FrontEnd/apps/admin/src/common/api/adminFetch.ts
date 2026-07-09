@@ -1,4 +1,4 @@
-import { resolveAdminApiErrorMessage } from './adminApiContract'
+import { resolveAdminApiErrorMessage, unwrapAdminApiResponse } from './adminApiContract'
 
 const CSRF_COOKIE_NAME = 'ADMIN-XSRF-TOKEN'
 const CSRF_HEADER_NAME = 'X-ADMIN-XSRF-TOKEN'
@@ -39,7 +39,7 @@ export async function adminFetchJson<T>(path: string, options: AdminFetchOptions
   }
 
   const text = await response.text()
-  return text ? (JSON.parse(text) as T) : (undefined as T)
+  return text ? unwrapAdminApiResponse<T>(JSON.parse(text) as T) : (undefined as T)
 }
 
 async function resolveAdminHeaders(path: string, options: AdminFetchOptions) {

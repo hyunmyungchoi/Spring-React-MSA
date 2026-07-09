@@ -1,5 +1,6 @@
 package com.springmsa.authserver.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -21,9 +22,11 @@ import org.springframework.util.StringUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.URI;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher.pathPattern;
 
@@ -36,6 +39,12 @@ public class SecurityConfig {
     private static final String AUTH_SESSION_COOKIE = "AUTHSESSIONID";
     private static final String POST_LOGOUT_REDIRECT_URI = "post_logout_redirect_uri";
     private static final String DEFAULT_LOGOUT_REDIRECT_URI = LOGIN_PAGE + "?logout";
+
+    @Value("${app.frontend.user-login-uri:}")
+    private String userFrontendLoginUri;
+
+    @Value("${app.frontend.admin-login-uri:}")
+    private String adminFrontendLoginUri;
 
     /**
      * Authorization Protocol (Oauth2 / OIDC)
@@ -114,12 +123,42 @@ public class SecurityConfig {
     }
 
     private void handleLogoutSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
-        String redirectUri = request.getParameter(POST_LOGOUT_REDIRECT_URI);
-        response.sendRedirect(
-                StringUtils.hasText(redirectUri)
-                        ? redirectUri
-                        : DEFAULT_LOGOUT_REDIRECT_URI
-        );
+        response.sendRedirect(resolvePostLogoutRedirectUri(request.getParameter(POST_LOGOUT_REDIRECT_URI)));
+    }
+
+    private String resolvePostLogoutRedirectUri(String requestedRedirectUri) {
+        URI requestedUri = parseAbsoluteUri(requestedRedirectUri);
+
+        if (requestedUri == null || !isAllowedPostLogoutRedirectUri(requestedUri)) {
+            return DEFAULT_LOGOUT_REDIRECT_URI;
+        }
+
+        return requestedUri.toString();
+    }
+
+    private boolean isAllowedPostLogoutRedirectUri(URI requestedUri) {
+        return Stream.of(userFrontendLoginUri, adminFrontendLoginUri)
+                .map(this::parseAbsoluteUri)
+                .anyMatch(requestedUri::equals);
+    }
+
+    private URI parseAbsoluteUri(String uri) {
+        if (!StringUtils.hasText(uri)) {
+            return null;
+        }
+
+        try {
+            URI parsedUri = URI.create(uri.trim()).normalize();
+
+            if (!parsedUri.isAbsolute() || !StringUtils.hasText(parsedUri.getHost()) || parsedUri.getRawUserInfo() != null) {
+                return null;
+            }
+
+            return parsedUri;
+
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     private Function<OidcUserInfoAuthenticationContext, OidcUserInfo> userInfoMapper() {

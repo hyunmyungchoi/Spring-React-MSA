@@ -1,7 +1,7 @@
 package com.springmsa.memberbff.config;
 
-import com.springmsa.memberbff.auth.BffSessionMetadataService;
-import com.springmsa.memberbff.presence.MemberPresenceService;
+import com.springmsa.memberbff.auth.service.BffSessionMetadataService;
+import com.springmsa.memberbff.presence.service.MemberPresenceService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

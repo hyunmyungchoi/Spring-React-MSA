@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { chatWebSocketUrl, fetchChatMessages } from "../api/chatApi";
 import type { ChatMessage, ChatServerMessage } from "../types/chatMessage";
@@ -23,6 +23,103 @@ function ChatEntryPage() {
     const [draft, setDraft] = useState("");
     const [connected, setConnected] = useState(false);
     const [status, setStatus] = useState("Connecting...");
+
+    const clearHeartbeatTimeout = useCallback(() => {
+        if (heartbeatTimeoutRef.current !== null) {
+            window.clearTimeout(heartbeatTimeoutRef.current);
+            heartbeatTimeoutRef.current = null;
+        }
+    }, []);
+
+    const clearHeartbeat = useCallback(() => {
+        if (heartbeatIntervalRef.current !== null) {
+            window.clearInterval(heartbeatIntervalRef.current);
+            heartbeatIntervalRef.current = null;
+        }
+
+        clearHeartbeatTimeout();
+    }, [clearHeartbeatTimeout]);
+
+    const markHeartbeatReceived = useCallback(() => {
+        clearHeartbeatTimeout();
+    }, [clearHeartbeatTimeout]);
+
+    const clearReconnectTimer = useCallback(() => {
+        if (reconnectTimerRef.current !== null) {
+            window.clearTimeout(reconnectTimerRef.current);
+            reconnectTimerRef.current = null;
+        }
+    }, []);
+
+    const scheduleReconnect = useCallback((connect: () => void) => {
+        clearReconnectTimer();
+
+        const delay = reconnectDelayRef.current;
+        setStatus(`Reconnecting in ${Math.ceil(delay / 1000)}s...`);
+
+        reconnectTimerRef.current = window.setTimeout(() => {
+            reconnectTimerRef.current = null;
+            connect();
+        }, delay);
+
+        reconnectDelayRef.current = Math.min(delay * 2, RECONNECT_MAX_DELAY_MS);
+    }, [clearReconnectTimer]);
+
+    const handleServerMessage = useCallback((payload: string) => {
+        try {
+            const serverMessage = JSON.parse(payload) as ChatServerMessage;
+
+            if (serverMessage.type === "ERROR") {
+                setStatus(serverMessage.detail ?? "Chat message failed");
+                return;
+            }
+
+            if (serverMessage.type === "CONNECTED") {
+                setStatus("Connected");
+                return;
+            }
+
+            if (serverMessage.type === "PONG") {
+                setStatus("Connected");
+                return;
+            }
+
+            if (serverMessage.type === "HISTORY") {
+                setMessages((current) => mergeMessages(current, serverMessage.messages ?? []));
+                return;
+            }
+
+            if (serverMessage.type === "CHAT_MESSAGE" && serverMessage.message) {
+                setMessages((current) => mergeMessages(current, [serverMessage.message as ChatMessage]));
+            }
+        } catch {
+            setStatus("Chat message parse failed");
+        }
+    }, []);
+
+    const startHeartbeat = useCallback((socket: WebSocket) => {
+        clearHeartbeat();
+
+        heartbeatIntervalRef.current = window.setInterval(() => {
+            if (socket.readyState !== WebSocket.OPEN) {
+                return;
+            }
+
+            try {
+                socket.send(JSON.stringify({ type: "PING" }));
+            } catch {
+                socket.close();
+                return;
+            }
+
+            clearHeartbeatTimeout();
+
+            heartbeatTimeoutRef.current = window.setTimeout(() => {
+                setStatus("Chat heartbeat timeout");
+                socket.close();
+            }, HEARTBEAT_TIMEOUT_MS);
+        }, HEARTBEAT_INTERVAL_MS);
+    }, [clearHeartbeat, clearHeartbeatTimeout]);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -103,104 +200,7 @@ function ChatEntryPage() {
                 socketRef.current = null;
             }
         };
-    }, []);
-
-    const startHeartbeat = (socket: WebSocket) => {
-        clearHeartbeat();
-
-        heartbeatIntervalRef.current = window.setInterval(() => {
-            if (socket.readyState !== WebSocket.OPEN) {
-                return;
-            }
-
-            try {
-                socket.send(JSON.stringify({ type: "PING" }));
-            } catch {
-                socket.close();
-                return;
-            }
-
-            clearHeartbeatTimeout();
-
-            heartbeatTimeoutRef.current = window.setTimeout(() => {
-                setStatus("Chat heartbeat timeout");
-                socket.close();
-            }, HEARTBEAT_TIMEOUT_MS);
-        }, HEARTBEAT_INTERVAL_MS);
-    };
-
-    const markHeartbeatReceived = () => {
-        clearHeartbeatTimeout();
-    };
-
-    const clearHeartbeat = () => {
-        if (heartbeatIntervalRef.current !== null) {
-            window.clearInterval(heartbeatIntervalRef.current);
-            heartbeatIntervalRef.current = null;
-        }
-
-        clearHeartbeatTimeout();
-    };
-
-    const clearHeartbeatTimeout = () => {
-        if (heartbeatTimeoutRef.current !== null) {
-            window.clearTimeout(heartbeatTimeoutRef.current);
-            heartbeatTimeoutRef.current = null;
-        }
-    };
-
-    const scheduleReconnect = (connect: () => void) => {
-        clearReconnectTimer();
-
-        const delay = reconnectDelayRef.current;
-        setStatus(`Reconnecting in ${Math.ceil(delay / 1000)}s...`);
-
-        reconnectTimerRef.current = window.setTimeout(() => {
-            reconnectTimerRef.current = null;
-            connect();
-        }, delay);
-
-        reconnectDelayRef.current = Math.min(delay * 2, RECONNECT_MAX_DELAY_MS);
-    };
-
-    const clearReconnectTimer = () => {
-        if (reconnectTimerRef.current !== null) {
-            window.clearTimeout(reconnectTimerRef.current);
-            reconnectTimerRef.current = null;
-        }
-    };
-
-    const handleServerMessage = (payload: string) => {
-        try {
-            const serverMessage = JSON.parse(payload) as ChatServerMessage;
-
-            if (serverMessage.type === "ERROR") {
-                setStatus(serverMessage.detail ?? "Chat message failed");
-                return;
-            }
-
-            if (serverMessage.type === "CONNECTED") {
-                setStatus("Connected");
-                return;
-            }
-
-            if (serverMessage.type === "PONG") {
-                setStatus("Connected");
-                return;
-            }
-
-            if (serverMessage.type === "HISTORY") {
-                setMessages((current) => mergeMessages(current, serverMessage.messages ?? []));
-                return;
-            }
-
-            if (serverMessage.type === "CHAT_MESSAGE" && serverMessage.message) {
-                setMessages((current) => mergeMessages(current, [serverMessage.message as ChatMessage]));
-            }
-        } catch {
-            setStatus("Chat message parse failed");
-        }
-    };
+    }, [clearHeartbeat, clearReconnectTimer, handleServerMessage, markHeartbeatReceived, scheduleReconnect, startHeartbeat]);
 
     const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();

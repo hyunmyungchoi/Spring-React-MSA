@@ -1,7 +1,7 @@
 package com.springmsa.authserver.security;
 
-import com.springmsa.authserver.client.UserServiceClient;
-import com.springmsa.authserver.client.dto.AuthUserResponse;
+import com.springmsa.authserver.user.client.UserServiceClient;
+import com.springmsa.authserver.user.dto.AuthUserResponse;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;

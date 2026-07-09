@@ -6,7 +6,8 @@ COPY spring-member-bff-service/gradlew spring-member-bff-service/gradlew
 COPY spring-member-bff-service/gradle spring-member-bff-service/gradle
 COPY spring-member-bff-service/build.gradle spring-member-bff-service/settings.gradle spring-member-bff-service/
 COPY spring-member-bff-service/src spring-member-bff-service/src
-COPY spring-msa-kafka-common spring-msa-kafka-common
+COPY spring-msa-common-kafka spring-msa-common-kafka
+COPY spring-msa-common-web spring-msa-common-web
 
 WORKDIR /workspace/spring-member-bff-service
 RUN sed -i 's/\r$//' gradlew \

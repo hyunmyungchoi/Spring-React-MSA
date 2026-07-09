@@ -59,6 +59,11 @@ spec:
                 secretKeyRef:
                   name: spring-msa-secret
                   key: REDIS_PASSWORD
+            - name: SPRING_MSA_INTERNAL_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: spring-msa-secret
+                  key: SPRING_MSA_INTERNAL_API_TOKEN
             - name: BFF_CHAT_PUBSUB_CHANNEL
               value: spring:chat:broadcast
             - name: BFF_CHAT_RECENT_MESSAGES_CACHE_ENABLED

@@ -25,7 +25,7 @@ Not allowed:
 |---|---|---:|
 | React | `react` | `19.2.6` |
 | React DOM | `react-dom` | `19.2.6` |
-| React Router | `react-router` | `7.15.0` |
+| React Router | `react-router-dom` | `7.15.1` |
 | Redux Toolkit | `@reduxjs/toolkit` | `2.11.2` |
 | React Redux | `react-redux` | `9.3.0` |
 | Axios | `axios` | `1.16.1` |
@@ -52,13 +52,13 @@ cd spring-msa-front
 ## Install Runtime Dependencies
 
 ```bash
-pnpm add react@19.2.6 react-dom@19.2.6 react-router@7.15.0 @reduxjs/toolkit@2.11.2 react-redux@9.3.0 axios@1.16.1
+pnpm add react@19.2.6 react-dom@19.2.6 react-router-dom@7.15.1 @reduxjs/toolkit@2.11.2 react-redux@9.3.0 axios@1.16.1
 ```
 
 ## Install Dev Dependencies
 
 ```bash
-pnpm add -D typescript@6.0.3 vite@8.0.13 @vitejs/plugin-react@6.0.2 tailwindcss@4.3.0 @tailwindcss/vite@4.3.0 @types/react@19.2.14 @types/react-dom@19.2.3
+pnpm add -D typescript@6.0.3 vite@8.0.13 @vitejs/plugin-react@6.0.2 tailwindcss@4.3.0 @tailwindcss/vite@4.3.0 @types/node@24.12.3 @types/react@19.2.14 @types/react-dom@19.2.3
 ```
 
 ## RTK Query
@@ -143,3 +143,46 @@ node -v
 pnpm -v
 pnpm list
 ```
+
+## Docker Entry Modes
+
+Member web can be built as the full SPA or as a single entry app.
+
+```bash
+MEMBER_WEB_VITE_MODE=prod docker compose up --build spring-member-web
+MEMBER_WEB_VITE_MODE=stock docker compose up --build spring-member-web
+MEMBER_WEB_VITE_MODE=community docker compose up --build spring-member-web
+```
+
+PowerShell:
+
+```powershell
+$env:MEMBER_WEB_VITE_MODE = "stock"; docker compose up --build spring-member-web
+```
+
+Admin web follows the same pattern.
+
+```bash
+ADMIN_WEB_VITE_MODE=prod docker compose up --build spring-admin-web
+ADMIN_WEB_VITE_MODE=users docker compose up --build spring-admin-web
+ADMIN_WEB_VITE_MODE=logs docker compose up --build spring-admin-web
+```
+
+PowerShell:
+
+```powershell
+$env:ADMIN_WEB_VITE_MODE = "users"; docker compose up --build spring-admin-web
+```
+
+Kubernetes frontend deployments use separate images for independently deployable entries.
+
+| Deployment | Vite mode | Mount path |
+|---|---|---|
+| `spring-member-web` | `prod` | `/` |
+| `spring-community-web` | `community` | `/community` |
+| `spring-stock-web` | `stock` | `/stock` |
+| `spring-admin-web` | `prod` | `/` |
+| `spring-admin-users-web` | `users` | `/manage/users` |
+| `spring-admin-logs-web` | `logs` | `/manage/logs` |
+
+GitHub Actions passes `WEB_MOUNT_PATH` for the entry-specific images so the static assets live under the same path that Ingress routes to that Deployment.

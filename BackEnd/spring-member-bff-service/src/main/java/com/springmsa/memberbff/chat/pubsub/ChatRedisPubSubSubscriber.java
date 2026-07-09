@@ -1,7 +1,7 @@
 package com.springmsa.memberbff.chat.pubsub;
 
-import com.springmsa.memberbff.chat.ChatWebSocketSessionRegistry;
 import com.springmsa.memberbff.chat.dto.ChatServerMessage;
+import com.springmsa.memberbff.chat.websocket.ChatWebSocketSessionRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.Message;

@@ -40,3 +40,8 @@ admin-bff:
   api:
     user-api-base-url: http://localhost:8080
     user-internal-base-url: http://localhost:8081
+
+springmsa:
+  internal-api:
+    header-name: X-Internal-Token
+    token: local-dev-internal-token

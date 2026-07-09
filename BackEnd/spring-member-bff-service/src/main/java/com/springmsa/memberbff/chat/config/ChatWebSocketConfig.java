@@ -1,6 +1,6 @@
 package com.springmsa.memberbff.chat.config;
 
-import com.springmsa.memberbff.chat.ChatWebSocketHandler;
+import com.springmsa.memberbff.chat.websocket.ChatWebSocketHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -24,4 +24,3 @@ public class ChatWebSocketConfig implements WebSocketConfigurer {
                 .setAllowedOriginPatterns(allowedOriginPatterns);
     }
 }
-

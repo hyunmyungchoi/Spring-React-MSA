@@ -45,6 +45,11 @@ spec:
                 secretKeyRef:
                   name: spring-msa-secret
                   key: REDIS_PASSWORD
+            - name: SPRING_MSA_INTERNAL_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: spring-msa-secret
+                  key: SPRING_MSA_INTERNAL_API_TOKEN
             - name: ADMIN_BFF_FRONTEND_REDIRECT_URI
               value: http://admin.localtest.me
             - name: ADMIN_BFF_OAUTH2_AUTHORIZATION_URI

@@ -10,7 +10,7 @@ export type AdminApiErrorBody = {
 export type AdminApiResponse<T> = {
   success: boolean
   status: number
-  data: T
+  data?: T
   message?: string | null
 }
 
@@ -25,12 +25,16 @@ export class AdminApiContractError extends Error {
 }
 
 // Enforces the shared admin BFF envelope before feature code consumes data.
-export function unwrapAdminApiResponse<T>(response: AdminApiResponse<T>): T {
-  if (!response.success) {
-    throw new AdminApiContractError(response.status, response.message ?? 'Admin API request failed')
+export function unwrapAdminApiResponse<T>(body: T | AdminApiResponse<T>): T {
+  if (!isAdminApiEnvelope<T>(body)) {
+    return body
   }
 
-  return response.data
+  if (body.success === false) {
+    throw new AdminApiContractError(body.status ?? 0, body.message ?? 'Admin API request failed')
+  }
+
+  return body.data as T
 }
 
 export function resolveAdminApiErrorMessage(errorBody: unknown, status: number) {
@@ -52,4 +56,8 @@ export function resolveAdminApiErrorMessage(errorBody: unknown, status: number) 
   }
 
   return `Admin API request failed: ${status}`
+}
+
+function isAdminApiEnvelope<T>(body: T | AdminApiResponse<T>): body is AdminApiResponse<T> {
+  return typeof body === 'object' && body !== null && ('success' in body || 'data' in body || 'status' in body)
 }

@@ -1,6 +1,6 @@
 package com.springmsa.memberbff.presence.redis;
 
-import com.springmsa.memberbff.presence.MemberPresenceEventType;
+import com.springmsa.memberbff.presence.domain.MemberPresenceEventType;
 
 import java.time.Instant;
 import java.util.List;

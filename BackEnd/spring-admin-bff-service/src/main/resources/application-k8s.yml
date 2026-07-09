@@ -40,3 +40,7 @@ admin-bff:
   api:
     user-api-base-url: ${ADMIN_BFF_API_USER_API_BASE_URL:http://spring-member-gateway:8080}
     user-internal-base-url: ${ADMIN_BFF_API_USER_INTERNAL_BASE_URL:http://spring-user-service:8081}
+
+springmsa:
+  internal-api:
+    token: ${SPRING_MSA_INTERNAL_API_TOKEN}

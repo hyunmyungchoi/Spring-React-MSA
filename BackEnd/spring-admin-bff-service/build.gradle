@@ -19,6 +19,8 @@ ext {
 }
 
 dependencies {
+    implementation 'com.springmsa:spring-msa-common-web:0.0.1-SNAPSHOT'
+
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'

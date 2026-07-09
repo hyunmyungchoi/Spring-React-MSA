@@ -31,3 +31,8 @@ spring:
 logging:
   level:
     org.hibernate.SQL: debug
+
+springmsa:
+  internal-api:
+    header-name: X-Internal-Token
+    token: local-dev-internal-token

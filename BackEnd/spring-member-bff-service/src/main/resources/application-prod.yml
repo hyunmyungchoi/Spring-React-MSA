@@ -47,3 +47,7 @@ bff:
 logging:
   level:
     com.springmsa.memberbff: info
+
+springmsa:
+  internal-api:
+    token: ${SPRING_MSA_INTERNAL_API_TOKEN}

@@ -57,6 +57,11 @@ spec:
                 secretKeyRef:
                   name: spring-msa-secret
                   key: REDIS_PASSWORD
+            - name: SPRING_MSA_INTERNAL_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: spring-msa-secret
+                  key: SPRING_MSA_INTERNAL_API_TOKEN
             - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI
               value: http://user.localtest.me
             - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI
