@@ -19,3 +19,11 @@ spring:
         jwt:
           issuer-uri: http://localhost:8080
           jwk-set-uri: http://localhost:9000/oauth2/jwks
+
+toss:
+  api:
+    base-url: ${TOSS_API_BASE_URL:https://openapi.tossinvest.com}
+    client-id: ${TOSS_API_CLIENT_ID}
+    client-secret: ${TOSS_API_CLIENT_SECRET}
+    token-cache-key: toss:oauth:access-token
+    refresh-lock-key: toss:oauth:refresh-lock

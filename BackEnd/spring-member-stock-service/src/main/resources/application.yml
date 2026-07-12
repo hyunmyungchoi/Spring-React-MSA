@@ -28,6 +28,14 @@ management:
       exposure:
         include: health,info
 
+toss:
+  api:
+    base-url: ${TOSS_API_BASE_URL:https://openapi.tossinvest.com}
+    client-id: ${TOSS_API_CLIENT_ID}
+    client-secret: ${TOSS_API_CLIENT_SECRET}
+    token-cache-key: toss:oauth:access-token
+    refresh-lock-key: toss:oauth:refresh-lock
+
 logging:
   charset:
     console: UTF-8
