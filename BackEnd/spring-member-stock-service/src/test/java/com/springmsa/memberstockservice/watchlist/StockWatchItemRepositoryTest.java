@@ -3,23 +3,23 @@ package com.springmsa.memberstockservice.watchlist;
 import com.springmsa.memberstockservice.watchlist.domain.StockWatchItem;
 import com.springmsa.memberstockservice.watchlist.repository.StockWatchItemRepository;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
-import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.data.jpa.autoconfigure.DataJpaRepositoriesAutoConfiguration;
 import org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration;
 import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
 import org.springframework.boot.jdbc.autoconfigure.DataSourceTransactionManagerAutoConfiguration;
+import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
-import org.springframework.boot.test.context.SpringBootTestContextBootstrapper;
 import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.boot.test.util.ReflectionTestUtils;
 import org.springframework.boot.transaction.autoconfigure.TransactionAutoConfiguration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.BootstrapWith;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
@@ -27,7 +27,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@BootstrapWith(SpringBootTestContextBootstrapper.class)
 @ContextConfiguration(
         classes = StockWatchItemRepositoryTest.TestJpaConfiguration.class,
         initializers = ConfigDataApplicationContextInitializer.class
@@ -41,6 +40,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         "spring.jpa.hibernate.ddl-auto=create-drop",
         "spring.jpa.open-in-view=false"
 })
+@ExtendWith(SpringExtension.class)
 @Transactional
 class StockWatchItemRepositoryTest {
 
