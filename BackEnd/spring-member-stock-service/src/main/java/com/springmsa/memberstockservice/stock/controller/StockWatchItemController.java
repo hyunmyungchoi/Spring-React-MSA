@@ -28,8 +28,8 @@ public class StockWatchItemController {
     }
 
     @GetMapping
-    public List<StockWatchItemResponse> findAll() {
-        return stockWatchItemService.findAll();
+    public List<StockWatchItemResponse> findAll(Authentication authentication) {
+        return stockWatchItemService.findAll(authentication.getName());
     }
 
     @PostMapping
@@ -39,13 +39,17 @@ public class StockWatchItemController {
     }
 
     @PutMapping("/{itemId}")
-    public StockWatchItemResponse update(@PathVariable Long itemId, @RequestBody StockWatchItemRequest request) {
-        return stockWatchItemService.update(itemId, request);
+    public StockWatchItemResponse update(
+            @PathVariable Long itemId,
+            @RequestBody StockWatchItemRequest request,
+            Authentication authentication
+    ) {
+        return stockWatchItemService.update(itemId, request, authentication.getName());
     }
 
     @DeleteMapping("/{itemId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable Long itemId) {
-        stockWatchItemService.delete(itemId);
+    public void delete(@PathVariable Long itemId, Authentication authentication) {
+        stockWatchItemService.delete(itemId, authentication.getName());
     }
 }

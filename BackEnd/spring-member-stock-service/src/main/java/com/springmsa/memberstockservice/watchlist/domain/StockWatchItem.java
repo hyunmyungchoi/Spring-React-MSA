@@ -53,6 +53,12 @@ public class StockWatchItem {
         return item;
     }
 
+    public void update(String symbol, String memo) {
+        this.symbol = symbol.trim().toUpperCase(Locale.ROOT);
+        this.memo = memo.trim();
+        this.updatedAt = Instant.now();
+    }
+
     public Long getId() {
         return id;
     }
