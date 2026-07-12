@@ -5,6 +5,16 @@ spring:
   application:
     name: spring-member-stock-service
 
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:15432}/${POSTGRES_DB:msa}}
+    username: ${SPRING_DATASOURCE_USERNAME:${POSTGRES_USER:msa}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${POSTGRES_PASSWORD:msa}}
+
+  jpa:
+    hibernate:
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
+    open-in-view: false
+
   security:
     oauth2:
       resourceserver:

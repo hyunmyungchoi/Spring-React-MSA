@@ -13,3 +13,5 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = 'spring-member-stock-service'
+
+includeBuild('../spring-msa-common-web')
