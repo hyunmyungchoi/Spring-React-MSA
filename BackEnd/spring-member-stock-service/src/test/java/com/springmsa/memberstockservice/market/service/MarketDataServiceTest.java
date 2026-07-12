@@ -79,6 +79,7 @@ class MarketDataServiceTest {
     @Test
     void fetchesMissingQuotesAndCachesFreshResponses() {
         when(cache.findFreshQuote("005930")).thenReturn(Optional.empty());
+        when(cache.tryAcquireQuoteRefreshLock("005930")).thenReturn(true);
         when(adapter.getPrices(symbols("005930"))).thenReturn(List.of(new MarketQuote(
                 "005930",
                 new BigDecimal("72000.50"),
@@ -99,6 +100,7 @@ class MarketDataServiceTest {
     void returnsStaleQuoteWhenTossIsUnavailable() {
         MarketQuoteResponse stale = quote("005930", "62000", DataStatus.STALE, NOW.minusSeconds(20));
         when(cache.findFreshQuote("005930")).thenReturn(Optional.empty());
+        when(cache.tryAcquireQuoteRefreshLock("005930")).thenReturn(true);
         when(adapter.getPrices(symbols("005930"))).thenThrow(new ApiException(TossErrorCode.TOSS_MARKET_UNAVAILABLE));
         when(cache.findStaleQuote("005930")).thenReturn(Optional.of(stale));
 
@@ -112,8 +114,22 @@ class MarketDataServiceTest {
     }
 
     @Test
+    void lockLoserUsesStaleQuoteWithoutCallingToss() {
+        MarketQuoteResponse stale = quote("005930", "62000", DataStatus.STALE, NOW.minusSeconds(20));
+        when(cache.findFreshQuote("005930")).thenReturn(Optional.empty());
+        when(cache.tryAcquireQuoteRefreshLock("005930")).thenReturn(false);
+        when(cache.findStaleQuote("005930")).thenReturn(Optional.of(stale));
+
+        assertThat(service.getPrices(symbols("005930"))).containsExactly(stale);
+
+        verifyNoInteractions(adapter);
+        assertCounter("stock.cache.stale_served", "prices", "stale", 1.0);
+    }
+
+    @Test
     void rethrowsStockNotFoundWithoutServingStaleData() {
         when(cache.findFreshQuote("UNKNOWN")).thenReturn(Optional.empty());
+        when(cache.tryAcquireQuoteRefreshLock("UNKNOWN")).thenReturn(true);
         when(adapter.getPrices(symbols("UNKNOWN"))).thenThrow(new ApiException(TossErrorCode.STOCK_NOT_FOUND));
 
         assertThatThrownBy(() -> service.getPrices(symbols("UNKNOWN")))
@@ -173,6 +189,7 @@ class MarketDataServiceTest {
     void incrementsRateLimitedCounterWhenServingStaleQuoteAfterRateLimit() {
         MarketQuoteResponse stale = quote("005930", "62000", DataStatus.STALE, NOW.minusSeconds(20));
         when(cache.findFreshQuote("005930")).thenReturn(Optional.empty());
+        when(cache.tryAcquireQuoteRefreshLock("005930")).thenReturn(true);
         when(adapter.getPrices(symbols("005930"))).thenThrow(new ApiException(TossErrorCode.TOSS_RATE_LIMITED));
         when(cache.findStaleQuote("005930")).thenReturn(Optional.of(stale));
 

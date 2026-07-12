@@ -10,6 +10,7 @@ import com.springmsa.memberstockservice.market.dto.CandleResponse;
 import com.springmsa.memberstockservice.market.dto.DataStatus;
 import com.springmsa.memberstockservice.market.dto.MarketQuoteResponse;
 import com.springmsa.memberstockservice.market.dto.StockSummaryResponse;
+import com.springmsa.memberstockservice.toss.auth.TossErrorCode;
 import com.springmsa.memberstockservice.toss.market.TossMarketDataAdapter;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -77,27 +78,53 @@ public class MarketDataService {
         }
 
         if (!misses.isEmpty()) {
+            LinkedHashSet<String> locked = new LinkedHashSet<>();
+            LinkedHashSet<String> fetchMisses = new LinkedHashSet<>();
+
             try {
-                List<MarketQuoteResponse> fetched = callToss(
-                        PRICES_ENDPOINT,
-                        () -> adapter.getPrices(misses).stream()
-                                .map(this::toResponse)
-                                .toList()
-                );
-                for (MarketQuoteResponse response : fetched) {
-                    cache.saveQuote(response);
-                    responses.put(response.symbol(), response);
-                }
-            } catch (ApiException exception) {
-                if (!isRecoverableMarketFailure(exception)) {
-                    throw exception;
+                for (String symbol : misses) {
+                    if (cache.tryAcquireQuoteRefreshLock(symbol)) {
+                        locked.add(symbol);
+                        Optional<MarketQuoteResponse> cachedAfterLock = cache.findFreshQuote(symbol);
+                        if (cachedAfterLock.isPresent()) {
+                            responses.put(symbol, cachedAfterLock.get());
+                            increment("stock.cache.hits", PRICES_ENDPOINT, "fresh");
+                        } else {
+                            fetchMisses.add(symbol);
+                        }
+                    } else {
+                        responses.put(symbol, quoteFromConcurrentRefresh(symbol));
+                    }
                 }
 
-                for (String symbol : misses) {
-                    MarketQuoteResponse stale = cache.findStaleQuote(symbol)
-                            .orElseThrow(() -> exception);
-                    responses.put(symbol, stale);
-                    increment("stock.cache.stale_served", PRICES_ENDPOINT, "stale");
+                if (!fetchMisses.isEmpty()) {
+                    try {
+                        List<MarketQuoteResponse> fetched = callToss(
+                                PRICES_ENDPOINT,
+                                () -> adapter.getPrices(fetchMisses).stream()
+                                        .map(this::toResponse)
+                                        .toList()
+                        );
+                        for (MarketQuoteResponse response : fetched) {
+                            cache.saveQuote(response);
+                            responses.put(response.symbol(), response);
+                        }
+                    } catch (ApiException exception) {
+                        if (!isRecoverableMarketFailure(exception)) {
+                            throw exception;
+                        }
+
+                        for (String symbol : fetchMisses) {
+                            MarketQuoteResponse stale = cache.findStaleQuote(symbol)
+                                    .orElseThrow(() -> exception);
+                            responses.put(symbol, stale);
+                            increment("stock.cache.stale_served", PRICES_ENDPOINT, "stale");
+                        }
+                    }
+                }
+            } finally {
+                for (String symbol : locked) {
+                    cache.releaseQuoteRefreshLock(symbol);
                 }
             }
         }
@@ -235,6 +262,22 @@ public class MarketDataService {
     private boolean isRateLimited(RuntimeException exception) {
         return exception instanceof ApiException apiException
                 && "TOSS_RATE_LIMITED".equals(apiException.code());
+    }
+
+    private MarketQuoteResponse quoteFromConcurrentRefresh(String symbol) {
+        Optional<MarketQuoteResponse> fresh = cache.findFreshQuote(symbol);
+        if (fresh.isPresent()) {
+            increment("stock.cache.hits", PRICES_ENDPOINT, "fresh");
+            return fresh.get();
+        }
+
+        Optional<MarketQuoteResponse> stale = cache.findStaleQuote(symbol);
+        if (stale.isPresent()) {
+            increment("stock.cache.stale_served", PRICES_ENDPOINT, "stale");
+            return stale.get();
+        }
+
+        throw new ApiException(TossErrorCode.TOSS_MARKET_UNAVAILABLE);
     }
 
     private void increment(String name, String endpoint, String outcome) {

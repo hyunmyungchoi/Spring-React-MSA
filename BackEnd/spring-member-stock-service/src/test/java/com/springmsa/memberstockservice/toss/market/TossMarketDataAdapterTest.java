@@ -273,8 +273,10 @@ class TossMarketDataAdapterTest {
                         .header("X-Request-Id", "req-404")
                         .body("""
                                 {
-                                  "code": "stock-not-found",
-                                  "message": "stock not found"
+                                  "error": {
+                                    "code": "stock-not-found",
+                                    "message": "stock not found"
+                                  }
                                 }
                                 """));
 

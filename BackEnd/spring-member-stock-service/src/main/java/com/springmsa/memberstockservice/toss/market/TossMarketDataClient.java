@@ -179,6 +179,11 @@ class RestClientTossMarketDataClient implements TossMarketDataClient {
         }
 
         try {
+            TossErrorEnvelope envelope = objectMapper.readValue(body, TossErrorEnvelope.class);
+            if (envelope.error() != null) {
+                return envelope.error();
+            }
+
             return objectMapper.readValue(body, TossErrorResponse.class);
         } catch (RuntimeException ignored) {
             return new TossErrorResponse(null, null);
@@ -241,5 +246,10 @@ record TossCandlePageResponse(
 record TossErrorResponse(
         String code,
         String message
+) {
+}
+
+record TossErrorEnvelope(
+        TossErrorResponse error
 ) {
 }

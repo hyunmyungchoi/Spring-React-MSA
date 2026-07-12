@@ -20,6 +20,7 @@ public class MarketDataCacheRepository {
 
     private static final Duration QUOTE_TTL = Duration.ofSeconds(2);
     private static final Duration QUOTE_STALE_TTL = Duration.ofMinutes(5);
+    private static final Duration QUOTE_REFRESH_LOCK_TTL = Duration.ofSeconds(2);
     private static final Duration STOCK_TTL = Duration.ofHours(24);
     private static final Duration CANDLE_TTL = Duration.ofSeconds(30);
 
@@ -42,6 +43,15 @@ public class MarketDataCacheRepository {
     public void saveQuote(MarketQuoteResponse response) {
         write(quoteKey(response.symbol()), response, QUOTE_TTL);
         write(staleQuoteKey(response.symbol()), staleCopy(response), QUOTE_STALE_TTL);
+    }
+
+    public boolean tryAcquireQuoteRefreshLock(String symbol) {
+        Boolean acquired = operations().setIfAbsent(refreshLockKey(symbol), "1", QUOTE_REFRESH_LOCK_TTL);
+        return Boolean.TRUE.equals(acquired);
+    }
+
+    public void releaseQuoteRefreshLock(String symbol) {
+        redisTemplate.delete(refreshLockKey(symbol));
     }
 
     public Optional<StockSummaryResponse> findStock(String symbol) {
@@ -104,6 +114,10 @@ public class MarketDataCacheRepository {
 
     private String staleQuoteKey(String symbol) {
         return "stock:quote-stale:" + symbol;
+    }
+
+    private String refreshLockKey(String symbol) {
+        return "stock:quote-refresh-lock:" + symbol;
     }
 
     private String stockKey(String symbol) {
