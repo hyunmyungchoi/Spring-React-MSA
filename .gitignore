@@ -132,3 +132,6 @@ generated-files/
 infra/docker/.env.prod
 !infra/docker/.env.prod.example
 infra/k8s/spring-msa/02-secrets.local.yaml
+
+# Local planning / handoff notes
+/doc/
