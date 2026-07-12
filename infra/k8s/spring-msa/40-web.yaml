@@ -17,7 +17,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: spring-member-web
-          image: ghcr.io/hyunmyungchoi/spring-member-web:efdfd894ddb21f69c7677456da246493b37a664c
+          image: ghcr.io/hyunmyungchoi/spring-member-web:906f5013d0356b93aead2e022337efa6085ed7b5
           imagePullPolicy: Always
           ports:
             - containerPort: 80
@@ -54,7 +54,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: spring-community-web
-          image: ghcr.io/hyunmyungchoi/spring-community-web:62fbbc1eebfe3e4f97c6dcc18dea6e1411780b5f
+          image: ghcr.io/hyunmyungchoi/spring-community-web:906f5013d0356b93aead2e022337efa6085ed7b5
           imagePullPolicy: Always
           ports:
             - containerPort: 80
@@ -91,7 +91,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: spring-stock-web
-          image: ghcr.io/hyunmyungchoi/spring-stock-web:efdfd894ddb21f69c7677456da246493b37a664c
+          image: ghcr.io/hyunmyungchoi/spring-stock-web:906f5013d0356b93aead2e022337efa6085ed7b5
           imagePullPolicy: Always
           ports:
             - containerPort: 80
