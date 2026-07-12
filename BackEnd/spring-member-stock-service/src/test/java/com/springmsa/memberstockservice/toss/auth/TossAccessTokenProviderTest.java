@@ -151,6 +151,24 @@ class TossAccessTokenProviderTest {
     }
 
     @Test
+    void evictsCachedTokenOnDemand() {
+        TossAccessTokenProvider provider = new TossAccessTokenProvider(
+                redisTemplate,
+                tokenClient,
+                properties,
+                duration -> {
+                },
+                Duration.ZERO,
+                Duration.ZERO
+        );
+
+        provider.evictAccessToken();
+
+        verify(redisTemplate).delete("toss:oauth:access-token");
+        verifyNoInteractions(tokenClient);
+    }
+
+    @Test
     void throwsServiceUnavailableWhenNoTokenAppearsBeforeTimeout() {
         TossAccessTokenProvider provider = new TossAccessTokenProvider(
                 redisTemplate,

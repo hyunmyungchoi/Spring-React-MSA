@@ -69,6 +69,10 @@ public class TossAccessTokenProvider {
         return waitForToken(valueOperations);
     }
 
+    public void evictAccessToken() {
+        redisTemplate.delete(properties.tokenCacheKey());
+    }
+
     private String issueAndCacheToken(ValueOperations<String, String> valueOperations) {
         String cachedToken = valueOperations.get(properties.tokenCacheKey());
 
