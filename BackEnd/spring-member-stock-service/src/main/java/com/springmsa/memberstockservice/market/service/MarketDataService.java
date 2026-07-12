@@ -14,6 +14,7 @@ import com.springmsa.memberstockservice.toss.market.TossMarketDataAdapter;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -40,6 +41,7 @@ public class MarketDataService {
     private final MeterRegistry meterRegistry;
     private final Clock clock;
 
+    @Autowired
     public MarketDataService(
             TossMarketDataAdapter adapter,
             MarketDataCacheRepository cache,
@@ -48,7 +50,7 @@ public class MarketDataService {
         this(adapter, cache, meterRegistry, Clock.systemUTC());
     }
 
-    public MarketDataService(
+    MarketDataService(
             TossMarketDataAdapter adapter,
             MarketDataCacheRepository cache,
             MeterRegistry meterRegistry,

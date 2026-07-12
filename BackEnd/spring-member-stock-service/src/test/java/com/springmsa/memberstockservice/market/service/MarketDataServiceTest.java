@@ -15,6 +15,7 @@ import com.springmsa.memberstockservice.toss.market.TossMarketDataAdapter;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -27,6 +28,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -48,6 +50,19 @@ class MarketDataServiceTest {
     @BeforeEach
     void setUp() {
         service = new MarketDataService(adapter, cache, meterRegistry, clock);
+    }
+
+    @Test
+    void springContextCreatesServiceWithoutAClockBean() {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext()) {
+            context.registerBean(TossMarketDataAdapter.class, () -> adapter);
+            context.registerBean(MarketDataCacheRepository.class, () -> cache);
+            context.registerBean(SimpleMeterRegistry.class, () -> meterRegistry);
+            context.register(MarketDataService.class);
+
+            assertThatCode(context::refresh).doesNotThrowAnyException();
+            assertThat(context.getBean(MarketDataService.class)).isNotNull();
+        }
     }
 
     @Test

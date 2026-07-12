@@ -77,6 +77,14 @@ class MarketDataControllerTest {
     }
 
     @Test
+    void stocksRejectTrailingEmptySymbolToken() throws Exception {
+        mockMvc.perform(get("/api/stock/market/stocks")
+                        .param("symbols", "AAPL,"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_MARKET_SYMBOL"));
+    }
+
+    @Test
     void stocksRejectMoreThanTwoHundredSymbols() throws Exception {
         StringBuilder symbols = new StringBuilder();
         for (int index = 0; index < 201; index++) {

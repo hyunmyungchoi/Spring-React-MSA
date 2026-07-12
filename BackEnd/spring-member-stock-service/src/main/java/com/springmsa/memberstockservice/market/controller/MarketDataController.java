@@ -54,7 +54,7 @@ public class MarketDataController {
     private LinkedHashSet<String> symbolSet(String rawSymbols) {
         LinkedHashSet<String> symbols = new LinkedHashSet<>();
 
-        for (String rawSymbol : rawSymbols.split(",")) {
+        for (String rawSymbol : rawSymbols.split(",", -1)) {
             String symbol = normalizeSymbol(rawSymbol);
             symbols.add(symbol);
         }
