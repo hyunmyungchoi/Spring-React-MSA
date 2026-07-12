@@ -11,18 +11,10 @@ spring:
   application:
     name: spring-member-bff-service
 
-  datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:15432}/${POSTGRES_DB:msa}}
-    username: ${SPRING_DATASOURCE_USERNAME:${POSTGRES_USER:msa}}
-    password: ${SPRING_DATASOURCE_PASSWORD:${POSTGRES_PASSWORD:msa}}
-
   jpa:
-    hibernate:
-      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
     open-in-view: false
 
   kafka:
-    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
@@ -55,40 +47,37 @@ logging:
 
 springmsa:
   internal-api:
-    header-name: ${SPRING_MSA_INTERNAL_API_HEADER_NAME:X-Internal-Token}
-    token: ${SPRING_MSA_INTERNAL_API_TOKEN:local-dev-internal-token}
+    header-name: X-Internal-Token
 
 bff:
   presence:
     redis:
-      namespace: ${BFF_PRESENCE_REDIS_NAMESPACE:spring:presence:member-bff}
+      namespace: spring:presence:member-bff
     heartbeat:
-      ttl-seconds: ${BFF_PRESENCE_HEARTBEAT_TTL_SECONDS:45}
+      ttl-seconds: 45
     stream:
-      key: ${BFF_PRESENCE_STREAM_KEY:spring:presence:member-bff:events}
-      max-length: ${BFF_PRESENCE_STREAM_MAX_LENGTH:1000}
+      key: spring:presence:member-bff:events
+      max-length: 1000
   chat:
-    websocket:
-      allowed-origin-patterns: ${BFF_CHAT_WEBSOCKET_ALLOWED_ORIGIN_PATTERNS:http://localhost:*,http://user.localtest.me}
     pubsub:
-      channel: ${BFF_CHAT_PUBSUB_CHANNEL:spring:chat:broadcast}
+      channel: spring:chat:broadcast
     cache:
       recent-messages:
-        enabled: ${BFF_CHAT_RECENT_MESSAGES_CACHE_ENABLED:true}
-        namespace: ${BFF_CHAT_RECENT_MESSAGES_CACHE_NAMESPACE:spring:chat:cache}
-        max-size: ${BFF_CHAT_RECENT_MESSAGES_CACHE_MAX_SIZE:200}
-        ttl-seconds: ${BFF_CHAT_RECENT_MESSAGES_CACHE_TTL_SECONDS:3600}
+        enabled: true
+        namespace: spring:chat:cache
+        max-size: 200
+        ttl-seconds: 3600
     message:
-      default-history-limit: ${BFF_CHAT_DEFAULT_HISTORY_LIMIT:50}
-      max-content-length: ${BFF_CHAT_MAX_CONTENT_LENGTH:1000}
+      default-history-limit: 50
+      max-content-length: 1000
   kafka:
     topics:
-      partitions: ${BFF_KAFKA_TOPIC_PARTITIONS:3}
-      replicas: ${BFF_KAFKA_TOPIC_REPLICAS:1}
+      partitions: 3
+      replicas: 1
     retry:
-      interval-ms: ${BFF_KAFKA_RETRY_INTERVAL_MS:1000}
-      max-attempts: ${BFF_KAFKA_RETRY_MAX_ATTEMPTS:3}
+      interval-ms: 1000
+      max-attempts: 3
     consumer:
-      notification-group: ${BFF_KAFKA_NOTIFICATION_GROUP:spring-member-bff-chat-notification}
-      analytics-group: ${BFF_KAFKA_ANALYTICS_GROUP:spring-member-bff-chat-analytics}
-      dlt-group: ${BFF_KAFKA_DLT_GROUP:spring-member-bff-chat-dlt}
+      notification-group: spring-member-bff-chat-notification
+      analytics-group: spring-member-bff-chat-analytics
+      dlt-group: spring-member-bff-chat-dlt

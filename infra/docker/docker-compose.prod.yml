@@ -1,4 +1,4 @@
-services:
+﻿services:
   postgres:
     image: postgres:16
     container_name: spring-msa-postgres
@@ -79,6 +79,10 @@ services:
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
       SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD}
+
+      TOSS_API_BASE_URL: ${TOSS_API_BASE_URL:-https://openapi.tossinvest.com}
+      TOSS_API_CLIENT_ID: ${TOSS_API_CLIENT_ID}
+      TOSS_API_CLIENT_SECRET: ${TOSS_API_CLIENT_SECRET}
 
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: ${PUBLIC_GATEWAY_URL}
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://spring-security-authorization-server:9000/oauth2/jwks

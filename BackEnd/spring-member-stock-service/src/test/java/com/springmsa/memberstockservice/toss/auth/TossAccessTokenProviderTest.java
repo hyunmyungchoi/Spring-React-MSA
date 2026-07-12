@@ -45,7 +45,8 @@ class TossAccessTokenProviderTest {
         TossAccessTokenProvider provider = new TossAccessTokenProvider(
                 redisTemplate,
                 tokenClient,
-                properties,
+                properties
+        ).withTimingForTest(
                 duration -> {
                 },
                 Duration.ofSeconds(1),
@@ -63,7 +64,8 @@ class TossAccessTokenProviderTest {
         TossAccessTokenProvider provider = new TossAccessTokenProvider(
                 redisTemplate,
                 tokenClient,
-                properties,
+                properties
+        ).withTimingForTest(
                 duration -> {
                 },
                 Duration.ofSeconds(1),
@@ -71,11 +73,12 @@ class TossAccessTokenProviderTest {
         );
         when(valueOperations.get("toss:oauth:access-token")).thenReturn((String) null, (String) null);
         when(valueOperations.setIfAbsent("toss:oauth:refresh-lock", "locked", Duration.ofSeconds(5))).thenReturn(true);
-        when(tokenClient.issueToken()).thenReturn(new TossTokenResponse("issued-token", "Bearer", 3600));
+        when(tokenClient.issueToken()).thenReturn(new TossTokenResponse("issued-token", "bearer", 3600));
 
         assertThat(provider.getAccessToken()).isEqualTo("issued-token");
 
         verify(valueOperations).set("toss:oauth:access-token", "issued-token", Duration.ofSeconds(3540));
+        verify(redisTemplate).delete("toss:oauth:refresh-lock");
     }
 
     @Test
@@ -83,7 +86,8 @@ class TossAccessTokenProviderTest {
         TossAccessTokenProvider provider = new TossAccessTokenProvider(
                 redisTemplate,
                 tokenClient,
-                properties,
+                properties
+        ).withTimingForTest(
                 duration -> {
                 },
                 Duration.ofSeconds(1),
@@ -109,7 +113,8 @@ class TossAccessTokenProviderTest {
         TossAccessTokenProvider provider = new TossAccessTokenProvider(
                 redisTemplate,
                 tokenClient,
-                properties,
+                properties
+        ).withTimingForTest(
                 duration -> {
                 },
                 Duration.ofSeconds(1),
@@ -135,7 +140,8 @@ class TossAccessTokenProviderTest {
         TossAccessTokenProvider provider = new TossAccessTokenProvider(
                 redisTemplate,
                 tokenClient,
-                properties,
+                properties
+        ).withTimingForTest(
                 duration -> {
                 },
                 Duration.ofSeconds(1),
@@ -155,7 +161,8 @@ class TossAccessTokenProviderTest {
         TossAccessTokenProvider provider = new TossAccessTokenProvider(
                 redisTemplate,
                 tokenClient,
-                properties,
+                properties
+        ).withTimingForTest(
                 duration -> {
                 },
                 Duration.ZERO,
@@ -173,7 +180,8 @@ class TossAccessTokenProviderTest {
         TossAccessTokenProvider provider = new TossAccessTokenProvider(
                 redisTemplate,
                 tokenClient,
-                properties,
+                properties
+        ).withTimingForTest(
                 duration -> {
                 },
                 Duration.ZERO,

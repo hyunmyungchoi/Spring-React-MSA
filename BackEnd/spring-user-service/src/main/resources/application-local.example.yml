@@ -11,9 +11,9 @@ spring:
           jwk-set-uri: http://localhost:9000/oauth2/jwks
 
   datasource:
-    url: jdbc:postgresql://127.0.0.1:15432/msa
-    username: msa
-    password: msa
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://127.0.0.1:15432/msa}
+    username: ${SPRING_DATASOURCE_USERNAME:${POSTGRES_USER:msa}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${POSTGRES_PASSWORD:msa}}
     driver-class-name: org.postgresql.Driver
 
   jpa:

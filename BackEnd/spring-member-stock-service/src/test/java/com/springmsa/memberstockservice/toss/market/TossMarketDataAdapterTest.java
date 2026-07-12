@@ -6,19 +6,23 @@ import com.springmsa.memberstockservice.market.domain.CandleInterval;
 import com.springmsa.memberstockservice.market.domain.MarketQuote;
 import com.springmsa.memberstockservice.market.domain.StockSummary;
 import com.springmsa.memberstockservice.toss.auth.TossAccessTokenProvider;
-import com.springmsa.memberstockservice.toss.config.TossApiProperties;
+import com.springmsa.memberstockservice.toss.market.dto.TossApiResponse;
+import com.springmsa.memberstockservice.toss.market.dto.TossCandle;
+import com.springmsa.memberstockservice.toss.market.dto.TossCandlePageResponse;
+import com.springmsa.memberstockservice.toss.market.dto.TossPriceResponse;
+import com.springmsa.memberstockservice.toss.market.dto.TossStockInfo;
+import feign.FeignException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.client.MockRestServiceServer;
-import org.springframework.web.client.RestClient;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.math.BigDecimal;
-import java.io.IOException;
 import java.time.OffsetDateTime;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -26,40 +30,22 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.client.ExpectedCount.once;
-import static org.springframework.test.web.client.ExpectedCount.times;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.withException;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
-import tools.jackson.databind.json.JsonMapper;
 
 class TossMarketDataAdapterTest {
 
     private TossAccessTokenProvider tokenProvider;
-    private MockRestServiceServer server;
+    private TossMarketDataFeignClient feignClient;
     private TossMarketDataAdapter adapter;
 
     @BeforeEach
     void setUp() {
-        TossApiProperties properties = new TossApiProperties(
-                "https://openapi.tossinvest.com",
-                "dummy-client-id",
-                "dummy-client-secret",
-                "toss:oauth:access-token",
-                "toss:oauth:refresh-lock"
-        );
         tokenProvider = mock(TossAccessTokenProvider.class);
-        RestClient.Builder builder = RestClient.builder().baseUrl(properties.baseUrl());
-        server = MockRestServiceServer.bindTo(builder).build();
+        feignClient = mock(TossMarketDataFeignClient.class);
         adapter = new TossMarketDataAdapter(
-                new RestClientTossMarketDataClient(
-                        builder,
+                new FeignTossMarketDataClient(
+                        feignClient,
                         tokenProvider,
-                        properties,
-                        JsonMapper.builder().findAndAddModules().build()
+                        new TossErrorResponseParser(JsonMapper.builder().findAndAddModules().build())
                 )
         );
     }
@@ -67,22 +53,13 @@ class TossMarketDataAdapterTest {
     @Test
     void mapsPriceResponseUsingOfficialStringDecimalFields() {
         when(tokenProvider.getAccessToken()).thenReturn("dummy-access-token");
-
-        server.expect(once(), requestTo("https://openapi.tossinvest.com/api/v1/prices?symbols=005930"))
-                .andExpect(method(HttpMethod.GET))
-                .andExpect(header(HttpHeaders.AUTHORIZATION, "Bearer dummy-access-token"))
-                .andRespond(withSuccess("""
-                        {
-                          "result": [
-                            {
-                              "symbol": "005930",
-                              "timestamp": "2026-03-25T09:30:00.123+09:00",
-                              "lastPrice": "72000",
-                              "currency": "KRW"
-                            }
-                          ]
-                        }
-                        """, MediaType.APPLICATION_JSON));
+        when(feignClient.getPrices("Bearer dummy-access-token", "005930"))
+                .thenReturn(new TossApiResponse<>(List.of(new TossPriceResponse(
+                        "005930",
+                        "2026-03-25T09:30:00.123+09:00",
+                        "72000",
+                        "KRW"
+                ))));
 
         assertThat(adapter.getPrices(Set.of("005930")))
                 .containsExactly(new MarketQuote(
@@ -96,22 +73,13 @@ class TossMarketDataAdapterTest {
     @Test
     void mapsNullablePriceTimestampFromOfficialSchema() {
         when(tokenProvider.getAccessToken()).thenReturn("dummy-access-token");
-
-        server.expect(once(), requestTo("https://openapi.tossinvest.com/api/v1/prices?symbols=005930"))
-                .andExpect(method(HttpMethod.GET))
-                .andExpect(header(HttpHeaders.AUTHORIZATION, "Bearer dummy-access-token"))
-                .andRespond(withSuccess("""
-                        {
-                          "result": [
-                            {
-                              "symbol": "005930",
-                              "timestamp": null,
-                              "lastPrice": "72000",
-                              "currency": "KRW"
-                            }
-                          ]
-                        }
-                        """, MediaType.APPLICATION_JSON));
+        when(feignClient.getPrices("Bearer dummy-access-token", "005930"))
+                .thenReturn(new TossApiResponse<>(List.of(new TossPriceResponse(
+                        "005930",
+                        null,
+                        "72000",
+                        "KRW"
+                ))));
 
         assertThat(adapter.getPrices(Set.of("005930")))
                 .containsExactly(new MarketQuote(
@@ -125,37 +93,15 @@ class TossMarketDataAdapterTest {
     @Test
     void mapsStockResponseUsingOfficialFieldNames() {
         when(tokenProvider.getAccessToken()).thenReturn("dummy-access-token");
-
-        server.expect(once(), requestTo("https://openapi.tossinvest.com/api/v1/stocks?symbols=005930"))
-                .andExpect(method(HttpMethod.GET))
-                .andExpect(header(HttpHeaders.AUTHORIZATION, "Bearer dummy-access-token"))
-                .andRespond(withSuccess("""
-                        {
-                          "result": [
-                            {
-                              "symbol": "005930",
-                              "name": "삼성전자",
-                              "englishName": "SamsungElec",
-                              "isinCode": "KR7005930003",
-                              "market": "KOSPI",
-                              "securityType": "STOCK",
-                              "isCommonShare": true,
-                              "status": "ACTIVE",
-                              "currency": "KRW",
-                              "listDate": "1975-06-11",
-                              "delistDate": null,
-                              "sharesOutstanding": "5919637922",
-                              "leverageFactor": null,
-                              "koreanMarketDetail": {
-                                "liquidationTrading": false,
-                                "nxtSupported": true,
-                                "krxTradingSuspended": false,
-                                "nxtTradingSuspended": false
-                              }
-                            }
-                          ]
-                        }
-                        """, MediaType.APPLICATION_JSON));
+        when(feignClient.getStocks("Bearer dummy-access-token", "005930"))
+                .thenReturn(new TossApiResponse<>(List.of(new TossStockInfo(
+                        "005930",
+                        "삼성전자",
+                        "SamsungElec",
+                        "KOSPI",
+                        "KRW",
+                        "ACTIVE"
+                ))));
 
         assertThat(adapter.getStocks(Set.of("005930")))
                 .containsExactly(new StockSummary(
@@ -171,37 +117,30 @@ class TossMarketDataAdapterTest {
     @Test
     void mapsCandleResponseUsingOfficialQueryParameters() {
         when(tokenProvider.getAccessToken()).thenReturn("dummy-access-token");
-
-        server.expect(once(), requestTo("https://openapi.tossinvest.com/api/v1/candles?symbol=005930&interval=1d&count=2"))
-                .andExpect(method(HttpMethod.GET))
-                .andExpect(header(HttpHeaders.AUTHORIZATION, "Bearer dummy-access-token"))
-                .andRespond(withSuccess("""
-                        {
-                          "result": {
-                            "candles": [
-                              {
-                                "timestamp": "2026-03-25T09:00:00+09:00",
-                                "openPrice": "71600",
-                                "highPrice": "72300",
-                                "lowPrice": "71500",
-                                "closePrice": "72000",
-                                "volume": "3521000",
-                                "currency": "KRW"
-                              },
-                              {
-                                "timestamp": "2026-03-24T09:00:00+09:00",
-                                "openPrice": "71200",
-                                "highPrice": "71800",
-                                "lowPrice": "71000",
-                                "closePrice": "71600",
-                                "volume": "2984000",
-                                "currency": "KRW"
-                              }
-                            ],
-                            "nextBefore": "2026-03-24T09:00:00+09:00"
-                          }
-                        }
-                        """, MediaType.APPLICATION_JSON));
+        when(feignClient.getCandles("Bearer dummy-access-token", "005930", "1d", 2))
+                .thenReturn(new TossApiResponse<>(new TossCandlePageResponse(
+                        List.of(
+                                new TossCandle(
+                                        "2026-03-25T09:00:00+09:00",
+                                        "71600",
+                                        "72300",
+                                        "71500",
+                                        "72000",
+                                        "3521000",
+                                        "KRW"
+                                ),
+                                new TossCandle(
+                                        "2026-03-24T09:00:00+09:00",
+                                        "71200",
+                                        "71800",
+                                        "71000",
+                                        "71600",
+                                        "2984000",
+                                        "KRW"
+                                )
+                        ),
+                        OffsetDateTime.parse("2026-03-24T09:00:00+09:00")
+                )));
 
         assertThat(adapter.getCandles("005930", CandleInterval.DAY_1, 2))
                 .containsExactly(
@@ -228,32 +167,16 @@ class TossMarketDataAdapterTest {
 
     @Test
     void retriesOnceAfterUnauthorizedByEvictingCachedToken() {
+        FeignException unauthorized = feignException(HttpStatus.UNAUTHORIZED, "{}", Map.of());
         when(tokenProvider.getAccessToken()).thenReturn("expired-token", "fresh-token");
-
-        server.expect(once(), requestTo("https://openapi.tossinvest.com/api/v1/prices?symbols=005930"))
-                .andExpect(method(HttpMethod.GET))
-                .andExpect(header(HttpHeaders.AUTHORIZATION, "Bearer expired-token"))
-                .andRespond(withStatus(HttpStatus.UNAUTHORIZED).contentType(MediaType.APPLICATION_JSON).body("""
-                        {
-                          "code": "unauthorized",
-                          "message": "token expired"
-                        }
-                        """));
-        server.expect(once(), requestTo("https://openapi.tossinvest.com/api/v1/prices?symbols=005930"))
-                .andExpect(method(HttpMethod.GET))
-                .andExpect(header(HttpHeaders.AUTHORIZATION, "Bearer fresh-token"))
-                .andRespond(withSuccess("""
-                        {
-                          "result": [
-                            {
-                              "symbol": "005930",
-                              "timestamp": "2026-03-25T09:30:00+09:00",
-                              "lastPrice": "72000",
-                              "currency": "KRW"
-                            }
-                          ]
-                        }
-                        """, MediaType.APPLICATION_JSON));
+        when(feignClient.getPrices("Bearer expired-token", "005930")).thenThrow(unauthorized);
+        when(feignClient.getPrices("Bearer fresh-token", "005930"))
+                .thenReturn(new TossApiResponse<>(List.of(new TossPriceResponse(
+                        "005930",
+                        "2026-03-25T09:30:00+09:00",
+                        "72000",
+                        "KRW"
+                ))));
 
         assertThat(adapter.getPrices(Set.of("005930")))
                 .extracting(MarketQuote::symbol)
@@ -264,21 +187,20 @@ class TossMarketDataAdapterTest {
 
     @Test
     void mapsStockNotFoundFrom404Response() {
+        FeignException stockNotFound = feignException(
+                HttpStatus.NOT_FOUND,
+                """
+                        {
+                          "error": {
+                            "code": "stock-not-found",
+                            "message": "stock not found"
+                          }
+                        }
+                        """,
+                Map.of("X-Request-Id", List.of("req-404"))
+        );
         when(tokenProvider.getAccessToken()).thenReturn("dummy-access-token");
-
-        server.expect(once(), requestTo("https://openapi.tossinvest.com/api/v1/stocks?symbols=UNKNOWN"))
-                .andExpect(method(HttpMethod.GET))
-                .andRespond(withStatus(HttpStatus.NOT_FOUND)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-Request-Id", "req-404")
-                        .body("""
-                                {
-                                  "error": {
-                                    "code": "stock-not-found",
-                                    "message": "stock not found"
-                                  }
-                                }
-                                """));
+        when(feignClient.getStocks("Bearer dummy-access-token", "UNKNOWN")).thenThrow(stockNotFound);
 
         assertThatThrownBy(() -> adapter.getStocks(Set.of("UNKNOWN")))
                 .isInstanceOf(ApiException.class)
@@ -292,20 +214,21 @@ class TossMarketDataAdapterTest {
 
     @Test
     void mapsRateLimitAndParsesRetryAfterSeconds() {
+        FeignException rateLimited = feignException(
+                HttpStatus.TOO_MANY_REQUESTS,
+                """
+                        {
+                          "code": "rate-limited",
+                          "message": "too many requests"
+                        }
+                        """,
+                Map.of(
+                        HttpHeaders.RETRY_AFTER, List.of("7"),
+                        "X-Request-Id", List.of("req-429")
+                )
+        );
         when(tokenProvider.getAccessToken()).thenReturn("dummy-access-token");
-
-        server.expect(once(), requestTo("https://openapi.tossinvest.com/api/v1/prices?symbols=005930"))
-                .andExpect(method(HttpMethod.GET))
-                .andRespond(withStatus(HttpStatus.TOO_MANY_REQUESTS)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header(HttpHeaders.RETRY_AFTER, "7")
-                        .header("X-Request-Id", "req-429")
-                        .body("""
-                                {
-                                  "code": "rate-limited",
-                                  "message": "too many requests"
-                                }
-                                """));
+        when(feignClient.getPrices("Bearer dummy-access-token", "005930")).thenThrow(rateLimited);
 
         assertThatThrownBy(() -> adapter.getPrices(Set.of("005930")))
                 .isInstanceOf(ApiException.class)
@@ -320,19 +243,18 @@ class TossMarketDataAdapterTest {
 
     @Test
     void mapsServerErrorsToMarketUnavailable() {
+        FeignException serverError = feignException(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                """
+                        {
+                          "code": "server-error",
+                          "message": "unexpected"
+                        }
+                        """,
+                Map.of("X-Request-Id", List.of("req-500"))
+        );
         when(tokenProvider.getAccessToken()).thenReturn("dummy-access-token");
-
-        server.expect(once(), requestTo("https://openapi.tossinvest.com/api/v1/prices?symbols=005930"))
-                .andExpect(method(HttpMethod.GET))
-                .andRespond(withStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-Request-Id", "req-500")
-                        .body("""
-                                {
-                                  "code": "server-error",
-                                  "message": "unexpected"
-                                }
-                                """));
+        when(feignClient.getPrices("Bearer dummy-access-token", "005930")).thenThrow(serverError);
 
         assertThatThrownBy(() -> adapter.getPrices(Set.of("005930")))
                 .isInstanceOf(ApiException.class)
@@ -346,11 +268,9 @@ class TossMarketDataAdapterTest {
 
     @Test
     void mapsTimeoutToMarketUnavailable() {
+        FeignException timeout = feignException(-1, "", Map.of());
         when(tokenProvider.getAccessToken()).thenReturn("dummy-access-token");
-
-        server.expect(once(), requestTo("https://openapi.tossinvest.com/api/v1/prices?symbols=005930"))
-                .andExpect(method(HttpMethod.GET))
-                .andRespond(withException(new IOException("Read timed out")));
+        when(feignClient.getPrices("Bearer dummy-access-token", "005930")).thenThrow(timeout);
 
         assertThatThrownBy(() -> adapter.getPrices(Set.of("005930")))
                 .isInstanceOf(ApiException.class)
@@ -359,5 +279,25 @@ class TossMarketDataAdapterTest {
                     assertThat(apiException.code()).isEqualTo("TOSS_MARKET_UNAVAILABLE");
                     assertThat(apiException.status().value()).isEqualTo(503);
                 });
+    }
+
+    private static FeignException feignException(
+            HttpStatus status,
+            String body,
+            Map<String, Collection<String>> headers
+    ) {
+        return feignException(status.value(), body, headers);
+    }
+
+    private static FeignException feignException(
+            int status,
+            String body,
+            Map<String, Collection<String>> headers
+    ) {
+        FeignException exception = mock(FeignException.class);
+        when(exception.status()).thenReturn(status);
+        when(exception.contentUTF8()).thenReturn(body);
+        when(exception.responseHeaders()).thenReturn(headers);
+        return exception;
     }
 }

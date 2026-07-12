@@ -13,3 +13,9 @@ spring:
     hibernate:
       ddl-auto: create-drop
     open-in-view: false
+
+toss:
+  api:
+    base-url: ${TOSS_API_BASE_URL}
+    client-id: ${TOSS_API_CLIENT_ID}
+    client-secret: ${TOSS_API_CLIENT_SECRET}

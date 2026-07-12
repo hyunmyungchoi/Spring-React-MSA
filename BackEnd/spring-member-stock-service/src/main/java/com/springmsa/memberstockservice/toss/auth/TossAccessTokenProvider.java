@@ -2,6 +2,7 @@ package com.springmsa.memberstockservice.toss.auth;
 
 import com.springmsa.common.web.error.ApiException;
 import com.springmsa.memberstockservice.toss.config.TossApiProperties;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Component;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Component;
 import java.time.Duration;
 
 @Component
+@RequiredArgsConstructor
 public class TossAccessTokenProvider {
 
     private static final String LOCK_VALUE = "locked";
@@ -20,32 +22,19 @@ public class TossAccessTokenProvider {
     private final StringRedisTemplate redisTemplate;
     private final TossTokenClient tokenClient;
     private final TossApiProperties properties;
-    private final Sleeper sleeper;
-    private final Duration lockWaitTimeout;
-    private final Duration retryInterval;
+    private Sleeper sleeper = Thread::sleep;
+    private Duration lockWaitTimeout = LOCK_WAIT_TIMEOUT;
+    private Duration retryInterval = LOCK_RETRY_INTERVAL;
 
-    public TossAccessTokenProvider(
-            StringRedisTemplate redisTemplate,
-            TossTokenClient tokenClient,
-            TossApiProperties properties
-    ) {
-        this(redisTemplate, tokenClient, properties, Thread::sleep, LOCK_WAIT_TIMEOUT, LOCK_RETRY_INTERVAL);
-    }
-
-    TossAccessTokenProvider(
-            StringRedisTemplate redisTemplate,
-            TossTokenClient tokenClient,
-            TossApiProperties properties,
+    TossAccessTokenProvider withTimingForTest(
             Sleeper sleeper,
             Duration lockWaitTimeout,
             Duration retryInterval
     ) {
-        this.redisTemplate = redisTemplate;
-        this.tokenClient = tokenClient;
-        this.properties = properties;
         this.sleeper = sleeper;
         this.lockWaitTimeout = lockWaitTimeout;
         this.retryInterval = retryInterval;
+        return this;
     }
 
     public String getAccessToken() {
@@ -63,7 +52,11 @@ public class TossAccessTokenProvider {
         );
 
         if (Boolean.TRUE.equals(lockAcquired)) {
-            return issueAndCacheToken(valueOperations);
+            try {
+                return issueAndCacheToken(valueOperations);
+            } finally {
+                redisTemplate.delete(properties.refreshLockKey());
+            }
         }
 
         return waitForToken(valueOperations);
@@ -91,7 +84,11 @@ public class TossAccessTokenProvider {
     }
 
     private Duration getCacheTtl(TossTokenResponse response) {
-        if (!"Bearer".equals(response.tokenType())) {
+        if (response == null || !hasText(response.accessToken()) || !hasText(response.tokenType())) {
+            throw new ApiException(TossErrorCode.TOSS_TOKEN_UNAVAILABLE);
+        }
+
+        if (!"Bearer".equalsIgnoreCase(response.tokenType())) {
             throw new ApiException(TossErrorCode.TOSS_TOKEN_UNAVAILABLE);
         }
 

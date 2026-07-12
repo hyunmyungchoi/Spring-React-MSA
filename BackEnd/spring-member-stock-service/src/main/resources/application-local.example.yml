@@ -4,26 +4,25 @@ spring:
       on-profile: local
 
   datasource:
-    url: jdbc:postgresql://localhost:15432/msa
-    username: msa
-    password: msa
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
 
   data:
     redis:
-      host: localhost
-      port: 16379
+      host: ${SPRING_DATA_REDIS_HOST}
+      port: ${SPRING_DATA_REDIS_PORT}
+      password: ${SPRING_DATA_REDIS_PASSWORD}
 
   security:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8080
-          jwk-set-uri: http://localhost:9000/oauth2/jwks
+          issuer-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI}
+          jwk-set-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI}
 
 toss:
   api:
-    base-url: ${TOSS_API_BASE_URL:https://openapi.tossinvest.com}
+    base-url: ${TOSS_API_BASE_URL}
     client-id: ${TOSS_API_CLIENT_ID}
     client-secret: ${TOSS_API_CLIENT_SECRET}
-    token-cache-key: toss:oauth:access-token
-    refresh-lock-key: toss:oauth:refresh-lock

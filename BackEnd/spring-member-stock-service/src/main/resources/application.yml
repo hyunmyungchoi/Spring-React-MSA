@@ -5,22 +5,8 @@ spring:
   application:
     name: spring-member-stock-service
 
-  datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:15432}/${POSTGRES_DB:msa}}
-    username: ${SPRING_DATASOURCE_USERNAME:${POSTGRES_USER:msa}}
-    password: ${SPRING_DATASOURCE_PASSWORD:${POSTGRES_PASSWORD:msa}}
-
   jpa:
-    hibernate:
-      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
     open-in-view: false
-
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI:http://localhost:8080}
-          jwk-set-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI:http://localhost:9000/oauth2/jwks}
 
 management:
   endpoints:
@@ -30,9 +16,6 @@ management:
 
 toss:
   api:
-    base-url: ${TOSS_API_BASE_URL:https://openapi.tossinvest.com}
-    client-id: ${TOSS_API_CLIENT_ID}
-    client-secret: ${TOSS_API_CLIENT_SECRET}
     token-cache-key: toss:oauth:access-token
     refresh-lock-key: toss:oauth:refresh-lock
 

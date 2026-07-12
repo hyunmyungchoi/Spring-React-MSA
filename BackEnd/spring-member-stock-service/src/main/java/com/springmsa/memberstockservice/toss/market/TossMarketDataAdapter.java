@@ -7,6 +7,7 @@ import com.springmsa.memberstockservice.market.domain.StockSummary;
 import com.springmsa.memberstockservice.toss.market.dto.TossCandle;
 import com.springmsa.memberstockservice.toss.market.dto.TossPriceResponse;
 import com.springmsa.memberstockservice.toss.market.dto.TossStockInfo;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -15,13 +16,10 @@ import java.util.List;
 import java.util.Set;
 
 @Component
+@RequiredArgsConstructor
 public class TossMarketDataAdapter {
 
     private final TossMarketDataClient client;
-
-    public TossMarketDataAdapter(TossMarketDataClient client) {
-        this.client = client;
-    }
 
     public List<MarketQuote> getPrices(Set<String> symbols) {
         return client.getPrices(symbols).stream()

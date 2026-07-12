@@ -1,8 +1,8 @@
-package com.springmsa.memberstockservice.stock.controller;
+package com.springmsa.memberstockservice.watchlist.controller;
 
-import com.springmsa.memberstockservice.stock.dto.StockWatchItemRequest;
-import com.springmsa.memberstockservice.stock.dto.StockWatchItemResponse;
-import com.springmsa.memberstockservice.stock.service.StockWatchItemService;
+import com.springmsa.memberstockservice.watchlist.dto.StockWatchItemRequest;
+import com.springmsa.memberstockservice.watchlist.dto.StockWatchItemResponse;
+import com.springmsa.memberstockservice.watchlist.service.StockWatchItemService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.Authentication;

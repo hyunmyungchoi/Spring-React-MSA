@@ -1,24 +1,22 @@
-package com.springmsa.memberstockservice.stock.service;
+package com.springmsa.memberstockservice.watchlist.service;
 
 import com.springmsa.common.web.error.ApiException;
-import com.springmsa.memberstockservice.stock.dto.StockWatchItemRequest;
-import com.springmsa.memberstockservice.stock.dto.StockWatchItemResponse;
-import com.springmsa.memberstockservice.stock.error.StockWatchItemErrorCode;
 import com.springmsa.memberstockservice.watchlist.domain.StockWatchItem;
+import com.springmsa.memberstockservice.watchlist.dto.StockWatchItemRequest;
+import com.springmsa.memberstockservice.watchlist.dto.StockWatchItemResponse;
+import com.springmsa.memberstockservice.watchlist.error.StockWatchItemErrorCode;
 import com.springmsa.memberstockservice.watchlist.repository.StockWatchItemRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class StockWatchItemService {
 
     private final StockWatchItemRepository repository;
-
-    public StockWatchItemService(StockWatchItemRepository repository) {
-        this.repository = repository;
-    }
 
     public List<StockWatchItemResponse> findAll(String ownerSub) {
         return repository.findAllByOwnerSubOrderByCreatedAtDesc(ownerSub).stream()

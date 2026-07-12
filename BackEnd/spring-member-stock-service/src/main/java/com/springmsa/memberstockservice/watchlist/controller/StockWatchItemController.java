@@ -1,8 +1,9 @@
-package com.springmsa.memberstockservice.stock.controller;
+package com.springmsa.memberstockservice.watchlist.controller;
 
-import com.springmsa.memberstockservice.stock.dto.StockWatchItemRequest;
-import com.springmsa.memberstockservice.stock.dto.StockWatchItemResponse;
-import com.springmsa.memberstockservice.stock.service.StockWatchItemService;
+import com.springmsa.memberstockservice.watchlist.dto.StockWatchItemRequest;
+import com.springmsa.memberstockservice.watchlist.dto.StockWatchItemResponse;
+import com.springmsa.memberstockservice.watchlist.service.StockWatchItemService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -19,13 +20,10 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/stock/watch-items")
+@RequiredArgsConstructor
 public class StockWatchItemController {
 
     private final StockWatchItemService stockWatchItemService;
-
-    public StockWatchItemController(StockWatchItemService stockWatchItemService) {
-        this.stockWatchItemService = stockWatchItemService;
-    }
 
     @GetMapping
     public List<StockWatchItemResponse> findAll(Authentication authentication) {

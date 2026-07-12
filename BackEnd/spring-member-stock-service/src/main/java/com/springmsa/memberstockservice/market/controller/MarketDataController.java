@@ -7,6 +7,7 @@ import com.springmsa.memberstockservice.market.dto.MarketQuoteResponse;
 import com.springmsa.memberstockservice.market.dto.StockSummaryResponse;
 import com.springmsa.memberstockservice.market.error.MarketDataErrorCode;
 import com.springmsa.memberstockservice.market.service.MarketDataService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,16 +22,13 @@ import java.util.regex.Pattern;
 
 @RestController
 @RequestMapping("/api/stock/market")
+@RequiredArgsConstructor
 public class MarketDataController {
 
     private static final int MAX_SYMBOLS = 200;
     private static final Pattern SYMBOL_PATTERN = Pattern.compile("[A-Za-z0-9.-]{1,20}");
 
     private final MarketDataService service;
-
-    public MarketDataController(MarketDataService service) {
-        this.service = service;
-    }
 
     @GetMapping("/prices")
     public List<MarketQuoteResponse> prices(@RequestParam(defaultValue = "") String symbols) {

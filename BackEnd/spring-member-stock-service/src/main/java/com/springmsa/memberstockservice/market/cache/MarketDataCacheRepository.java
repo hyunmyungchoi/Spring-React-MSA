@@ -5,17 +5,17 @@ import com.springmsa.memberstockservice.market.dto.CandleResponse;
 import com.springmsa.memberstockservice.market.dto.DataStatus;
 import com.springmsa.memberstockservice.market.dto.MarketQuoteResponse;
 import com.springmsa.memberstockservice.market.dto.StockSummaryResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Repository;
-import tools.jackson.core.JacksonException;
-import tools.jackson.databind.ObjectMapper;
 
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 
 @Repository
+@RequiredArgsConstructor
 public class MarketDataCacheRepository {
 
     private static final Duration QUOTE_TTL = Duration.ofSeconds(2);
@@ -25,12 +25,7 @@ public class MarketDataCacheRepository {
     private static final Duration CANDLE_TTL = Duration.ofSeconds(30);
 
     private final StringRedisTemplate redisTemplate;
-    private final ObjectMapper objectMapper;
-
-    public MarketDataCacheRepository(StringRedisTemplate redisTemplate, ObjectMapper objectMapper) {
-        this.redisTemplate = redisTemplate;
-        this.objectMapper = objectMapper;
-    }
+    private final MarketDataCacheCodec cacheCodec;
 
     public Optional<MarketQuoteResponse> findFreshQuote(String symbol) {
         return read(quoteKey(symbol), MarketQuoteResponse.class);
@@ -83,25 +78,12 @@ public class MarketDataCacheRepository {
     }
 
     private <T> Optional<T> read(String key, Class<T> type) {
-        String value = operations().get(key);
-
-        if (value == null || value.isBlank()) {
-            return Optional.empty();
-        }
-
-        try {
-            return Optional.of(objectMapper.readValue(value, type));
-        } catch (JacksonException ignored) {
-            return Optional.empty();
-        }
+        return cacheCodec.decode(operations().get(key), type);
     }
 
     private void write(String key, Object value, Duration ttl) {
-        try {
-            operations().set(key, objectMapper.writeValueAsString(value), ttl);
-        } catch (JacksonException ignored) {
-            // Cache serialization failures should not break market data responses.
-        }
+        cacheCodec.encode(value)
+                .ifPresent(json -> operations().set(key, json, ttl));
     }
 
     private ValueOperations<String, String> operations() {
@@ -127,7 +109,4 @@ public class MarketDataCacheRepository {
     private String candlesKey(String symbol, CandleInterval interval, int count) {
         return "stock:candles:" + symbol + ":" + interval.apiValue() + ":" + count;
     }
-}
-
-record CandleCachePayload(List<CandleResponse> candles) {
 }

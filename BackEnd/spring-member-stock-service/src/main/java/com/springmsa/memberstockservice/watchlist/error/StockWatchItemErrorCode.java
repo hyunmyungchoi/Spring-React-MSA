@@ -1,4 +1,4 @@
-package com.springmsa.memberstockservice.stock.error;
+package com.springmsa.memberstockservice.watchlist.error;
 
 import com.springmsa.common.web.error.MsaErrorCode;
 import org.springframework.http.HttpStatus;

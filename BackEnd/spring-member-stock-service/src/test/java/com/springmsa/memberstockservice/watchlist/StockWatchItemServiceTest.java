@@ -1,11 +1,11 @@
 package com.springmsa.memberstockservice.watchlist;
 
 import com.springmsa.common.web.error.ApiException;
-import com.springmsa.memberstockservice.stock.dto.StockWatchItemRequest;
-import com.springmsa.memberstockservice.stock.dto.StockWatchItemResponse;
-import com.springmsa.memberstockservice.stock.service.StockWatchItemService;
 import com.springmsa.memberstockservice.watchlist.domain.StockWatchItem;
+import com.springmsa.memberstockservice.watchlist.dto.StockWatchItemRequest;
+import com.springmsa.memberstockservice.watchlist.dto.StockWatchItemResponse;
 import com.springmsa.memberstockservice.watchlist.repository.StockWatchItemRepository;
+import com.springmsa.memberstockservice.watchlist.service.StockWatchItemService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;

@@ -35,9 +35,12 @@ class MarketDataCacheRepositoryTest {
     @BeforeEach
     void setUp() {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        MarketDataCacheCodec cacheCodec = new MarketDataCacheCodec(
+                JsonMapper.builder().findAndAddModules().build()
+        );
         repository = new MarketDataCacheRepository(
                 redisTemplate,
-                JsonMapper.builder().findAndAddModules().build()
+                cacheCodec
         );
     }
 

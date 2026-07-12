@@ -4,14 +4,15 @@ spring:
       on-profile: local
 
   datasource:
-    url: jdbc:postgresql://localhost:15432/msa
-    username: msa
-    password: msa
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:15432/msa}
+    username: ${SPRING_DATASOURCE_USERNAME:${POSTGRES_USER:msa}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${POSTGRES_PASSWORD:msa}}
 
   data:
     redis:
-      host: localhost
-      port: 16379
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:16379}
+      password: ${SPRING_DATA_REDIS_PASSWORD:}
 
   security:
     oauth2:

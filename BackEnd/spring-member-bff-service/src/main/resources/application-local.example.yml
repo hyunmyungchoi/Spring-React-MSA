@@ -5,8 +5,12 @@ spring:
 
   data:
     redis:
-      host: localhost
-      port: 16379
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:16379}
+      password: ${SPRING_DATA_REDIS_PASSWORD:}
+
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
 
   security:
     oauth2:

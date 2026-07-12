@@ -5,8 +5,9 @@ spring:
 
   data:
     redis:
-      host: localhost
-      port: 16379
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:16379}
+      password: ${SPRING_DATA_REDIS_PASSWORD:}
 
   security:
     oauth2:

@@ -2,13 +2,14 @@ package com.springmsa.memberstockservice.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.client.RestClient;
+
+import java.time.Clock;
 
 @Configuration
-public class RestClientConfig {
+public class ClockConfig {
 
     @Bean
-    RestClient.Builder restClientBuilder() {
-        return RestClient.builder();
+    Clock clock() {
+        return Clock.systemUTC();
     }
 }

@@ -1,4 +1,4 @@
-services:
+﻿services:
   postgres:
     image: postgres:16
     container_name: spring-msa-postgres
@@ -39,6 +39,16 @@ services:
       dockerfile: Dockerfile
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/msa
+      SPRING_DATASOURCE_USERNAME: msa
+      SPRING_DATASOURCE_PASSWORD: msa
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_SQL_INIT_MODE: always
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://spring-member-gateway:8080
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://spring-security-authorization-server:9000/oauth2/jwks
+      SPRING_MSA_INTERNAL_API_TOKEN: local-dev-internal-token
     ports:
       - "8081:8081"
     depends_on:
@@ -63,6 +73,13 @@ services:
       dockerfile: Dockerfile
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/msa
+      SPRING_DATASOURCE_USERNAME: msa
+      SPRING_DATASOURCE_PASSWORD: msa
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://spring-member-gateway:8080
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://spring-security-authorization-server:9000/oauth2/jwks
     ports:
       - "8083:8083"
     depends_on:
@@ -87,6 +104,16 @@ services:
       dockerfile: Dockerfile
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/msa
+      SPRING_DATASOURCE_USERNAME: msa
+      SPRING_DATASOURCE_PASSWORD: msa
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://spring-member-gateway:8080
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://spring-security-authorization-server:9000/oauth2/jwks
+      TOSS_API_BASE_URL: ${TOSS_API_BASE_URL}
+      TOSS_API_CLIENT_ID: ${TOSS_API_CLIENT_ID}
+      TOSS_API_CLIENT_SECRET: ${TOSS_API_CLIENT_SECRET}
     ports:
       - "8084:8084"
     depends_on:
@@ -113,6 +140,7 @@ services:
       SPRING_PROFILES_ACTIVE: docker
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_PASSWORD: ""
 
       AUTH_SERVER_ISSUER: http://spring-member-gateway:8080
 
@@ -130,6 +158,7 @@ services:
       USER_FRONTEND_LOGIN_URI: http://localhost:5173/auth
       ADMIN_FRONTEND_LOGIN_URI: http://localhost:5176/auth
       USER_SERVICE_BASE_URL: http://spring-user-service:8081
+      SPRING_MSA_INTERNAL_API_TOKEN: local-dev-internal-token
     ports:
       - "9000:9000"
     depends_on:
@@ -154,6 +183,14 @@ services:
       dockerfile: spring-member-bff-service/Dockerfile
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/msa
+      SPRING_DATASOURCE_USERNAME: msa
+      SPRING_DATASOURCE_PASSWORD: msa
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_PASSWORD: ""
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: host.docker.internal:9092
 
       BFF_FRONTEND_REDIRECT_URI: http://localhost:5173
 
@@ -171,6 +208,7 @@ services:
       BFF_API_USER_INTERNAL_BASE_URL: http://spring-user-service:8081
       BFF_API_COMMUNITY_API_BASE_URL: http://spring-member-community-service:8083
       BFF_API_STOCK_API_BASE_URL: http://spring-member-stock-service:8084
+      SPRING_MSA_INTERNAL_API_TOKEN: local-dev-internal-token
     ports:
       - "8079:8079"
     depends_on:
@@ -201,6 +239,9 @@ services:
       dockerfile: Dockerfile
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_PASSWORD: ""
 
       ADMIN_BFF_FRONTEND_REDIRECT_URI: http://localhost:5176
 
@@ -216,6 +257,7 @@ services:
 
       ADMIN_BFF_API_USER_API_BASE_URL: http://spring-member-gateway:8080
       ADMIN_BFF_API_USER_INTERNAL_BASE_URL: http://spring-user-service:8081
+      SPRING_MSA_INTERNAL_API_TOKEN: local-dev-internal-token
     ports:
       - "8087:8087"
     depends_on:
@@ -245,6 +287,9 @@ services:
       PUBLIC_ORIGIN: localhost:5173
       GATEWAY_CORS_ALLOWED_ORIGIN: http://localhost:5173
       GATEWAY_BFF_URI: http://spring-member-bff-service:8079
+      GATEWAY_USER_SERVICE_URI: http://spring-user-service:8081
+      GATEWAY_COMMUNITY_SERVICE_URI: http://spring-member-community-service:8083
+      GATEWAY_STOCK_SERVICE_URI: http://spring-member-stock-service:8084
       GATEWAY_AUTHORIZATION_SERVER_URI: http://spring-security-authorization-server:9000
     ports:
       - "8080:8080"

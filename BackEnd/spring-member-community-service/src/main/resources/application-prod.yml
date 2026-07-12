@@ -11,7 +11,7 @@ spring:
   data:
     redis:
       host: ${SPRING_DATA_REDIS_HOST}
-      port: ${SPRING_DATA_REDIS_PORT:6379}
+      port: ${SPRING_DATA_REDIS_PORT}
       password: ${SPRING_DATA_REDIS_PASSWORD}
 
   security:
@@ -19,7 +19,7 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI}
-          jwk-set-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI:${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI}/oauth2/jwks}
+          jwk-set-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI}
 
 logging:
   level:

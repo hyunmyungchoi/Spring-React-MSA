@@ -10,6 +10,7 @@ import com.springmsa.memberstockservice.market.dto.CandleResponse;
 import com.springmsa.memberstockservice.market.dto.DataStatus;
 import com.springmsa.memberstockservice.market.dto.MarketQuoteResponse;
 import com.springmsa.memberstockservice.market.dto.StockSummaryResponse;
+import com.springmsa.memberstockservice.config.ClockConfig;
 import com.springmsa.memberstockservice.toss.auth.TossErrorCode;
 import com.springmsa.memberstockservice.toss.market.TossMarketDataAdapter;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -53,11 +54,12 @@ class MarketDataServiceTest {
     }
 
     @Test
-    void springContextCreatesServiceWithoutAClockBean() {
+    void springContextCreatesServiceWithClockConfiguration() {
         try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext()) {
             context.registerBean(TossMarketDataAdapter.class, () -> adapter);
             context.registerBean(MarketDataCacheRepository.class, () -> cache);
             context.registerBean(SimpleMeterRegistry.class, () -> meterRegistry);
+            context.register(ClockConfig.class);
             context.register(MarketDataService.class);
 
             assertThatCode(context::refresh).doesNotThrowAnyException();

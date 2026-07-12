@@ -15,7 +15,7 @@ import com.springmsa.memberstockservice.toss.market.TossMarketDataAdapter;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -31,6 +31,7 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 @Service
+@RequiredArgsConstructor
 public class MarketDataService {
 
     private static final String PRICES_ENDPOINT = "prices";
@@ -41,27 +42,6 @@ public class MarketDataService {
     private final MarketDataCacheRepository cache;
     private final MeterRegistry meterRegistry;
     private final Clock clock;
-
-    @Autowired
-    public MarketDataService(
-            TossMarketDataAdapter adapter,
-            MarketDataCacheRepository cache,
-            MeterRegistry meterRegistry
-    ) {
-        this(adapter, cache, meterRegistry, Clock.systemUTC());
-    }
-
-    MarketDataService(
-            TossMarketDataAdapter adapter,
-            MarketDataCacheRepository cache,
-            MeterRegistry meterRegistry,
-            Clock clock
-    ) {
-        this.adapter = adapter;
-        this.cache = cache;
-        this.meterRegistry = meterRegistry;
-        this.clock = clock;
-    }
 
     public List<MarketQuoteResponse> getPrices(Set<String> symbols) {
         Map<String, MarketQuoteResponse> responses = new LinkedHashMap<>();
