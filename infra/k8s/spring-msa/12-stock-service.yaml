@@ -10,6 +10,10 @@ spec:
       app: spring-member-stock-service
   template:
     metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: /actuator/prometheus
+        prometheus.io/port: "8084"
       labels:
         app: spring-member-stock-service
     spec:
@@ -63,6 +67,37 @@ spec:
               value: http://spring-security-authorization-server:9000/oauth2/jwks
             - name: SPRING_JPA_HIBERNATE_DDL_AUTO
               value: update
+            - name: MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED
+              value: "true"
+            - name: TOSS_API_BASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: spring-msa-config
+                  key: TOSS_API_BASE_URL
+            - name: TOSS_API_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: spring-msa-secret
+                  key: TOSS_API_CLIENT_ID
+            - name: TOSS_API_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: spring-msa-secret
+                  key: TOSS_API_CLIENT_SECRET
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8084
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8084
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            failureThreshold: 3
 ---
 apiVersion: v1
 kind: Service

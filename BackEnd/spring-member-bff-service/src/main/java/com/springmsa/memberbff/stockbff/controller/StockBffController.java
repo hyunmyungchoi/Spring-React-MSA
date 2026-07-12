@@ -1,6 +1,7 @@
 package com.springmsa.memberbff.stockbff.controller;
 
 import com.springmsa.common.web.response.MsaResponse;
+import com.springmsa.memberbff.stockbff.dto.MarketWorkspaceResponse;
 import com.springmsa.memberbff.stockbff.dto.StockWatchItemRequest;
 import com.springmsa.memberbff.stockbff.dto.StockWatchItemResponse;
 import com.springmsa.memberbff.stockbff.service.StockBffService;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -34,6 +36,11 @@ public class StockBffController {
     @GetMapping("/stock/watch-items")
     public ResponseEntity<MsaResponse<List<StockWatchItemResponse>>> watchItems(Authentication authentication, HttpServletRequest request, HttpServletResponse response) {
         return ResponseEntity.ok(MsaResponse.ok(stockBffService.findWatchItems(authentication, request, response)));
+    }
+
+    @GetMapping("/stock/market/workspace")
+    public ResponseEntity<MsaResponse<MarketWorkspaceResponse>> marketWorkspace(Authentication authentication, HttpServletRequest request, HttpServletResponse response, @RequestParam(defaultValue = "") String symbols) {
+        return ResponseEntity.ok(MsaResponse.ok(stockBffService.getMarketWorkspace(authentication, request, response, symbols)));
     }
 
     @PostMapping("/stock/watch-items")

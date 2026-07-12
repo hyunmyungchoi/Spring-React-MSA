@@ -1,5 +1,7 @@
 package com.springmsa.memberbff.stockbff.client;
 
+import com.springmsa.memberbff.stockbff.dto.MarketQuoteResponse;
+import com.springmsa.memberbff.stockbff.dto.StockSummaryResponse;
 import com.springmsa.memberbff.stockbff.dto.StockWatchItemRequest;
 import com.springmsa.memberbff.stockbff.dto.StockWatchItemResponse;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 import java.util.Map;
@@ -23,6 +26,12 @@ public interface StockServiceClient {
 
     @GetMapping("/api/stock/watch-items")
     List<StockWatchItemResponse> findWatchItems(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorization);
+
+    @GetMapping("/api/stock/market/stocks")
+    List<StockSummaryResponse> findMarketStocks(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorization, @RequestParam("symbols") String symbols);
+
+    @GetMapping("/api/stock/market/prices")
+    List<MarketQuoteResponse> findMarketPrices(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorization, @RequestParam("symbols") String symbols);
 
     @PostMapping("/api/stock/watch-items")
     StockWatchItemResponse createWatchItem(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorization, @RequestBody StockWatchItemRequest request);

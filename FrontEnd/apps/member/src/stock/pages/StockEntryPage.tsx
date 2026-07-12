@@ -1,45 +1,36 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { FormEvent } from "react";
 import {
     createStockWatchItem,
     deleteStockWatchItem,
-    fetchStockWatchItems,
     updateStockWatchItem,
 } from "../api/stockApi";
+import StockCandleTable from "../components/StockCandleTable";
+import StockQuoteGrid from "../components/StockQuoteGrid";
+import StockSearchForm from "../components/StockSearchForm";
+import { useMarketWorkspace } from "../hooks/useMarketWorkspace";
+import { toKoreanStockMessage } from "../messages/stockErrorMessages";
+import type { PartialFailure } from "../types/marketData";
 import type { StockWatchItem } from "../types/stockWatchItem";
 
-// Renders the stock CRUD workspace.
+const INITIAL_SYMBOLS = ["005930", "AAPL"];
+const SYMBOL_PATTERN = /^[A-Z0-9.-]{1,20}$/;
+const MAX_SYMBOLS = 200;
+
 function StockEntryPage() {
-    const [items, setItems] = useState<StockWatchItem[]>([]);
+    const [symbols, setSymbols] = useState(INITIAL_SYMBOLS);
+    const [symbolQuery, setSymbolQuery] = useState(INITIAL_SYMBOLS.join(","));
     const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
     const [symbol, setSymbol] = useState("");
     const [memo, setMemo] = useState("");
     const [message, setMessage] = useState("");
+    const { workspace, loading, error, paused, refresh } = useMarketWorkspace(symbols);
 
-    const loadItems = async () => {
-        const data = await fetchStockWatchItems();
-        setItems(data);
-    };
-
-    useEffect(() => {
-        let ignore = false;
-
-        fetchStockWatchItems()
-            .then((data) => {
-                if (!ignore) {
-                    setItems(data);
-                }
-            })
-            .catch((error) => {
-                if (!ignore) {
-                    setMessage(error instanceof Error ? error.message : "Stock watch items load failed");
-                }
-            });
-
-        return () => {
-            ignore = true;
-        };
-    }, []);
+    const items = workspace?.watchItems ?? [];
+    const quotes = workspace?.prices ?? [];
+    const stocks = workspace?.stocks ?? [];
+    const failures = workspace?.failures ?? [];
+    const displayMessage = message || (error ? toKoreanStockMessage(error, "시세 정보를 불러오지 못했습니다.") : "");
 
     const resetForm = () => {
         setSelectedItemId(null);
@@ -54,16 +45,16 @@ function StockEntryPage() {
         try {
             if (selectedItemId === null) {
                 await createStockWatchItem({ symbol, memo });
-                setMessage("Stock watch item created.");
+                setMessage("관심 종목을 등록했습니다.");
             } else {
                 await updateStockWatchItem(selectedItemId, { symbol, memo });
-                setMessage("Stock watch item updated.");
+                setMessage("관심 종목을 수정했습니다.");
             }
 
             resetForm();
-            await loadItems();
+            refresh();
         } catch (error) {
-            setMessage(error instanceof Error ? error.message : "Stock watch item save failed");
+            setMessage(toKoreanStockMessage(error, "관심 종목 저장에 실패했습니다."));
         }
     };
 
@@ -78,59 +69,145 @@ function StockEntryPage() {
 
         try {
             await deleteStockWatchItem(itemId);
-            setMessage("Stock watch item deleted.");
+            setMessage("관심 종목을 삭제했습니다.");
             if (selectedItemId === itemId) {
                 resetForm();
             }
-            await loadItems();
+            refresh();
         } catch (error) {
-            setMessage(error instanceof Error ? error.message : "Stock watch item delete failed");
+            setMessage(toKoreanStockMessage(error, "관심 종목 삭제에 실패했습니다."));
         }
     };
 
+    const handleSymbolSubmit = () => {
+        const nextSymbols = parseSymbols(symbolQuery);
+
+        if (nextSymbols.length === 0) {
+            setMessage("조회할 종목을 입력해 주세요.");
+            return;
+        }
+
+        if (nextSymbols.length > MAX_SYMBOLS) {
+            setMessage("종목은 최대 200개까지 조회할 수 있습니다.");
+            return;
+        }
+
+        if (nextSymbols.some((nextSymbol) => !SYMBOL_PATTERN.test(nextSymbol))) {
+            setMessage("종목 코드는 영문, 숫자, 점, 하이픈만 사용할 수 있습니다.");
+            return;
+        }
+
+        setMessage("");
+        setSymbols(nextSymbols);
+    };
+
     return (
-        <section className="info-panel">
-            <h2>Stock CRUD</h2>
-            <form className="auth-form" onSubmit={handleSubmit}>
-                <label>
-                    Symbol
-                    <input value={symbol} onChange={(event) => setSymbol(event.target.value.toUpperCase())} required />
-                </label>
-                <label>
-                    Memo
-                    <input value={memo} onChange={(event) => setMemo(event.target.value)} required />
-                </label>
-                <button className="primary-button" type="submit">
-                    {selectedItemId === null ? "Create item" : "Update item"}
-                </button>
-                {selectedItemId !== null && (
-                    <button className="secondary-button" type="button" onClick={resetForm}>
-                        Cancel edit
-                    </button>
-                )}
-            </form>
+        <div className="stock-workspace">
+            <section className="info-panel stock-panel">
+                <div className="stock-section-heading">
+                    <div>
+                        <h2>시장 현황</h2>
+                        <p className="entry-copy">관심 종목과 실시간 시세</p>
+                    </div>
+                    <StockSearchForm
+                        value={symbolQuery}
+                        loading={loading}
+                        paused={paused}
+                        onValueChange={setSymbolQuery}
+                        onSubmit={handleSymbolSubmit}
+                    />
+                </div>
 
-            {message && <p className="status-message">{message}</p>}
+                {displayMessage && <p className="status-message">{displayMessage}</p>}
+                <FailurePanel failures={failures} />
+                <StockQuoteGrid quotes={quotes} stocks={stocks} />
+            </section>
 
-            <div className="service-grid">
-                {items.map((item) => (
-                    <article className="service-tile" key={item.id}>
-                        <span>{item.owner}</span>
-                        <strong>{item.symbol}</strong>
-                        <p className="entry-copy">{item.memo}</p>
-                        <div className="user-nav">
-                            <button type="button" onClick={() => handleEdit(item)}>
-                                Edit
+            <section className="stock-layout">
+                <div className="info-panel stock-panel">
+                    <div className="stock-section-heading">
+                        <h2>관심 종목</h2>
+                    </div>
+                    <form className="auth-form stock-watch-form" onSubmit={handleSubmit}>
+                        <label>
+                            종목
+                            <input value={symbol} onChange={(event) => setSymbol(event.target.value.toUpperCase())} required />
+                        </label>
+                        <label>
+                            메모
+                            <input value={memo} onChange={(event) => setMemo(event.target.value)} required />
+                        </label>
+                        <button className="primary-button" type="submit">
+                            {selectedItemId === null ? "등록" : "수정"}
+                        </button>
+                        {selectedItemId !== null && (
+                            <button className="secondary-button" type="button" onClick={resetForm}>
+                                취소
                             </button>
-                            <button type="button" onClick={() => void handleDelete(item.id)}>
-                                Delete
-                            </button>
-                        </div>
-                    </article>
-                ))}
-            </div>
-        </section>
+                        )}
+                    </form>
+
+                    <div className="stock-watch-list">
+                        {items.length === 0 ? (
+                            <p className="stock-empty">관심 종목이 없습니다.</p>
+                        ) : (
+                            items.map((item) => (
+                                <article className="stock-watch-item" key={item.id}>
+                                    <div>
+                                        <strong>{item.symbol}</strong>
+                                        <span>{item.memo}</span>
+                                    </div>
+                                    <div className="stock-actions">
+                                        <button type="button" onClick={() => handleEdit(item)}>
+                                            수정
+                                        </button>
+                                        <button type="button" onClick={() => void handleDelete(item.id)}>
+                                            삭제
+                                        </button>
+                                    </div>
+                                </article>
+                            ))
+                        )}
+                    </div>
+                </div>
+
+                <section className="info-panel stock-panel">
+                    <div className="stock-section-heading">
+                        <h2>캔들 테이블</h2>
+                    </div>
+                    <StockCandleTable quotes={quotes} />
+                </section>
+            </section>
+        </div>
     );
+}
+
+function FailurePanel({ failures }: { failures: PartialFailure[] }) {
+    if (failures.length === 0) {
+        return null;
+    }
+
+    return (
+        <div className="stock-failure-panel">
+            {failures.map((failure) => (
+                <article key={`${failure.component}-${failure.code}-${failure.traceId ?? "none"}`}>
+                    <strong>{failure.component}</strong>
+                    <span>{failure.code}</span>
+                    <p>{failure.message}</p>
+                    {failure.traceId && <small>Trace ID {failure.traceId}</small>}
+                </article>
+            ))}
+        </div>
+    );
+}
+
+function parseSymbols(value: string) {
+    return Array.from(new Set(
+        value
+            .split(",")
+            .map((entry) => entry.trim().toUpperCase())
+            .filter(Boolean)
+    ));
 }
 
 export default StockEntryPage;

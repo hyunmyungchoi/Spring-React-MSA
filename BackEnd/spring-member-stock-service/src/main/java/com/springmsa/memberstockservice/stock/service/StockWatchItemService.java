@@ -1,66 +1,66 @@
 package com.springmsa.memberstockservice.stock.service;
 
+import com.springmsa.common.web.error.ApiException;
 import com.springmsa.memberstockservice.stock.dto.StockWatchItemRequest;
 import com.springmsa.memberstockservice.stock.dto.StockWatchItemResponse;
-import org.springframework.http.HttpStatus;
+import com.springmsa.memberstockservice.stock.error.StockWatchItemErrorCode;
+import com.springmsa.memberstockservice.watchlist.domain.StockWatchItem;
+import com.springmsa.memberstockservice.watchlist.repository.StockWatchItemRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
-import java.time.Instant;
-import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 public class StockWatchItemService {
 
-    private final AtomicLong sequence = new AtomicLong(0);
-    private final ConcurrentHashMap<Long, StockWatchItemResponse> watchItems = new ConcurrentHashMap<>();
+    private final StockWatchItemRepository repository;
 
-    public List<StockWatchItemResponse> findAll() {
-        return watchItems.values().stream()
-                .sorted(Comparator.comparing(StockWatchItemResponse::id))
+    public StockWatchItemService(StockWatchItemRepository repository) {
+        this.repository = repository;
+    }
+
+    public List<StockWatchItemResponse> findAll(String ownerSub) {
+        return repository.findAllByOwnerSubOrderByCreatedAtDesc(ownerSub).stream()
+                .map(this::toResponse)
                 .toList();
     }
 
     public StockWatchItemResponse create(StockWatchItemRequest request, String owner) {
-        Long id = sequence.incrementAndGet();
-        Instant now = Instant.now();
-        StockWatchItemResponse response = new StockWatchItemResponse(
-                id,
-                request.symbol(),
-                request.memo(),
-                owner,
-                now,
-                now
-        );
-        watchItems.put(id, response);
-        return response;
+        try {
+            return toResponse(repository.save(StockWatchItem.create(owner, request.symbol(), request.memo())));
+        } catch (DataIntegrityViolationException exception) {
+            throw new ApiException(StockWatchItemErrorCode.WATCH_ITEM_DUPLICATE, exception);
+        }
     }
 
-    public StockWatchItemResponse update(Long itemId, StockWatchItemRequest request) {
-        StockWatchItemResponse current = watchItems.get(itemId);
+    public StockWatchItemResponse update(Long itemId, StockWatchItemRequest request, String ownerSub) {
+        StockWatchItem item = repository.findByIdAndOwnerSub(itemId, ownerSub)
+                .orElseThrow(() -> new ApiException(StockWatchItemErrorCode.WATCH_ITEM_NOT_FOUND));
 
-        if (current == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Stock watch item not found");
+        try {
+            item.update(request.symbol(), request.memo());
+            return toResponse(repository.save(item));
+        } catch (DataIntegrityViolationException exception) {
+            throw new ApiException(StockWatchItemErrorCode.WATCH_ITEM_DUPLICATE, exception);
         }
-
-        StockWatchItemResponse updated = new StockWatchItemResponse(
-                current.id(),
-                request.symbol(),
-                request.memo(),
-                current.owner(),
-                current.createdAt(),
-                Instant.now()
-        );
-        watchItems.put(itemId, updated);
-        return updated;
     }
 
-    public void delete(Long itemId) {
-        if (watchItems.remove(itemId) == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Stock watch item not found");
-        }
+    public void delete(Long itemId, String ownerSub) {
+        StockWatchItem item = repository.findByIdAndOwnerSub(itemId, ownerSub)
+                .orElseThrow(() -> new ApiException(StockWatchItemErrorCode.WATCH_ITEM_NOT_FOUND));
+
+        repository.delete(item);
+    }
+
+    private StockWatchItemResponse toResponse(StockWatchItem item) {
+        return new StockWatchItemResponse(
+                item.getId(),
+                item.getSymbol(),
+                item.getMemo(),
+                item.getOwnerSub(),
+                item.getCreatedAt(),
+                item.getUpdatedAt()
+        );
     }
 }
