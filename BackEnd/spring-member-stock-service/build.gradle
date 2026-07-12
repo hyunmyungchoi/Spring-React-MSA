@@ -14,12 +14,6 @@ java {
     }
 }
 
-configurations.configureEach {
-    resolutionStrategy.dependencySubstitution {
-        substitute module('org.testcontainers:testcontainers-postgresql') using module('org.testcontainers:testcontainers:2.0.5')
-    }
-}
-
 dependencies {
     implementation 'com.springmsa:spring-msa-common-web:0.0.1-SNAPSHOT'
 
@@ -35,7 +29,7 @@ dependencies {
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-testcontainers'
-    testImplementation 'org.testcontainers:testcontainers-postgresql'
+    testImplementation 'org.testcontainers:postgresql'
     testRuntimeOnly 'com.h2database:h2'
 }
 
