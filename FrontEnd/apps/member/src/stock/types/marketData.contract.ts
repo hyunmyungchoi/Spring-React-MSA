@@ -1,5 +1,6 @@
 import { fetchMarketWorkspace } from "../api/stockApi";
 import { useMarketWorkspace } from "../hooks/useMarketWorkspace";
+import { toKoreanStockMessage } from "../messages/stockErrorMessages";
 import type {
     DataStatus,
     MarketQuote,
@@ -57,3 +58,8 @@ export const useWorkspaceContract: (symbols: string[]) => {
     paused: boolean;
     refresh: () => void;
 } = useMarketWorkspace;
+
+export const crudFallbackMessageContract: string = toKoreanStockMessage(
+    new Error("Stock watch item creation failed"),
+    "관심 종목 저장에 실패했습니다."
+);
