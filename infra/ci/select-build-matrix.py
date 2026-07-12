@@ -36,7 +36,7 @@ BACKEND_IMAGES: list[dict[str, str]] = [
     },
     {
         "service": "spring-member-stock-service",
-        "context": "BackEnd/spring-member-stock-service",
+        "context": "BackEnd",
         "dockerfile": "BackEnd/spring-member-stock-service/Dockerfile",
     },
     {
