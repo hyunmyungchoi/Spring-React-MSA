@@ -79,6 +79,58 @@ class TossAccessTokenProviderTest {
     }
 
     @Test
+    void rejectsTokenResponseThatCannotProducePositiveCacheTtl() {
+        TossAccessTokenProvider provider = new TossAccessTokenProvider(
+                redisTemplate,
+                tokenClient,
+                properties,
+                duration -> {
+                },
+                Duration.ofSeconds(1),
+                Duration.ofMillis(10)
+        );
+        when(valueOperations.get("toss:oauth:access-token")).thenReturn((String) null, (String) null);
+        when(valueOperations.setIfAbsent("toss:oauth:refresh-lock", "locked", Duration.ofSeconds(5))).thenReturn(true);
+        when(tokenClient.issueToken()).thenReturn(new TossTokenResponse("issued-token", "Bearer", 60));
+
+        assertThatThrownBy(provider::getAccessToken)
+                .isInstanceOf(ApiException.class)
+                .satisfies(exception -> {
+                    ApiException apiException = (ApiException) exception;
+                    assertThat(apiException.code()).isEqualTo("TOSS_TOKEN_UNAVAILABLE");
+                    assertThat(apiException.status().value()).isEqualTo(503);
+                });
+
+        verify(valueOperations, never()).set(eq("toss:oauth:access-token"), any(), any(Duration.class));
+    }
+
+    @Test
+    void rejectsNonBearerTokenTypeBeforeCaching() {
+        TossAccessTokenProvider provider = new TossAccessTokenProvider(
+                redisTemplate,
+                tokenClient,
+                properties,
+                duration -> {
+                },
+                Duration.ofSeconds(1),
+                Duration.ofMillis(10)
+        );
+        when(valueOperations.get("toss:oauth:access-token")).thenReturn((String) null, (String) null);
+        when(valueOperations.setIfAbsent("toss:oauth:refresh-lock", "locked", Duration.ofSeconds(5))).thenReturn(true);
+        when(tokenClient.issueToken()).thenReturn(new TossTokenResponse("issued-token", "MAC", 3600));
+
+        assertThatThrownBy(provider::getAccessToken)
+                .isInstanceOf(ApiException.class)
+                .satisfies(exception -> {
+                    ApiException apiException = (ApiException) exception;
+                    assertThat(apiException.code()).isEqualTo("TOSS_TOKEN_UNAVAILABLE");
+                    assertThat(apiException.status().value()).isEqualTo(503);
+                });
+
+        verify(valueOperations, never()).set(eq("toss:oauth:access-token"), any(), any(Duration.class));
+    }
+
+    @Test
     void waitsForAnotherNodeToPopulateTokenWhenRefreshLockIsBusy() {
         TossAccessTokenProvider provider = new TossAccessTokenProvider(
                 redisTemplate,

@@ -77,12 +77,26 @@ public class TossAccessTokenProvider {
         }
 
         TossTokenResponse response = tokenClient.issueToken();
+        Duration cacheTtl = getCacheTtl(response);
         valueOperations.set(
                 properties.tokenCacheKey(),
                 response.accessToken(),
-                Duration.ofSeconds(response.expiresIn() - TOKEN_TTL_BUFFER_SECONDS)
+                cacheTtl
         );
         return response.accessToken();
+    }
+
+    private Duration getCacheTtl(TossTokenResponse response) {
+        if (!"Bearer".equals(response.tokenType())) {
+            throw new ApiException(TossErrorCode.TOSS_TOKEN_UNAVAILABLE);
+        }
+
+        long cacheSeconds = response.expiresIn() - TOKEN_TTL_BUFFER_SECONDS;
+        if (cacheSeconds <= 0) {
+            throw new ApiException(TossErrorCode.TOSS_TOKEN_UNAVAILABLE);
+        }
+
+        return Duration.ofSeconds(cacheSeconds);
     }
 
     private String waitForToken(ValueOperations<String, String> valueOperations) {
