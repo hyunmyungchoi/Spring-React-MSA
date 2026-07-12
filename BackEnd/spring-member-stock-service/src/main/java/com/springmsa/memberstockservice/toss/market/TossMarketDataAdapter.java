@@ -66,6 +66,10 @@ public class TossMarketDataAdapter {
     }
 
     private OffsetDateTime timestamp(String value) {
+        if (value == null) {
+            return null;
+        }
+
         return OffsetDateTime.parse(value);
     }
 }

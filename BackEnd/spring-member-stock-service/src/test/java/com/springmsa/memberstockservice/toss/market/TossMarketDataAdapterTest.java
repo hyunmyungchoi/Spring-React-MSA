@@ -94,6 +94,35 @@ class TossMarketDataAdapterTest {
     }
 
     @Test
+    void mapsNullablePriceTimestampFromOfficialSchema() {
+        when(tokenProvider.getAccessToken()).thenReturn("dummy-access-token");
+
+        server.expect(once(), requestTo("https://openapi.tossinvest.com/api/v1/prices?symbols=005930"))
+                .andExpect(method(HttpMethod.GET))
+                .andExpect(header(HttpHeaders.AUTHORIZATION, "Bearer dummy-access-token"))
+                .andRespond(withSuccess("""
+                        {
+                          "result": [
+                            {
+                              "symbol": "005930",
+                              "timestamp": null,
+                              "lastPrice": "72000",
+                              "currency": "KRW"
+                            }
+                          ]
+                        }
+                        """, MediaType.APPLICATION_JSON));
+
+        assertThat(adapter.getPrices(Set.of("005930")))
+                .containsExactly(new MarketQuote(
+                        "005930",
+                        new BigDecimal("72000"),
+                        "KRW",
+                        null
+                ));
+    }
+
+    @Test
     void mapsStockResponseUsingOfficialFieldNames() {
         when(tokenProvider.getAccessToken()).thenReturn("dummy-access-token");
 
