@@ -8,7 +8,6 @@ const baseUrl = (__ENV.STOCK_BFF_BASE_URL || "http://user.localtest.me").replace
 const symbols = __ENV.STOCK_SYMBOLS || "005930,000660,035420,051910,207940";
 const cookie = __ENV.BFF_COOKIE || "";
 const prometheusUrl = (__ENV.PROMETHEUS_URL || "").replace(/\/$/, "");
-const tossMetricWindow = __ENV.STOCK_TOSS_METRIC_WINDOW || "3m";
 const maxTossRequests = Number(__ENV.STOCK_TOSS_MAX_REQUESTS || "80");
 
 export const options = {
@@ -26,6 +25,12 @@ export const options = {
     },
 };
 
+export function setup() {
+    return {
+        baselineTossRequests: readTossRequestCounter(),
+    };
+}
+
 export default function () {
     const response = http.get(
         `${baseUrl}/bff/stock/market/workspace?symbols=${encodeURIComponent(symbols)}`,
@@ -39,27 +44,37 @@ export default function () {
     sleep(2);
 }
 
-export function teardown() {
+export function teardown(data) {
     if (!prometheusUrl) {
         tossRequestsBounded.add(false);
         return;
     }
 
-    const query = `sum(increase(stock_toss_requests_total[${tossMetricWindow}]))`;
+    const currentTossRequests = readTossRequestCounter();
+    const tossRequestsDuringRun = currentTossRequests - data.baselineTossRequests;
+
+    check(null, {
+        "Prometheus query succeeded": () => Number.isFinite(currentTossRequests),
+        "stock.toss.requests remains bounded by shared cache": () =>
+            tossRequestsDuringRun <= maxTossRequests,
+    });
+    tossRequestsBounded.add(tossRequestsDuringRun <= maxTossRequests);
+}
+
+function readTossRequestCounter() {
+    if (!prometheusUrl) {
+        return Number.POSITIVE_INFINITY;
+    }
+
+    const query = "sum(stock_toss_requests_total)";
     const response = http.get(
         `${prometheusUrl}/api/v1/query?query=${encodeURIComponent(query)}`
     );
-    const value = response.status === 200 ? prometheusValue(response) : Number.POSITIVE_INFINITY;
 
-    check(response, {
-        "Prometheus query succeeded": (res) => res.status === 200,
-        "stock.toss.requests remains bounded by shared cache": () =>
-            value <= maxTossRequests,
-    });
-    tossRequestsBounded.add(value <= maxTossRequests);
-}
+    if (response.status !== 200) {
+        return Number.POSITIVE_INFINITY;
+    }
 
-function prometheusValue(response) {
     try {
         const body = response.json();
         return Number(body?.data?.result?.[0]?.value?.[1] || "0");
