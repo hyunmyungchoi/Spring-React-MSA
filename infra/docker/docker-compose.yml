@@ -1,28 +1,30 @@
-﻿services:
+services:
   postgres:
     image: postgres:16
     container_name: spring-msa-postgres
     environment:
-      POSTGRES_DB: msa
-      POSTGRES_USER: msa
-      POSTGRES_PASSWORD: msa
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "15432:5432"
+      - "${POSTGRES_PORT:-15432}:5432"
     volumes:
       - spring-msa-postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U msa -d msa"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 3s
       retries: 30
     networks:
       - spring-msa-network
+    restart: unless-stopped
 
   redis:
     image: redis:7-alpine
     container_name: spring-msa-redis
+    command: ${REDIS_COMMAND:-redis-server}
     ports:
-      - "16379:6379"
+      - "${REDIS_PORT:-16379}:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -30,187 +32,194 @@
       retries: 30
     networks:
       - spring-msa-network
+    restart: unless-stopped
 
   spring-user-service:
-    image: spring-react-msa/spring-user-service:latest
+    image: ${IMAGE_REGISTRY}/spring-user-service:${IMAGE_TAG}
     container_name: spring-user-service
     build:
-      context: ../../BackEnd/spring-user-service
-      dockerfile: Dockerfile
+      context: ../../BackEnd
+      dockerfile: spring-user-service/Dockerfile
     environment:
-      SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/msa
-      SPRING_DATASOURCE_USERNAME: msa
-      SPRING_DATASOURCE_PASSWORD: msa
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      SPRING_SQL_INIT_MODE: always
-      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://spring-member-gateway:8080
-      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://spring-security-authorization-server:9000/oauth2/jwks
-      SPRING_MSA_INTERNAL_API_TOKEN: local-dev-internal-token
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
+      SPRING_SQL_INIT_MODE: ${SPRING_SQL_INIT_MODE}
+      SPRING_DATA_REDIS_HOST: ${SPRING_DATA_REDIS_HOST}
+      SPRING_DATA_REDIS_PORT: ${SPRING_DATA_REDIS_PORT}
+      SPRING_DATA_REDIS_PASSWORD: ${SPRING_DATA_REDIS_PASSWORD:-}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI}
+      SPRING_MSA_INTERNAL_API_TOKEN: ${SPRING_MSA_INTERNAL_API_TOKEN}
     ports:
-      - "8081:8081"
+      - "${USER_SERVICE_PORT:-8081}:8081"
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "nc -z 127.0.0.1 8081"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8081/actuator/health/readiness"]
       interval: 5s
       timeout: 3s
       retries: 30
       start_period: 20s
     networks:
       - spring-msa-network
+    restart: unless-stopped
 
   spring-member-community-service:
-    image: spring-react-msa/spring-member-community-service:latest
+    image: ${IMAGE_REGISTRY}/spring-member-community-service:${IMAGE_TAG}
     container_name: spring-member-community-service
     build:
       context: ../../BackEnd/spring-member-community-service
       dockerfile: Dockerfile
     environment:
-      SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/msa
-      SPRING_DATASOURCE_USERNAME: msa
-      SPRING_DATASOURCE_PASSWORD: msa
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
-      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://spring-member-gateway:8080
-      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://spring-security-authorization-server:9000/oauth2/jwks
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
+      SPRING_SQL_INIT_MODE: ${SPRING_SQL_INIT_MODE}
+      SPRING_DATA_REDIS_HOST: ${SPRING_DATA_REDIS_HOST}
+      SPRING_DATA_REDIS_PORT: ${SPRING_DATA_REDIS_PORT}
+      SPRING_DATA_REDIS_PASSWORD: ${SPRING_DATA_REDIS_PASSWORD:-}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI}
     ports:
-      - "8083:8083"
+      - "${COMMUNITY_SERVICE_PORT:-8083}:8083"
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "nc -z 127.0.0.1 8083"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8083/actuator/health/readiness"]
       interval: 5s
       timeout: 3s
       retries: 30
       start_period: 20s
     networks:
       - spring-msa-network
+    restart: unless-stopped
 
   spring-member-stock-service:
-    image: spring-react-msa/spring-member-stock-service:latest
+    image: ${IMAGE_REGISTRY}/spring-member-stock-service:${IMAGE_TAG}
     container_name: spring-member-stock-service
     build:
-      context: ../../BackEnd/spring-member-stock-service
-      dockerfile: Dockerfile
+      context: ../../BackEnd
+      dockerfile: spring-member-stock-service/Dockerfile
     environment:
-      SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/msa
-      SPRING_DATASOURCE_USERNAME: msa
-      SPRING_DATASOURCE_PASSWORD: msa
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
-      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://spring-member-gateway:8080
-      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://spring-security-authorization-server:9000/oauth2/jwks
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
+      SPRING_SQL_INIT_MODE: ${SPRING_SQL_INIT_MODE}
+      SPRING_DATA_REDIS_HOST: ${SPRING_DATA_REDIS_HOST}
+      SPRING_DATA_REDIS_PORT: ${SPRING_DATA_REDIS_PORT}
+      SPRING_DATA_REDIS_PASSWORD: ${SPRING_DATA_REDIS_PASSWORD:-}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI}
       TOSS_API_BASE_URL: ${TOSS_API_BASE_URL}
       TOSS_API_CLIENT_ID: ${TOSS_API_CLIENT_ID}
       TOSS_API_CLIENT_SECRET: ${TOSS_API_CLIENT_SECRET}
     ports:
-      - "8084:8084"
+      - "${STOCK_SERVICE_PORT:-8084}:8084"
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "nc -z 127.0.0.1 8084"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8084/actuator/health/readiness"]
       interval: 5s
       timeout: 3s
       retries: 30
       start_period: 20s
     networks:
       - spring-msa-network
+    restart: unless-stopped
 
   spring-security-authorization-server:
-    image: spring-react-msa/spring-security-authorization-server:latest
+    image: ${IMAGE_REGISTRY}/spring-security-authorization-server:${IMAGE_TAG}
     container_name: spring-security-authorization-server
     build:
-      context: ../../BackEnd/spring-security-authorization-server
-      dockerfile: Dockerfile
+      context: ../../BackEnd
+      dockerfile: spring-security-authorization-server/Dockerfile
     environment:
-      SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
-      SPRING_DATA_REDIS_PASSWORD: ""
-
-      AUTH_SERVER_ISSUER: http://spring-member-gateway:8080
-
-      BFF_CLIENT_ID: bff-client
-      BFF_CLIENT_SECRET_HASH: $$2a$$10$$BDeXFNHccQiu0ef5vYr/Bu0fAjSQzCgKc5NBppHdETy1G.W4KJzbS
-      BFF_OAUTH2_REDIRECT_URI: http://localhost:5173/bff/login/oauth2/code/member-bff
-      BFF_POST_LOGOUT_REDIRECT_URI: http://localhost:5173/auth
-
-      ADMIN_BFF_CLIENT_ID: admin-bff-client
-      ADMIN_BFF_CLIENT_SECRET_HASH: $$2a$$10$$Dm7Jh0Txq5XD7GRJXZSFFuIZQL1fMzpohFZJPM2EcFVPJNDsfveWi
-      ADMIN_BFF_OAUTH2_REDIRECT_URI: http://localhost:5176/admin-bff/login/oauth2/code/admin-bff
-      ADMIN_BFF_POST_LOGOUT_REDIRECT_URI: http://localhost:5176
-      ADMIN_BFF_POST_LOGOUT_LOGIN_REDIRECT_URI: http://localhost:5176/auth
-
-      USER_FRONTEND_LOGIN_URI: http://localhost:5173/auth
-      ADMIN_FRONTEND_LOGIN_URI: http://localhost:5176/auth
-      USER_SERVICE_BASE_URL: http://spring-user-service:8081
-      SPRING_MSA_INTERNAL_API_TOKEN: local-dev-internal-token
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      SPRING_DATA_REDIS_HOST: ${SPRING_DATA_REDIS_HOST}
+      SPRING_DATA_REDIS_PORT: ${SPRING_DATA_REDIS_PORT}
+      SPRING_DATA_REDIS_PASSWORD: ${SPRING_DATA_REDIS_PASSWORD:-}
+      AUTH_SERVER_ISSUER: ${AUTH_SERVER_ISSUER}
+      BFF_CLIENT_ID: ${BFF_CLIENT_ID}
+      BFF_CLIENT_SECRET_HASH: ${BFF_CLIENT_SECRET_HASH}
+      BFF_OAUTH2_REDIRECT_URI: ${BFF_OAUTH2_REDIRECT_URI}
+      BFF_POST_LOGOUT_REDIRECT_URI: ${BFF_POST_LOGOUT_REDIRECT_URI}
+      ADMIN_BFF_CLIENT_ID: ${ADMIN_BFF_CLIENT_ID}
+      ADMIN_BFF_CLIENT_SECRET_HASH: ${ADMIN_BFF_CLIENT_SECRET_HASH}
+      ADMIN_BFF_OAUTH2_REDIRECT_URI: ${ADMIN_BFF_OAUTH2_REDIRECT_URI}
+      ADMIN_BFF_POST_LOGOUT_REDIRECT_URI: ${ADMIN_BFF_POST_LOGOUT_REDIRECT_URI}
+      ADMIN_BFF_POST_LOGOUT_LOGIN_REDIRECT_URI: ${ADMIN_BFF_POST_LOGOUT_LOGIN_REDIRECT_URI}
+      USER_FRONTEND_LOGIN_URI: ${USER_FRONTEND_LOGIN_URI}
+      ADMIN_FRONTEND_LOGIN_URI: ${ADMIN_FRONTEND_LOGIN_URI}
+      USER_SERVICE_BASE_URL: ${USER_SERVICE_BASE_URL}
+      SPRING_MSA_INTERNAL_API_TOKEN: ${SPRING_MSA_INTERNAL_API_TOKEN}
     ports:
-      - "9000:9000"
+      - "${AUTH_SERVER_PORT:-9000}:9000"
     depends_on:
       redis:
         condition: service_healthy
       spring-user-service:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "nc -z 127.0.0.1 9000"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:9000/actuator/health/readiness"]
       interval: 5s
       timeout: 3s
       retries: 30
       start_period: 20s
     networks:
       - spring-msa-network
+    restart: unless-stopped
 
   spring-member-bff-service:
-    image: spring-react-msa/spring-member-bff-service:latest
+    image: ${IMAGE_REGISTRY}/spring-member-bff-service:${IMAGE_TAG}
     container_name: spring-member-bff-service
     build:
       context: ../../BackEnd
       dockerfile: spring-member-bff-service/Dockerfile
     environment:
-      SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/msa
-      SPRING_DATASOURCE_USERNAME: msa
-      SPRING_DATASOURCE_PASSWORD: msa
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
-      SPRING_DATA_REDIS_PASSWORD: ""
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: host.docker.internal:9092
-
-      BFF_FRONTEND_REDIRECT_URI: http://localhost:5173
-
-      BFF_OAUTH2_AUTHORIZATION_URI: http://localhost:5173/oauth2/authorize
-      BFF_OAUTH2_TOKEN_URI: http://spring-member-gateway:8080/oauth2/token
-      BFF_OAUTH2_USERINFO_URI: http://spring-member-gateway:8080/userinfo
-      BFF_OAUTH2_JWK_SET_URI: http://spring-member-gateway:8080/oauth2/jwks
-      BFF_CLIENT_ID: bff-client
-      BFF_CLIENT_SECRET: bff-secret
-      BFF_OAUTH2_REDIRECT_URI: http://localhost:5173/bff/login/oauth2/code/member-bff
-      BFF_OAUTH2_END_SESSION_URI: http://localhost:5173/connect/logout
-      BFF_OAUTH2_LOGOUT_URI: http://localhost:5173/logout
-
-      BFF_API_USER_API_BASE_URL: http://spring-user-service:8081
-      BFF_API_USER_INTERNAL_BASE_URL: http://spring-user-service:8081
-      BFF_API_COMMUNITY_API_BASE_URL: http://spring-member-community-service:8083
-      BFF_API_STOCK_API_BASE_URL: http://spring-member-stock-service:8084
-      SPRING_MSA_INTERNAL_API_TOKEN: local-dev-internal-token
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      SPRING_DATA_REDIS_HOST: ${SPRING_DATA_REDIS_HOST}
+      SPRING_DATA_REDIS_PORT: ${SPRING_DATA_REDIS_PORT}
+      SPRING_DATA_REDIS_PASSWORD: ${SPRING_DATA_REDIS_PASSWORD:-}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
+      SPRING_SQL_INIT_MODE: ${SPRING_SQL_INIT_MODE}
+      APP_KAFKA_ENABLED: ${APP_KAFKA_ENABLED}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:-}
+      BFF_FRONTEND_REDIRECT_URI: ${BFF_FRONTEND_REDIRECT_URI}
+      BFF_OAUTH2_AUTHORIZATION_URI: ${BFF_OAUTH2_AUTHORIZATION_URI}
+      BFF_OAUTH2_TOKEN_URI: ${BFF_OAUTH2_TOKEN_URI}
+      BFF_OAUTH2_USERINFO_URI: ${BFF_OAUTH2_USERINFO_URI}
+      BFF_OAUTH2_JWK_SET_URI: ${BFF_OAUTH2_JWK_SET_URI}
+      BFF_CLIENT_ID: ${BFF_CLIENT_ID}
+      BFF_CLIENT_SECRET: ${BFF_CLIENT_SECRET}
+      BFF_OAUTH2_REDIRECT_URI: ${BFF_OAUTH2_REDIRECT_URI}
+      BFF_OAUTH2_END_SESSION_URI: ${BFF_OAUTH2_END_SESSION_URI}
+      BFF_OAUTH2_LOGOUT_URI: ${BFF_OAUTH2_LOGOUT_URI}
+      BFF_API_USER_API_BASE_URL: ${BFF_API_USER_API_BASE_URL}
+      BFF_API_USER_INTERNAL_BASE_URL: ${BFF_API_USER_INTERNAL_BASE_URL}
+      BFF_API_COMMUNITY_API_BASE_URL: ${BFF_API_COMMUNITY_API_BASE_URL}
+      BFF_API_STOCK_API_BASE_URL: ${BFF_API_STOCK_API_BASE_URL}
+      SPRING_MSA_INTERNAL_API_TOKEN: ${SPRING_MSA_INTERNAL_API_TOKEN}
     ports:
-      - "8079:8079"
+      - "${MEMBER_BFF_PORT:-8079}:8079"
     depends_on:
       redis:
         condition: service_healthy
@@ -223,43 +232,41 @@
       spring-member-stock-service:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "nc -z 127.0.0.1 8079"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8079/actuator/health/readiness"]
       interval: 5s
       timeout: 3s
       retries: 30
       start_period: 20s
     networks:
       - spring-msa-network
+    restart: unless-stopped
 
   spring-admin-bff-service:
-    image: spring-react-msa/spring-admin-bff-service:latest
+    image: ${IMAGE_REGISTRY}/spring-admin-bff-service:${IMAGE_TAG}
     container_name: spring-admin-bff-service
     build:
-      context: ../../BackEnd/spring-admin-bff-service
-      dockerfile: Dockerfile
+      context: ../../BackEnd
+      dockerfile: spring-admin-bff-service/Dockerfile
     environment:
-      SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
-      SPRING_DATA_REDIS_PASSWORD: ""
-
-      ADMIN_BFF_FRONTEND_REDIRECT_URI: http://localhost:5176
-
-      ADMIN_BFF_OAUTH2_AUTHORIZATION_URI: http://localhost:5176/oauth2/authorize
-      ADMIN_BFF_OAUTH2_TOKEN_URI: http://spring-admin-gateway:8090/oauth2/token
-      ADMIN_BFF_OAUTH2_USERINFO_URI: http://spring-admin-gateway:8090/userinfo
-      ADMIN_BFF_OAUTH2_JWK_SET_URI: http://spring-admin-gateway:8090/oauth2/jwks
-      ADMIN_BFF_CLIENT_ID: admin-bff-client
-      ADMIN_BFF_CLIENT_SECRET: admin-bff-secret
-      ADMIN_BFF_OAUTH2_REDIRECT_URI: http://localhost:5176/admin-bff/login/oauth2/code/admin-bff
-      ADMIN_BFF_OAUTH2_END_SESSION_URI: http://localhost:5176/connect/logout
-      ADMIN_BFF_OAUTH2_LOGOUT_URI: http://localhost:5176/logout
-
-      ADMIN_BFF_API_USER_API_BASE_URL: http://spring-member-gateway:8080
-      ADMIN_BFF_API_USER_INTERNAL_BASE_URL: http://spring-user-service:8081
-      SPRING_MSA_INTERNAL_API_TOKEN: local-dev-internal-token
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      SPRING_DATA_REDIS_HOST: ${SPRING_DATA_REDIS_HOST}
+      SPRING_DATA_REDIS_PORT: ${SPRING_DATA_REDIS_PORT}
+      SPRING_DATA_REDIS_PASSWORD: ${SPRING_DATA_REDIS_PASSWORD:-}
+      ADMIN_BFF_FRONTEND_REDIRECT_URI: ${ADMIN_BFF_FRONTEND_REDIRECT_URI}
+      ADMIN_BFF_OAUTH2_AUTHORIZATION_URI: ${ADMIN_BFF_OAUTH2_AUTHORIZATION_URI}
+      ADMIN_BFF_OAUTH2_TOKEN_URI: ${ADMIN_BFF_OAUTH2_TOKEN_URI}
+      ADMIN_BFF_OAUTH2_USERINFO_URI: ${ADMIN_BFF_OAUTH2_USERINFO_URI}
+      ADMIN_BFF_OAUTH2_JWK_SET_URI: ${ADMIN_BFF_OAUTH2_JWK_SET_URI}
+      ADMIN_BFF_CLIENT_ID: ${ADMIN_BFF_CLIENT_ID}
+      ADMIN_BFF_CLIENT_SECRET: ${ADMIN_BFF_CLIENT_SECRET}
+      ADMIN_BFF_OAUTH2_REDIRECT_URI: ${ADMIN_BFF_OAUTH2_REDIRECT_URI}
+      ADMIN_BFF_OAUTH2_END_SESSION_URI: ${ADMIN_BFF_OAUTH2_END_SESSION_URI}
+      ADMIN_BFF_OAUTH2_LOGOUT_URI: ${ADMIN_BFF_OAUTH2_LOGOUT_URI}
+      ADMIN_BFF_API_USER_API_BASE_URL: ${ADMIN_BFF_API_USER_API_BASE_URL}
+      ADMIN_BFF_API_USER_INTERNAL_BASE_URL: ${ADMIN_BFF_API_USER_INTERNAL_BASE_URL}
+      SPRING_MSA_INTERNAL_API_TOKEN: ${SPRING_MSA_INTERNAL_API_TOKEN}
     ports:
-      - "8087:8087"
+      - "${ADMIN_BFF_PORT:-8087}:8087"
     depends_on:
       redis:
         condition: service_healthy
@@ -268,31 +275,32 @@
       spring-user-service:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "nc -z 127.0.0.1 8087"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8087/actuator/health/readiness"]
       interval: 5s
       timeout: 3s
       retries: 30
       start_period: 20s
     networks:
       - spring-msa-network
+    restart: unless-stopped
 
   spring-member-gateway:
-    image: spring-react-msa/spring-member-gateway:latest
+    image: ${IMAGE_REGISTRY}/spring-member-gateway:${IMAGE_TAG}
     container_name: spring-member-gateway
     build:
       context: ../../BackEnd/spring-member-gateway
       dockerfile: Dockerfile
     environment:
-      SPRING_PROFILES_ACTIVE: docker
-      PUBLIC_ORIGIN: localhost:5173
-      GATEWAY_CORS_ALLOWED_ORIGIN: http://localhost:5173
-      GATEWAY_BFF_URI: http://spring-member-bff-service:8079
-      GATEWAY_USER_SERVICE_URI: http://spring-user-service:8081
-      GATEWAY_COMMUNITY_SERVICE_URI: http://spring-member-community-service:8083
-      GATEWAY_STOCK_SERVICE_URI: http://spring-member-stock-service:8084
-      GATEWAY_AUTHORIZATION_SERVER_URI: http://spring-security-authorization-server:9000
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN}
+      GATEWAY_CORS_ALLOWED_ORIGIN: ${GATEWAY_CORS_ALLOWED_ORIGIN}
+      GATEWAY_BFF_URI: ${GATEWAY_BFF_URI}
+      GATEWAY_USER_SERVICE_URI: ${GATEWAY_USER_SERVICE_URI}
+      GATEWAY_COMMUNITY_SERVICE_URI: ${GATEWAY_COMMUNITY_SERVICE_URI}
+      GATEWAY_STOCK_SERVICE_URI: ${GATEWAY_STOCK_SERVICE_URI}
+      GATEWAY_AUTHORIZATION_SERVER_URI: ${GATEWAY_AUTHORIZATION_SERVER_URI}
     ports:
-      - "8080:8080"
+      - "${MEMBER_GATEWAY_PORT:-8080}:8080"
     depends_on:
       spring-member-bff-service:
         condition: service_healthy
@@ -305,51 +313,53 @@
       spring-security-authorization-server:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "nc -z 127.0.0.1 8080"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8080/actuator/health/readiness"]
       interval: 5s
       timeout: 3s
       retries: 30
       start_period: 20s
     networks:
       - spring-msa-network
+    restart: unless-stopped
 
   spring-admin-gateway:
-    image: spring-react-msa/spring-admin-gateway:latest
+    image: ${IMAGE_REGISTRY}/spring-admin-gateway:${IMAGE_TAG}
     container_name: spring-admin-gateway
     build:
       context: ../../BackEnd/spring-admin-gateway
       dockerfile: Dockerfile
     environment:
-      SPRING_PROFILES_ACTIVE: docker
-      ADMIN_GATEWAY_CORS_ALLOWED_ORIGIN: http://localhost:5176
-      ADMIN_GATEWAY_ADMIN_BFF_URI: http://spring-admin-bff-service:8087
-      ADMIN_GATEWAY_AUTHORIZATION_SERVER_URI: http://spring-security-authorization-server:9000
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      ADMIN_GATEWAY_CORS_ALLOWED_ORIGIN: ${ADMIN_GATEWAY_CORS_ALLOWED_ORIGIN}
+      ADMIN_GATEWAY_ADMIN_BFF_URI: ${ADMIN_GATEWAY_ADMIN_BFF_URI}
+      ADMIN_GATEWAY_AUTHORIZATION_SERVER_URI: ${ADMIN_GATEWAY_AUTHORIZATION_SERVER_URI}
     ports:
-      - "8090:8090"
+      - "${ADMIN_GATEWAY_PORT:-8090}:8090"
     depends_on:
       spring-admin-bff-service:
         condition: service_healthy
       spring-security-authorization-server:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "nc -z 127.0.0.1 8090"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8090/actuator/health/readiness"]
       interval: 5s
       timeout: 3s
       retries: 30
       start_period: 20s
     networks:
       - spring-msa-network
+    restart: unless-stopped
 
   spring-member-web:
-    image: spring-react-msa/spring-member-web:latest
+    image: ${IMAGE_REGISTRY}/spring-member-web:${IMAGE_TAG}
     container_name: spring-member-web
     build:
       context: ../..
       dockerfile: FrontEnd/apps/member/Dockerfile.member
     ports:
-      - "5173:80"
+      - "${MEMBER_WEB_PORT:-5173}:80"
     volumes:
-      - ./nginx/web/member-web.conf:/etc/nginx/conf.d/default.conf:ro
+      - ../nginx/web/member-web.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       spring-member-gateway:
         condition: service_healthy
@@ -358,15 +368,15 @@
     restart: unless-stopped
 
   spring-admin-web:
-    image: spring-react-msa/spring-admin-web:latest
+    image: ${IMAGE_REGISTRY}/spring-admin-web:${IMAGE_TAG}
     container_name: spring-admin-web
     build:
       context: ../..
       dockerfile: FrontEnd/apps/admin/Dockerfile.admin
     ports:
-      - "5176:80"
+      - "${ADMIN_WEB_PORT:-5176}:80"
     volumes:
-      - ./nginx/web/admin-web.conf:/etc/nginx/conf.d/default.conf:ro
+      - ../nginx/web/admin-web.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       spring-admin-gateway:
         condition: service_healthy

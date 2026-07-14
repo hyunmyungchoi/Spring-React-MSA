@@ -24,6 +24,8 @@ spec:
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: prod
+            - name: JAVA_TOOL_OPTIONS
+              value: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=70 -XX:InitialRAMPercentage=30"
             - name: SERVER_TOMCAT_ACCESSLOG_ENABLED
               value: "true"
             - name: SERVER_TOMCAT_ACCESSLOG_DIRECTORY
@@ -88,6 +90,27 @@ spec:
               value: http://admin.localtest.me/auth
             - name: ADMIN_BFF_POST_LOGOUT_LOGIN_REDIRECT_URI
               value: http://admin.localtest.me/login
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 9000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 9000
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 512m
+              memory: 1024Mi
+            limits:
+              cpu: 512m
+              memory: 1024Mi
 ---
 apiVersion: v1
 kind: Service

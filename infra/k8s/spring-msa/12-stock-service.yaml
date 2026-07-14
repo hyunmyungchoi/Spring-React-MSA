@@ -28,6 +28,8 @@ spec:
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: prod
+            - name: JAVA_TOOL_OPTIONS
+              value: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=70 -XX:InitialRAMPercentage=30"
             - name: SERVER_TOMCAT_ACCESSLOG_ENABLED
               value: "true"
             - name: SERVER_TOMCAT_ACCESSLOG_DIRECTORY
@@ -66,7 +68,7 @@ spec:
             - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI
               value: http://spring-security-authorization-server:9000/oauth2/jwks
             - name: SPRING_JPA_HIBERNATE_DDL_AUTO
-              value: update
+              value: validate
             - name: MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED
               value: "true"
             - name: TOSS_API_BASE_URL
@@ -98,6 +100,13 @@ spec:
             initialDelaySeconds: 60
             periodSeconds: 20
             failureThreshold: 3
+          resources:
+            requests:
+              cpu: 512m
+              memory: 1024Mi
+            limits:
+              cpu: 512m
+              memory: 1024Mi
 ---
 apiVersion: v1
 kind: Service

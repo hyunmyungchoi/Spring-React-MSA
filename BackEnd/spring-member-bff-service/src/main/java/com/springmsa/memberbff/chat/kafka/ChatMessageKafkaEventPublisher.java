@@ -6,6 +6,7 @@ import com.springmsa.memberbff.chat.dto.ChatMessageResponse;
 import com.springmsa.memberbff.chat.event.ChatMessageSavedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
@@ -17,6 +18,7 @@ import java.time.Instant;
 
 @Slf4j
 @Component
+@ConditionalOnProperty(prefix = "app.kafka", name = "enabled", havingValue = "true")
 @RequiredArgsConstructor
 public class ChatMessageKafkaEventPublisher {
 

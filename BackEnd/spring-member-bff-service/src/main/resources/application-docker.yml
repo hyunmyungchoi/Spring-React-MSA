@@ -19,8 +19,12 @@ spring:
     hibernate:
       ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
 
+  sql:
+    init:
+      mode: ${SPRING_SQL_INIT_MODE}
+
   kafka:
-    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS}
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:}
 
   security:
     oauth2:

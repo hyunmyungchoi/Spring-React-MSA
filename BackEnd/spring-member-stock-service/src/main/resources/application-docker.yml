@@ -13,6 +13,14 @@ spring:
       host: ${SPRING_DATA_REDIS_HOST}
       port: ${SPRING_DATA_REDIS_PORT}
 
+  jpa:
+    hibernate:
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
+
+  sql:
+    init:
+      mode: ${SPRING_SQL_INIT_MODE}
+
   security:
     oauth2:
       resourceserver:

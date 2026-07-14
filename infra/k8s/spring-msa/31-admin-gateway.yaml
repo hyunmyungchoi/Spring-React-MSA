@@ -24,6 +24,8 @@ spec:
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: prod
+            - name: JAVA_TOOL_OPTIONS
+              value: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=70 -XX:InitialRAMPercentage=30"
             - name: JAVA_OPTS
               value: -Dreactor.netty.http.server.accessLogEnabled=true
             - name: ADMIN_GATEWAY_CORS_ALLOWED_ORIGIN
@@ -32,6 +34,27 @@ spec:
               value: http://spring-admin-bff-service:8087
             - name: ADMIN_GATEWAY_AUTHORIZATION_SERVER_URI
               value: http://spring-security-authorization-server:9000
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8090
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8090
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 256m
+              memory: 512Mi
+            limits:
+              cpu: 256m
+              memory: 512Mi
 ---
 apiVersion: v1
 kind: Service

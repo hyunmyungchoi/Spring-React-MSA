@@ -19,11 +19,14 @@ RUN JAR_FILE="$(find build/libs -maxdepth 1 -type f -name '*.jar' ! -name '*-pla
 
 FROM eclipse-temurin:17-jre-alpine
 
+RUN apk add --no-cache wget
+
 WORKDIR /app
 
 COPY --from=build /workspace/spring-user-service/app.jar app.jar
 
 ENV SPRING_PROFILES_ACTIVE=docker
+ENV JAVA_TOOL_OPTIONS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=70 -XX:InitialRAMPercentage=30"
 ENV JAVA_OPTS=""
 
 EXPOSE 8081
