@@ -26,6 +26,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .addFilterBefore(internalApiTokenFilter, BearerTokenAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
                         .requestMatchers("/health", "/db-health").permitAll()
                         .requestMatchers("/internal/**").permitAll()
                         .requestMatchers("/api/user/me").authenticated()

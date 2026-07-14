@@ -24,6 +24,8 @@ spec:
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: prod
+            - name: JAVA_TOOL_OPTIONS
+              value: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=70 -XX:InitialRAMPercentage=30"
             - name: SERVER_TOMCAT_ACCESSLOG_ENABLED
               value: "true"
             - name: SERVER_TOMCAT_ACCESSLOG_DIRECTORY
@@ -80,6 +82,27 @@ spec:
               value: http://spring-user-service:8081
             - name: ADMIN_BFF_API_USER_INTERNAL_BASE_URL
               value: http://spring-user-service:8081
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8087
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8087
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 512m
+              memory: 768Mi
+            limits:
+              cpu: 512m
+              memory: 768Mi
 ---
 apiVersion: v1
 kind: Service

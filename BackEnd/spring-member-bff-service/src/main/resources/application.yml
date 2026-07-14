@@ -34,16 +34,27 @@ spring:
         namespace: spring:session:bff
 
 management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
   endpoints:
     web:
       exposure:
-        include: health,info
+        include:
+          - health
+          - info
+          - prometheus
 
 logging:
   charset:
     console: UTF-8
   level:
     com.springmsa.memberbff: debug
+
+app:
+  kafka:
+    enabled: ${APP_KAFKA_ENABLED:false}
 
 springmsa:
   internal-api:

@@ -24,6 +24,8 @@ spec:
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: prod
+            - name: JAVA_TOOL_OPTIONS
+              value: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=70 -XX:InitialRAMPercentage=30"
             - name: SERVER_TOMCAT_ACCESSLOG_ENABLED
               value: "true"
             - name: SERVER_TOMCAT_ACCESSLOG_DIRECTORY
@@ -49,7 +51,9 @@ spec:
                   name: spring-msa-secret
                   key: POSTGRES_PASSWORD
             - name: SPRING_JPA_HIBERNATE_DDL_AUTO
-              value: update
+              value: validate
+            - name: SPRING_SQL_INIT_MODE
+              value: never
             - name: SPRING_DATA_REDIS_HOST
               value: redis
             - name: SPRING_DATA_REDIS_PORT
@@ -74,6 +78,8 @@ spec:
               value: "200"
             - name: BFF_CHAT_RECENT_MESSAGES_CACHE_TTL_SECONDS
               value: "3600"
+            - name: APP_KAFKA_ENABLED
+              value: "true"
             - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
               value: kafka.kafka.svc.cluster.local:9092
             - name: BFF_KAFKA_NOTIFICATION_GROUP
@@ -126,6 +132,27 @@ spec:
               value: http://spring-member-community-service:8083
             - name: BFF_API_STOCK_API_BASE_URL
               value: http://spring-member-stock-service:8084
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8079
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8079
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 512m
+              memory: 1024Mi
+            limits:
+              cpu: 512m
+              memory: 1024Mi
 ---
 apiVersion: v1
 kind: Service

@@ -22,7 +22,7 @@ build/
 out/
 target/
 
-# Gradle wrapper는 보통 커밋함
+# Gradle wrapper??蹂댄넻 而ㅻ컠??
 !gradle/wrapper/gradle-wrapper.jar
 
 # =========================
@@ -60,10 +60,10 @@ dist/
 dist-ssr/
 coverage/
 
-# pnpm lockfile은 커밋해야 함
+# pnpm lockfile? 而ㅻ컠?댁빞 ??
 !pnpm-lock.yaml
 
-# npm/yarn lockfile은 pnpm 사용 시 금지
+# npm/yarn lockfile? pnpm ?ъ슜 ??湲덉?
 package-lock.json
 yarn.lock
 
@@ -102,6 +102,12 @@ generated/
 generated-files/
 
 # =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+
+# =========================
 # Certificates / Keys
 # =========================
 *.pem
@@ -130,9 +136,11 @@ generated-files/
 # infra
 # =========================
 infra/docker/.env.prod
-!infra/docker/.env.prod.example
+!infra/docker/.env.example
 infra/k8s/spring-msa/02-secrets.local.yaml
 infra/tossApi/
 
-# Local planning / handoff notes
-/doc/
+# 로컬 계획 및 인수인계 메모
+/docs/*
+!/docs/aws-migration/
+!/docs/aws-migration/*.md

@@ -5,6 +5,7 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,10 +24,11 @@ import java.util.Map;
 
 @EnableKafka
 @Configuration
+@ConditionalOnProperty(prefix = "app.kafka", name = "enabled", havingValue = "true")
 public class KafkaClientConfig {
 
     @Bean
-    KafkaAdmin kafkaAdmin(@Value("${spring.kafka.bootstrap-servers:kafka:9092}") String bootstrapServers) {
+    KafkaAdmin kafkaAdmin(@Value("${spring.kafka.bootstrap-servers}") String bootstrapServers) {
         Map<String, Object> configs = new HashMap<>();
         configs.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         return new KafkaAdmin(configs);
@@ -34,7 +36,7 @@ public class KafkaClientConfig {
 
     @Bean
     ProducerFactory<Object, Object> kafkaProducerFactory(
-            @Value("${spring.kafka.bootstrap-servers:kafka:9092}") String bootstrapServers
+            @Value("${spring.kafka.bootstrap-servers}") String bootstrapServers
     ) {
         Map<String, Object> configs = new HashMap<>();
         configs.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
@@ -50,7 +52,7 @@ public class KafkaClientConfig {
 
     @Bean
     ConsumerFactory<String, String> chatMessageCreatedConsumerFactory(
-            @Value("${spring.kafka.bootstrap-servers:kafka:9092}") String bootstrapServers,
+            @Value("${spring.kafka.bootstrap-servers}") String bootstrapServers,
             @Value("${spring.kafka.consumer.auto-offset-reset:earliest}") String autoOffsetReset
     ) {
         Map<String, Object> configs = new HashMap<>();
