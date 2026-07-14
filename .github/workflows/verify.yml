@@ -86,6 +86,10 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Make Gradle wrapper executable
+        working-directory: BackEnd/${{ matrix.service }}
+        run: chmod +x ./gradlew
+
       - name: Run Gradle tests
         working-directory: BackEnd/${{ matrix.service }}
         run: ./gradlew test

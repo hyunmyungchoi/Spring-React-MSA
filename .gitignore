@@ -140,7 +140,7 @@ infra/docker/.env.prod
 infra/k8s/spring-msa/02-secrets.local.yaml
 infra/tossApi/
 
-# Local planning / handoff notes
+# 로컬 계획 및 인수인계 메모
 /docs/*
 !/docs/aws-migration/
 !/docs/aws-migration/*.md
