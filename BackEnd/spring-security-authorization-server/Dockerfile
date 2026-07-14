@@ -19,7 +19,7 @@ RUN JAR_FILE="$(find build/libs -maxdepth 1 -type f -name '*.jar' ! -name '*-pla
 
 FROM eclipse-temurin:17-jre-alpine
 
-RUN apk add --no-cache wget
+RUN apk add --no-cache curl
 
 WORKDIR /app
 
