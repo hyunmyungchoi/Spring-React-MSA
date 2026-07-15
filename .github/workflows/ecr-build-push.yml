@@ -43,6 +43,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Validate backend target
+        shell: bash
+        run: |
+          case "${DEPLOY_TARGET}" in
+            all|spring-member-gateway|spring-admin-gateway|spring-security-authorization-server|spring-user-service|spring-member-community-service|spring-member-stock-service|spring-member-bff-service|spring-admin-bff-service)
+              ;;
+            *)
+              echo "Unsupported ECR deploy target: ${DEPLOY_TARGET}"
+              exit 1
+              ;;
+          esac
+
       - name: Select backend target
         id: matrix
         run: python infra/ci/select-build-matrix.py
@@ -55,8 +67,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Run CI matrix tests
-        run: python -m unittest infra/ci/test_select_build_matrix.py
+      - name: Run CI matrix and ECR workflow tests
+        run: >-
+          python -m unittest
+          infra/ci/test_select_build_matrix.py
+          infra/ci/test_ecr_build_push_workflow.py
 
   test-backend:
     name: Test backend (${{ matrix.service }})
