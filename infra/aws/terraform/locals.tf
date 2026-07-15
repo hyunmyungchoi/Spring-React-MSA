@@ -10,6 +10,9 @@ locals {
 
   availability_zones = slice(sort(data.aws_availability_zones.available.names), 0, 2)
 
+  github_repository = "hyunmyungchoi/Spring-React-MSA"
+  github_branch_ref = "refs/heads/master"
+
   backend_service_names = toset([
     "spring-member-gateway",
     "spring-admin-gateway",

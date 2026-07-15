@@ -7,6 +7,10 @@ data "aws_availability_zones" "available" {
   }
 }
 
+data "aws_iam_openid_connect_provider" "github" {
+  url = "https://token.actions.githubusercontent.com"
+}
+
 module "network" {
   source = "./modules/network"
 
@@ -27,6 +31,17 @@ module "ecr" {
   tagged_image_retention_count  = 5
   untagged_image_retention_days = 1
   common_tags                   = local.common_tags
+}
+
+module "github_actions_ecr" {
+  source = "./modules/github-actions-ecr"
+
+  name_prefix         = local.name_prefix
+  oidc_provider_arn   = data.aws_iam_openid_connect_provider.github.arn
+  github_repository   = local.github_repository
+  github_branch_ref   = local.github_branch_ref
+  ecr_repository_arns = toset(values(module.ecr.repository_arns))
+  common_tags         = local.common_tags
 }
 
 resource "aws_budgets_budget" "monthly" {

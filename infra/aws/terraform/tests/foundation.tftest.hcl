@@ -4,6 +4,13 @@ mock_provider "aws" {
       names = ["ap-northeast-2a", "ap-northeast-2c"]
     }
   }
+
+  mock_data "aws_iam_openid_connect_provider" {
+    defaults = {
+      arn = "arn:aws:iam::111122223333:oidc-provider/token.actions.githubusercontent.com"
+      url = "token.actions.githubusercontent.com"
+    }
+  }
 }
 
 run "foundation_plan" {

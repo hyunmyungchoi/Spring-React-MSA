@@ -57,3 +57,13 @@ output "ecr_repository_urls" {
   description = "Map of backend service names to ECR repository URLs."
   value       = module.ecr.repository_urls
 }
+
+output "github_actions_ecr_role_name" {
+  description = "Name of the GitHub Actions ECR publication role."
+  value       = module.github_actions_ecr.role_name
+}
+
+output "github_actions_ecr_role_arn" {
+  description = "ARN registered as the GitHub AWS_ECR_PUSH_ROLE_ARN repository variable."
+  value       = module.github_actions_ecr.role_arn
+}
