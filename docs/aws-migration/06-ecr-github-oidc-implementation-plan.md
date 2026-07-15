@@ -40,12 +40,14 @@
 - `infra/aws/terraform/tests/foundation.tftest.hcl`: Existing root tests updated with the OIDC data mock.
 - `.github/workflows/ecr-build-push.yml`: Independent manual backend publication workflow.
 - `infra/aws/terraform/README.md`: Operator instructions for Plan, Apply gate, GitHub variable, and manual publication.
+- `.gitignore`: Ignores the project-local `.worktrees/` directory used after the Foundation baseline commit.
 
 ---
 
 ### Task 1: Commit the applied AWS Foundation baseline safely
 
 **Files:**
+- Modify: `.gitignore`
 - Add: `docs/aws-migration/04-aws-foundation-design.md`
 - Add: `infra/aws/terraform/.gitignore`
 - Add: `infra/aws/terraform/.terraform.lock.hcl`
@@ -80,7 +82,7 @@ git check-ignore -v `
   infra/aws/terraform/tfplan
 ```
 
-Expected: exactly the 16 listed files are untracked; state, real variables, provider cache, and plan are ignored by `infra/aws/terraform/.gitignore`.
+Expected: exactly the 16 Foundation files listed above are untracked; state, real variables, provider cache, and plan are ignored by `infra/aws/terraform/.gitignore`.
 
 - [ ] **Step 2: Scan the baseline for credential and personal-value leakage**
 
@@ -104,7 +106,24 @@ Write-Output "No sensitive-looking values found."
 
 Expected: `No sensitive-looking values found.`
 
-- [ ] **Step 3: Verify that the checked-in Foundation definition matches the applied AWS state**
+- [ ] **Step 3: Ignore the project-local worktree directory**
+
+Add this line to the root `.gitignore`:
+
+```gitignore
+.worktrees/
+```
+
+Verify it before creating any worktree:
+
+```powershell
+Set-Location C:\Portfolio
+git check-ignore -v .worktrees
+```
+
+Expected: the root `.gitignore` rule for `.worktrees/` is reported.
+
+- [ ] **Step 4: Verify that the checked-in Foundation definition matches the applied AWS state**
 
 ```powershell
 $env:AWS_PROFILE = "spring-react-msa-learning-iam"
@@ -123,11 +142,12 @@ if ($LASTEXITCODE -ne 0) {
 
 Expected: formatting, validation, and tests pass; Plan prints `No changes` and returns exit code `0`.
 
-- [ ] **Step 4: Stage only the approved Foundation baseline**
+- [ ] **Step 5: Stage only the approved Foundation baseline and worktree ignore rule**
 
 ```powershell
 Set-Location C:\Portfolio
 git add -- `
+  .gitignore `
   docs/aws-migration/04-aws-foundation-design.md `
   infra/aws/terraform/.gitignore `
   infra/aws/terraform/.terraform.lock.hcl `
@@ -149,15 +169,17 @@ git diff --cached --check
 git diff --cached --name-only
 ```
 
-Expected: only the 16 listed files are staged; `terraform.tfstate`, `terraform.tfvars`, `.terraform`, and `tfplan` are absent.
+Expected: only the 16 Foundation files and the root `.gitignore` change are staged; `terraform.tfstate`, `terraform.tfvars`, `.terraform`, and `tfplan` are absent.
 
-- [ ] **Step 5: Commit the baseline**
+- [ ] **Step 6: Commit the baseline**
 
 ```powershell
 git commit -m "feat: add AWS foundation Terraform"
 ```
 
 Expected: one commit containing the applied Foundation definition and no runtime state or secret values.
+
+After Task 1 passes its task review, the controller creates `.worktrees/codex-ecr-github-oidc` on branch `codex/ecr-github-oidc` from the reviewed Task 1 commit. Tasks 2-5 run only in that worktree. Task 6 remains gated by explicit Apply approval.
 
 ---
 
@@ -832,15 +854,17 @@ git commit -m "feat: add GitHub OIDC role for ECR publishing"
 
 The YAML workflow is configuration rather than executable application logic. Per the approved design, validate it immediately with `actionlint` and validate its reused selector with the existing Python unit tests.
 
-- [ ] **Step 1: Record the existing GHCR workflow hash before editing**
+- [ ] **Step 1: Confirm the existing GHCR workflow is unchanged before editing**
 
 ```powershell
-Set-Location C:\Portfolio
-$ghcrHashBefore = (Get-FileHash .github/workflows/ghcr-build-push.yml -Algorithm SHA256).Hash
-$ghcrHashBefore
+git diff --quiet -- .github/workflows/ghcr-build-push.yml
+
+if ($LASTEXITCODE -ne 0) {
+  throw "The existing GHCR workflow was already modified before the ECR task."
+}
 ```
 
-Expected: a non-empty SHA-256 value retained in the current PowerShell session.
+Expected: exit code `0`; the existing GHCR workflow has no uncommitted change.
 
 - [ ] **Step 2: Create the manual ECR workflow**
 
@@ -1042,9 +1066,9 @@ Expected: Python reports three passing tests; `actionlint` exits `0` with no fin
 - [ ] **Step 4: Verify the GHCR workflow is byte-for-byte unchanged**
 
 ```powershell
-$ghcrHashAfter = (Get-FileHash .github/workflows/ghcr-build-push.yml -Algorithm SHA256).Hash
+git diff --quiet -- .github/workflows/ghcr-build-push.yml
 
-if ($ghcrHashAfter -ne $ghcrHashBefore) {
+if ($LASTEXITCODE -ne 0) {
   throw "The existing GHCR workflow changed unexpectedly."
 }
 
@@ -1301,6 +1325,6 @@ Do not push the branch, open a pull request, merge, or run the workflow without 
 - [ ] Terraform behavior is specified test-first.
 - [ ] Workflow configuration has an exact linter command and reuses tested selection logic.
 - [ ] Existing Foundation files are committed separately before feature work.
-- [ ] Existing GHCR workflow preservation is verified by hash.
+- [ ] Existing GHCR workflow preservation is verified by a clean targeted Git diff before and after the task.
 - [ ] Apply and GitHub mutations have explicit gates.
 - [ ] No placeholder, wildcard trust, secret, real account ID, `latest` tag, or unrelated AWS resource is introduced.
