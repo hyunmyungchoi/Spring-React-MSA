@@ -144,3 +144,5 @@ infra/tossApi/
 /docs/*
 !/docs/aws-migration/
 !/docs/aws-migration/*.md
+
+.worktrees/
