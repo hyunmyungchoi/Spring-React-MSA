@@ -42,3 +42,18 @@ output "availability_zones" {
   description = "Availability zones selected for the two-AZ network."
   value       = module.network.availability_zones
 }
+
+output "ecr_repository_names" {
+  description = "Map of backend service names to ECR repository names."
+  value       = module.ecr.repository_names
+}
+
+output "ecr_repository_arns" {
+  description = "Map of backend service names to ECR repository ARNs."
+  value       = module.ecr.repository_arns
+}
+
+output "ecr_repository_urls" {
+  description = "Map of backend service names to ECR repository URLs."
+  value       = module.ecr.repository_urls
+}

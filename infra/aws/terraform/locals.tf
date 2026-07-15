@@ -10,6 +10,17 @@ locals {
 
   availability_zones = slice(sort(data.aws_availability_zones.available.names), 0, 2)
 
+  backend_service_names = toset([
+    "spring-member-gateway",
+    "spring-admin-gateway",
+    "spring-security-authorization-server",
+    "spring-user-service",
+    "spring-member-community-service",
+    "spring-member-stock-service",
+    "spring-member-bff-service",
+    "spring-admin-bff-service",
+  ])
+
   budget_thresholds = {
     "10" = 10
     "30" = 30

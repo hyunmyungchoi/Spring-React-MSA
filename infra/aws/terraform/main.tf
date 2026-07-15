@@ -19,6 +19,16 @@ module "network" {
   common_tags               = local.common_tags
 }
 
+module "ecr" {
+  source = "./modules/ecr"
+
+  name_prefix                   = local.name_prefix
+  service_names                 = local.backend_service_names
+  tagged_image_retention_count  = 5
+  untagged_image_retention_days = 1
+  common_tags                   = local.common_tags
+}
+
 resource "aws_budgets_budget" "monthly" {
   count = var.enable_budget ? 1 : 0
 
