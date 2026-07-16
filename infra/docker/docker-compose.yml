@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:16
+    image: postgres:16@sha256:17e67d7b9890c99b055ba1e0d5c5be4ec27c9d3a72bda32db24a5e5d8a85af0c
     container_name: spring-msa-postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
@@ -20,7 +20,7 @@ services:
     restart: unless-stopped
 
   redis:
-    image: redis:7-alpine
+    image: redis:7-alpine@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99
     container_name: spring-msa-redis
     command: ${REDIS_COMMAND:-redis-server}
     ports:

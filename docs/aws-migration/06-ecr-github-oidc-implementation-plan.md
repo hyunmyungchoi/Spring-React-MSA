@@ -1,6 +1,16 @@
 # ECR and GitHub OIDC Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> 문서 상태: repository 구현 절차와 승인 gate 기록
+>
+> 기준일: 2026-07-17
+>
+> 완료: Foundation 기준선, Terraform module/test, ECR workflow, 검토된 저장 plan Apply, GitHub 변수 등록
+>
+> 대기: Workflow의 `master` 반영과 ECR 최초 게시
+>
+> 주의: 아래 checkbox는 당시 실행 절차이며 현재 상태의 기준은 아니다.
+
+현재 운영 상태와 명령은 [`infra/aws/terraform/README.md`](../../infra/aws/terraform/README.md)를 우선한다. 설계 기준은 [ECR/OIDC 설계](05-ecr-github-oidc-design.md), 현재 delivery 경계는 [CI/CD와 배포](../architecture/cicd-deployment.md)에서 관리한다. 이 계획은 특정 skill, plugin 또는 subagent 사용을 요구하지 않는다.
 
 **Goal:** Create eight private backend ECR repositories, a least-privilege GitHub OIDC role, and a separate manual SHA-only image publication workflow without changing the existing GHCR/Kubernetes delivery path.
 

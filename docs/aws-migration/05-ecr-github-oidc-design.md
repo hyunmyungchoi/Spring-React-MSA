@@ -1,10 +1,20 @@
 # ECR and GitHub OIDC Design
 
+> 문서 상태: 승인된 repository 설계
+>
+> 기준일: 2026-07-17
+>
+> 저장소 상태: Terraform module/test와 수동 workflow 구현 완료
+>
+> AWS 적용 상태: 검토된 plan Apply와 GitHub 변수 등록 완료, image publication 대기
+
+현재 운영 절차와 Apply gate는 [`infra/aws/terraform/README.md`](../../infra/aws/terraform/README.md)가 기준이다. 현재 GHCR/Kubernetes 경로와 AWS ECR 경로의 관계는 [CI/CD와 배포](../architecture/cicd-deployment.md), immutable image 원칙은 [ADR-004](../decisions/ADR-004-ghcr-immutable-image-tag.md)를 따른다.
+
 ## 1. Objective
 
 Build the container registry and CI authentication foundation for the AWS learning environment without changing the existing GHCR and Kubernetes delivery path.
 
-This phase creates Amazon ECR repositories for the eight backend services and a least-privilege IAM role that GitHub Actions can assume with OIDC. Image publishing is manual during the migration phase. This phase does not deploy workloads to ECS.
+Repository implementation, reviewed Terraform Apply, and the GitHub repository variable connection are complete. Image publishing remains manual during the migration phase and has not run yet. This phase does not deploy workloads to ECS.
 
 ## 2. Confirmed Requirements
 

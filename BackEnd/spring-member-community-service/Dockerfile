@@ -1,10 +1,10 @@
-FROM eclipse-temurin:17-jdk-alpine AS build
+FROM eclipse-temurin:17-jdk-alpine@sha256:638937c54b6d63f0973a20501973e7c433a36b1f22262bd2b25afa7be5ff8c4a AS build
 
 WORKDIR /workspace
 
 COPY gradlew gradlew
 COPY gradle gradle
-COPY build.gradle settings.gradle ./
+COPY build.gradle settings.gradle gradle.lockfile ./
 COPY src src
 
 RUN sed -i 's/\r$//' gradlew \
@@ -15,11 +15,11 @@ RUN JAR_FILE="$(find build/libs -maxdepth 1 -type f -name '*.jar' ! -name '*-pla
     && test -n "$JAR_FILE" \
     && cp "$JAR_FILE" app.jar
 
-FROM eclipse-temurin:17-jre-alpine
-
-RUN apk add --no-cache curl
+FROM eclipse-temurin:17-jre-alpine@sha256:02320dd4ce20e243dfb915c686089cf9315c763084fafbb12d5c9993aee18b57
 
 WORKDIR /app
+
+RUN apk add --no-cache curl
 
 COPY --from=build /workspace/app.jar app.jar
 

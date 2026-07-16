@@ -1,17 +1,18 @@
 package com.springmsa.common.web.error;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.springmsa.common.web.response.FieldErrorResponse;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 public final class MsaErrorResponseParser {
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder().build();
 
     private MsaErrorResponseParser() {
     }
@@ -38,7 +39,7 @@ public final class MsaErrorResponseParser {
 
             return Optional.of(new DownstreamErrorResponse(code, message, errors));
 
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             return Optional.empty();
         }
     }
@@ -82,7 +83,7 @@ public final class MsaErrorResponseParser {
             return null;
         }
 
-        String value = node.asText(null);
+        String value = node.asString();
         return hasText(value) ? value : null;
     }
 

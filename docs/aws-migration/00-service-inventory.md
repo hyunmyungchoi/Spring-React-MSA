@@ -1,5 +1,13 @@
 # AWS Migration Service Inventory
 
+> 문서 상태: 현재 저장소 기준 인벤토리
+>
+> 기준일: 2026-07-17
+>
+> AWS 적용 상태: ECS workload 미구현
+
+이 문서는 AWS에서 달라지는 배치와 환경 변수만 관리한다. 서비스 책임과 현재 요청 흐름의 기준 문서는 [MSA 구성](../architecture/msa-structure.md), [인증 흐름](../architecture/authentication-flow.md), [회원 서비스 스펙](../specs/member-service.md), [관리자 서비스 스펙](../specs/admin-service.md)이다.
+
 Root domain: `hyuncloudlab.com`
 
 Recommended public endpoints:
@@ -53,3 +61,4 @@ Recommended public endpoints:
 - Local Kubernetes manifests live in `infra/k8s/spring-msa` and intentionally use `localtest.me`.
 - AWS ECS values will be injected through ECS Task Definition environment variables plus SSM Parameter Store or Secrets Manager.
 - Java code and `application-prod.yml` must not contain concrete AWS public URLs.
+- Kubernetes↔AWS 장애 전환에서는 양쪽 설정을 동시에 활성화하지 않고 [재해 복구 아키텍처](../architecture/disaster-recovery.md)의 단일 writer 원칙을 따른다.
