@@ -21,7 +21,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: spring-member-stock-service
-          image: ghcr.io/hyunmyungchoi/spring-member-stock-service:950048c6632944e2ca4c10f0fe69bcc73d1388e1
+          image: ghcr.io/hyunmyungchoi/spring-member-stock-service:0a5a1aaef3616095633f94248c07608e00cd320b
           imagePullPolicy: Always
           ports:
             - containerPort: 8084

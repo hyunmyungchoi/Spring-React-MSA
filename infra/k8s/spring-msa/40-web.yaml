@@ -17,7 +17,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: spring-member-web
-          image: ghcr.io/hyunmyungchoi/spring-member-web:906f5013d0356b93aead2e022337efa6085ed7b5
+          image: ghcr.io/hyunmyungchoi/spring-member-web:0a5a1aaef3616095633f94248c07608e00cd320b
           imagePullPolicy: Always
           ports:
             - containerPort: 80
@@ -54,7 +54,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: spring-community-web
-          image: ghcr.io/hyunmyungchoi/spring-community-web:906f5013d0356b93aead2e022337efa6085ed7b5
+          image: ghcr.io/hyunmyungchoi/spring-community-web:0a5a1aaef3616095633f94248c07608e00cd320b
           imagePullPolicy: Always
           ports:
             - containerPort: 80
@@ -91,7 +91,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: spring-stock-web
-          image: ghcr.io/hyunmyungchoi/spring-stock-web:906f5013d0356b93aead2e022337efa6085ed7b5
+          image: ghcr.io/hyunmyungchoi/spring-stock-web:0a5a1aaef3616095633f94248c07608e00cd320b
           imagePullPolicy: Always
           ports:
             - containerPort: 80
@@ -128,7 +128,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: spring-admin-web
-          image: ghcr.io/hyunmyungchoi/spring-admin-web:efdfd894ddb21f69c7677456da246493b37a664c
+          image: ghcr.io/hyunmyungchoi/spring-admin-web:0a5a1aaef3616095633f94248c07608e00cd320b
           imagePullPolicy: Always
           ports:
             - containerPort: 80
@@ -165,7 +165,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: spring-admin-users-web
-          image: ghcr.io/hyunmyungchoi/spring-admin-users-web:efdfd894ddb21f69c7677456da246493b37a664c
+          image: ghcr.io/hyunmyungchoi/spring-admin-users-web:0a5a1aaef3616095633f94248c07608e00cd320b
           imagePullPolicy: Always
           ports:
             - containerPort: 80
@@ -202,7 +202,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: spring-admin-logs-web
-          image: ghcr.io/hyunmyungchoi/spring-admin-logs-web:efdfd894ddb21f69c7677456da246493b37a664c
+          image: ghcr.io/hyunmyungchoi/spring-admin-logs-web:0a5a1aaef3616095633f94248c07608e00cd320b
           imagePullPolicy: Always
           ports:
             - containerPort: 80
