@@ -16,7 +16,7 @@
 | 영역 | 현재 | 목표 |
 | --- | --- | --- |
 | Kubernetes | `localtest.me`, 단일 PostgreSQL/Kafka, 로컬 storage | 외부 접근 가능한 선호 site |
-| AWS | Foundation 적용 기록, ECR/OIDC Apply 대기 | ECS/ALB/RDS 기반 warm standby |
+| AWS | Foundation·ECR/OIDC 적용과 Backend 8개 ECR 게시 완료 | ECS/ALB/RDS 기반 warm standby |
 | Image | GHCR Git SHA로 Kubernetes 배포 | 같은 source SHA를 GHCR/ECR 양쪽에 보존 |
 | Database | 환경 간 복제 없음 | PostgreSQL 비동기 복제와 명시적 promotion |
 | Redis | 환경 간 복제 없음 | cache 재생성, session은 재로그인 허용 |

@@ -4,9 +4,9 @@
 >
 > 기준일: 2026-07-17
 >
-> 완료: Foundation 기준선, Terraform module/test, ECR workflow, 검토된 저장 plan Apply, GitHub 변수 등록
+> 완료: Foundation 기준선, Terraform module/test, ECR workflow, 저장 plan Apply, GitHub 변수 등록, PR #3 Merge, 단일·중복 Skip·Backend 8개 게시
 >
-> 대기: Workflow의 `master` 반영과 ECR 최초 게시
+> 실행 결과: 전체 게시 run `29561837114` 성공, SHA `3564959efa1637e60fe72f009d4fa1a5809de01b`
 >
 > 주의: 아래 checkbox는 당시 실행 절차이며 현재 상태의 기준은 아니다.
 

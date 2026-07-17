@@ -74,7 +74,8 @@ flowchart LR
 
 - `.github/workflows/ecr-build-push.yml`은 backend 8개만 대상으로 한다.
 - ECR에는 `latest`를 발행하지 않고 전체 Git commit SHA만 사용한다.
-- Terraform module, test, 검토된 저장 plan Apply와 GitHub 변수 연결은 완료됐다. ECR workflow의 `master` 반영과 최초 image publication은 아직 실행하지 않았다.
+- Terraform module, test, 저장 plan Apply, GitHub 변수 연결과 ECR workflow의 `master` 반영을 완료했다. 단일 게시, 같은 SHA 재실행 Skip, Backend 8개 전체 게시도 검증했다.
+- ECR 전체 게시 기준은 SHA `3564959efa1637e60fe72f009d4fa1a5809de01b`, GitHub Actions run `29561837114`다.
 - ECS, ALB, RDS, ElastiCache와 AWS 자동 배포는 아직 없다.
 - 실제 적용 상태와 승인 gate는 [`infra/aws/terraform/README.md`](../../infra/aws/terraform/README.md)를 기준으로 한다.
 

@@ -6,7 +6,9 @@
 >
 > 저장소 상태: Terraform module/test와 수동 workflow 구현 완료
 >
-> AWS 적용 상태: 검토된 plan Apply와 GitHub 변수 등록 완료, image publication 대기
+> AWS 적용 상태: Plan Apply, GitHub 변수 등록, 단일·중복 Skip·Backend 8개 Image 게시 완료
+>
+> 게시 기록: PR #3 Merge, ECR 전체 게시 run `29561837114`, SHA `3564959efa1637e60fe72f009d4fa1a5809de01b`
 
 현재 운영 절차와 Apply gate는 [`infra/aws/terraform/README.md`](../../infra/aws/terraform/README.md)가 기준이다. 현재 GHCR/Kubernetes 경로와 AWS ECR 경로의 관계는 [CI/CD와 배포](../architecture/cicd-deployment.md), immutable image 원칙은 [ADR-004](../decisions/ADR-004-ghcr-immutable-image-tag.md)를 따른다.
 

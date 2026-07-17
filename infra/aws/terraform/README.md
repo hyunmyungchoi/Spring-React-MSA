@@ -44,7 +44,7 @@
 - `tfplan.ecr` 생성 및 검토: 완료
 - 검토된 Plan Apply: 완료 (`18 added, 0 changed, 0 destroyed`)
 - GitHub Repository Variable `AWS_ECR_PUSH_ROLE_ARN` 등록: 완료
-- ECR 수동 Workflow 실행: 아직 하지 않음
+- ECR 수동 Workflow 실행: 완료 (단일 게시, 동일 SHA Skip, Backend 8개 전체 게시)
 
 ### 현재 생성하지 않는 대상
 
@@ -169,9 +169,9 @@ terraform show -no-color tfplan.<purpose>
 
 Add/Change/Destroy 수, 예상 리소스, IAM 범위, 비용, 교체와 삭제를 검토하고 그 정확한 새 Plan에 대해 다시 명시적 승인을 받는다. 승인 뒤에는 검토한 파일 이름을 지정해 `terraform apply tfplan.<purpose>`로 실행한다. 저장 Plan은 `tfplan`과 `tfplan.*` 패턴으로 Git에서 제외하며 공유하지 않는다.
 
-## Apply 이후 GitHub 연결과 첫 게시
+## Apply 이후 GitHub 연결과 ECR 게시
 
-검토된 `tfplan.ecr` Apply와 Role ARN의 GitHub Repository Variable 등록은 완료됐다. 아래 명령은 등록 절차의 기록이며, 현재 남은 단계는 Workflow를 `master`에 반영한 뒤 첫 이미지를 게시하는 것이다.
+검토된 `tfplan.ecr` Apply, Role ARN의 GitHub Repository Variable 등록, Workflow의 `master` 반영과 Backend 8개 게시까지 완료됐다. 아래 명령은 등록과 수동 게시 절차의 기록이다.
 
 ```powershell
 Set-Location C:\Portfolio\infra\aws\terraform
@@ -183,7 +183,7 @@ gh variable set AWS_ECR_PUSH_ROLE_ARN `
   --body $roleArn
 ```
 
-수동 Workflow는 Default Branch에 있어야 실행할 수 있다. Workflow가 검토되고 `master`에 Merge된 뒤, 먼저 서비스 하나만 게시한다.
+수동 Workflow는 Default Branch에 있어야 실행할 수 있다. Workflow는 PR #3으로 `master`에 반영했고, `spring-user-service` 단일 게시와 같은 SHA 재실행의 Skip 동작을 먼저 검증했다.
 
 ```powershell
 gh workflow run ecr-build-push.yml `
@@ -194,7 +194,7 @@ gh workflow run ecr-build-push.yml `
 gh run watch --repo hyunmyungchoi/Spring-React-MSA
 ```
 
-단일 서비스의 Full SHA Tag, Digest, Basic Scan 결과, Lifecycle Policy를 확인하기 전에는 `all`을 게시하지 않는다.
+단일 서비스 검증 뒤 `deploy_target=all` 실행으로 Backend 8개를 게시했다. 전체 게시 실행은 GitHub Actions run `29561837114`, 기준 SHA는 `3564959efa1637e60fe72f009d4fa1a5809de01b`다. ECR Repository는 Immutable SHA Tag, Push 시 Basic Scan, Tagged Image 5개와 Untagged Image 1일 보존 정책을 유지한다.
 
 ## Destroy
 
@@ -253,10 +253,9 @@ Application, Data, Kafka, SSH Port는 Internet에서 직접 접근할 수 없다
 
 ## 다음 단계
 
-1. ECR 수동 Workflow를 `master`에 반영하고 `spring-user-service` 단일 Image 게시 검증
-2. 같은 SHA 재실행의 Skip 동작을 확인한 뒤 Backend 8개 전체 게시
-3. NAT Gateway와 VPC Endpoint 비용·가용성 비교
-4. ECS on EC2 기반 Cluster/ASG/Capacity Provider 설계
-5. ALB, ACM, Route 53 구성
-6. RDS/ElastiCache와 DB Migration·Backup·복구 설계
+1. ECR Basic Scan 결과를 운영 기준에 맞게 검토하고 취약점 허용 기준 정의
+2. NAT Gateway와 VPC Endpoint 비용·가용성 비교
+3. ECS on EC2 기반 Cluster/ASG/Capacity Provider 설계
+4. ALB, ACM, Route 53 구성
+5. RDS/ElastiCache와 DB Migration·Backup·복구 설계
 7. CloudWatch Logs/Metrics/Alarms와 SRE Runbook 작성

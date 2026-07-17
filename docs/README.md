@@ -25,7 +25,7 @@
 | Data | PostgreSQL 16, Redis 7 |
 | Messaging | Kafka 3.7.0 |
 | Platform | Docker Compose, Kubernetes, ingress-nginx, GHCR, Argo CD |
-| AWS migration | Terraform Foundation·ECR/OIDC 적용, GitHub 변수 등록 완료, ECR 최초 게시·ECS/RDS 미구현 |
+| AWS migration | Terraform Foundation·ECR/OIDC 적용, Backend 8개 ECR 게시 완료, ECS/RDS 미구현 |
 | Observability | Prometheus, Grafana, Loki, Promtail, Kafka exporters |
 
 ## 문서 상태 표현
@@ -105,7 +105,7 @@
 | [환경 매트릭스](aws-migration/02-environment-matrix.md) | 로컬·K8s·AWS 설정 차이 | ECS Task Definition 미구현 |
 | [DB 전환 준비](aws-migration/03-database-migration.md) | RDS schema와 migration gap | RDS·migration tool 미구현 |
 | [AWS Foundation](aws-migration/04-aws-foundation-design.md) | VPC/subnet/SG 설계 | Foundation 적용, workload 미구현 |
-| [ECR/OIDC 설계](aws-migration/05-ecr-github-oidc-design.md) | SHA 이미지와 GitHub OIDC | Apply·GitHub 변수 등록 완료, 최초 게시 대기 |
-| [ECR/OIDC 구현 계획](aws-migration/06-ecr-github-oidc-implementation-plan.md) | 구현·승인 gate 실행 기록 | Task 6 Apply·연결 완료, 최초 게시 대기 |
+| [ECR/OIDC 설계](aws-migration/05-ecr-github-oidc-design.md) | SHA 이미지와 GitHub OIDC | Apply·GitHub 변수·Backend 8개 게시 완료 |
+| [ECR/OIDC 구현 계획](aws-migration/06-ecr-github-oidc-implementation-plan.md) | 구현·승인 gate 실행 기록 | Task 6·단일/중복/전체 게시 검증 완료 |
 
 AWS 적용 여부는 Git만으로 확정할 수 없으므로 문서의 `저장소 상태`와 `AWS 적용 상태`를 구분한다. Terraform state, 저장 plan, 계정 식별자와 secret은 문서나 Git에 추가하지 않는다.
