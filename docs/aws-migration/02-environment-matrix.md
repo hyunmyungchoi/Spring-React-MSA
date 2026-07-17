@@ -1,5 +1,13 @@
 # Environment Matrix
 
+> 문서 상태: 로컬·Kubernetes·AWS 목표 설정 비교
+>
+> 기준일: 2026-07-17
+>
+> AWS 적용 상태: ECS Task Definition, RDS, ElastiCache 미구현
+
+인증 URI와 쿠키/CSRF 계약의 기준은 [인증 스펙](../specs/authentication.md)이다. 이 표는 환경별 주입 값만 정의하며 secret의 실제 값을 기록하지 않는다.
+
 AWS root domain: `hyuncloudlab.com`
 
 | 변수명 | 로컬 Docker | 로컬 Kubernetes | AWS ECS | Secret 여부 |
@@ -31,3 +39,5 @@ AWS root domain: `hyuncloudlab.com`
 | `TOSS_API_CLIENT_SECRET` | `.env.local` | Kubernetes Secret | Secrets Manager or SSM SecureString | Yes |
 
 AWS ECS Task Definitions are intentionally not part of this repository state yet. Do not create `docker-compose-aws.yml` for ECS deployment.
+
+Kubernetes↔AWS DR을 구현할 때는 이 표를 복사해 두 환경을 동시에 write 가능하게 만들지 않는다. 동일 public domain을 사용하되 active site만 traffic과 database write credential을 가지며, 세부 전환 규칙은 [재해 복구 아키텍처](../architecture/disaster-recovery.md)를 따른다.

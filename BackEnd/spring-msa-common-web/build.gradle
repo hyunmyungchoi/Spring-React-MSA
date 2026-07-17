@@ -20,7 +20,7 @@ dependencyManagement {
 }
 
 dependencies {
-    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'tools.jackson.core:jackson-databind'
 
     api 'org.springframework:spring-context'
     api 'org.springframework:spring-web'
@@ -31,4 +31,8 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+dependencyLocking {
+    lockAllConfigurations()
 }

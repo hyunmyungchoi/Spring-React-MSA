@@ -1,0 +1,191 @@
+name: Build and Push Backend Images to Amazon ECR
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_target:
+        description: Backend service to build and publish
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - spring-member-gateway
+          - spring-admin-gateway
+          - spring-security-authorization-server
+          - spring-user-service
+          - spring-member-community-service
+          - spring-member-stock-service
+          - spring-member-bff-service
+          - spring-admin-bff-service
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ecr-publish-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ap-northeast-2
+  ECR_NAMESPACE: spring-react-msa-learning
+  DEPLOY_TARGET: ${{ inputs.deploy_target }}
+
+jobs:
+  prepare-build-matrix:
+    name: Prepare backend build matrix
+    runs-on: ubuntu-latest
+    outputs:
+      backend_matrix: ${{ steps.matrix.outputs.backend_matrix }}
+      has_backend: ${{ steps.matrix.outputs.has_backend }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Validate backend target
+        shell: bash
+        run: |
+          case "${DEPLOY_TARGET}" in
+            all|spring-member-gateway|spring-admin-gateway|spring-security-authorization-server|spring-user-service|spring-member-community-service|spring-member-stock-service|spring-member-bff-service|spring-admin-bff-service)
+              ;;
+            *)
+              echo "Unsupported ECR deploy target: ${DEPLOY_TARGET}"
+              exit 1
+              ;;
+          esac
+
+      - name: Select backend target
+        id: matrix
+        run: python infra/ci/select-build-matrix.py
+
+  ci-matrix-test:
+    name: CI matrix unit test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Run CI matrix and ECR workflow tests
+        run: >-
+          python -m unittest
+          infra/ci/test_select_build_matrix.py
+          infra/ci/test_ecr_build_push_workflow.py
+
+  test-backend:
+    name: Test backend (${{ matrix.service }})
+    runs-on: ubuntu-latest
+    needs:
+      - prepare-build-matrix
+    if: needs.prepare-build-matrix.outputs.has_backend == 'true'
+
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare-build-matrix.outputs.backend_matrix) }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Make Gradle wrapper executable
+        working-directory: BackEnd/${{ matrix.service }}
+        run: chmod +x ./gradlew
+
+      - name: Run Gradle tests
+        working-directory: BackEnd/${{ matrix.service }}
+        run: ./gradlew test
+
+  build-backend:
+    name: Publish backend image (${{ matrix.service }})
+    runs-on: ubuntu-latest
+    needs:
+      - prepare-build-matrix
+      - ci-matrix-test
+      - test-backend
+    if: >-
+      ${{
+        needs.prepare-build-matrix.outputs.has_backend == 'true'
+        && needs.ci-matrix-test.result == 'success'
+        && needs.test-backend.result == 'success'
+      }}
+
+    permissions:
+      contents: read
+      id-token: write
+
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare-build-matrix.outputs.backend_matrix) }}
+
+    env:
+      AWS_ECR_PUSH_ROLE_ARN: ${{ vars.AWS_ECR_PUSH_ROLE_ARN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Validate publication prerequisites
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF}" != "refs/heads/master" ]]; then
+            echo "ECR publication is restricted to refs/heads/master; received ${GITHUB_REF}."
+            exit 1
+          fi
+
+          if [[ -z "${AWS_ECR_PUSH_ROLE_ARN}" ]]; then
+            echo "Repository variable AWS_ECR_PUSH_ROLE_ARN is required."
+            exit 1
+          fi
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ env.AWS_ECR_PUSH_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: GitHubActionsEcr-${{ github.run_id }}
+          role-duration-seconds: 3600
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Check whether the SHA image already exists
+        id: image
+        shell: bash
+        run: |
+          repository="${ECR_NAMESPACE}/${{ matrix.service }}"
+
+          set +e
+          lookup_output=$(aws ecr describe-images \
+            --region "${AWS_REGION}" \
+            --repository-name "${repository}" \
+            --image-ids "imageTag=${GITHUB_SHA}" 2>&1)
+          lookup_status=$?
+          set -e
+
+          if [[ ${lookup_status} -eq 0 ]]; then
+            echo "exists=true" >> "${GITHUB_OUTPUT}"
+            echo "${repository}:${GITHUB_SHA} already exists; skipping publication."
+          elif grep -q "ImageNotFoundException" <<< "${lookup_output}"; then
+            echo "exists=false" >> "${GITHUB_OUTPUT}"
+            echo "${repository}:${GITHUB_SHA} is missing; publication will continue."
+          else
+            echo "${lookup_output}"
+            exit "${lookup_status}"
+          fi
+
+      - name: Build and push SHA-tagged image
+        if: steps.image.outputs.exists == 'false'
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_NAMESPACE }}/${{ matrix.service }}:${{ github.sha }}

@@ -29,6 +29,19 @@ class SelectBuildMatrixTest(unittest.TestCase):
             ["spring-stock-web"],
         )
 
+    def test_shared_frontend_lock_change_selects_all_frontend_images(self) -> None:
+        self.assertEqual(
+            select_build_matrix.detect_services(["FrontEnd/pnpm-lock.yaml"]),
+            [
+                "spring-member-web",
+                "spring-community-web",
+                "spring-stock-web",
+                "spring-admin-web",
+                "spring-admin-users-web",
+                "spring-admin-logs-web",
+            ],
+        )
+
     def test_stock_service_image_builds_from_backend_context(self) -> None:
         stock_image = next(
             image

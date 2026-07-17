@@ -50,3 +50,7 @@ tasks.named('test') {
         showStandardStreams = true
     }
 }
+
+dependencyLocking {
+    lockAllConfigurations()
+}

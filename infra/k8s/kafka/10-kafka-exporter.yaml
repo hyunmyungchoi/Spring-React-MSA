@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: kafka-exporter
-          image: danielqsj/kafka-exporter:v1.8.0
+          image: danielqsj/kafka-exporter:v1.8.0@sha256:9b67b273d1e54052e7ce77c46ecd1c6619fdee7e2ed26717e6272806fbc94150
           imagePullPolicy: IfNotPresent
           args:
             - --kafka.server=kafka.kafka.svc.cluster.local:9092

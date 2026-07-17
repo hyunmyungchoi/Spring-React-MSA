@@ -150,6 +150,22 @@ def detect_services(paths: list[str]) -> list[str]:
             add("spring-member-web", "spring-community-web", "spring-stock-web")
         elif path == "infra/nginx/web/admin-web.conf":
             add("spring-admin-web", "spring-admin-users-web", "spring-admin-logs-web")
+        elif path in {
+            "FrontEnd/.node-version",
+            "FrontEnd/.npmrc",
+            "FrontEnd/.nvmrc",
+            "FrontEnd/package.json",
+            "FrontEnd/pnpm-lock.yaml",
+            "FrontEnd/pnpm-workspace.yaml",
+        }:
+            add(
+                "spring-member-web",
+                "spring-community-web",
+                "spring-stock-web",
+                "spring-admin-web",
+                "spring-admin-users-web",
+                "spring-admin-logs-web",
+            )
         elif path.startswith("FrontEnd/apps/member/"):
             if path.endswith("Dockerfile.stock") or path.startswith("FrontEnd/apps/member/src/stock/"):
                 add("spring-stock-web")

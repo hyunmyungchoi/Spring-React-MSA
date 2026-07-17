@@ -5,6 +5,9 @@ $env:Path = [Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [En
 $Root = Split-Path -Parent $PSScriptRoot
 $ValuesDir = Join-Path $Root "values"
 $NamespaceManifest = Join-Path $Root "00-namespace.yaml"
+$LokiChartVersion = "18.5.0"
+$PromtailChartVersion = "6.17.1"
+$KubePrometheusStackChartVersion = "87.16.1"
 
 function Require-Command {
     param([Parameter(Mandatory = $true)][string]$Name)
@@ -37,6 +40,7 @@ Run @("helm", "repo", "update")
 
 Run @(
     "helm", "upgrade", "--install", "loki", "grafana-community/loki",
+    "--version", $LokiChartVersion,
     "--namespace", "observability",
     "--create-namespace",
     "--values", (Join-Path $ValuesDir "loki-values.yaml"),
@@ -46,6 +50,7 @@ Run @(
 
 Run @(
     "helm", "upgrade", "--install", "promtail", "grafana/promtail",
+    "--version", $PromtailChartVersion,
     "--namespace", "observability",
     "--values", (Join-Path $ValuesDir "promtail-values.yaml"),
     "--wait",
@@ -54,6 +59,7 @@ Run @(
 
 Run @(
     "helm", "upgrade", "--install", "kube-prometheus-stack", "prometheus-community/kube-prometheus-stack",
+    "--version", $KubePrometheusStackChartVersion,
     "--namespace", "observability",
     "--create-namespace",
     "--values", (Join-Path $ValuesDir "kube-prometheus-stack-values.yaml"),
