@@ -50,15 +50,6 @@ spec:
                 secretKeyRef:
                   name: spring-msa-secret
                   key: POSTGRES_PASSWORD
-            - name: SPRING_DATA_REDIS_HOST
-              value: redis
-            - name: SPRING_DATA_REDIS_PORT
-              value: "6379"
-            - name: SPRING_DATA_REDIS_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: spring-msa-secret
-                  key: REDIS_PASSWORD
             - name: SPRING_MSA_INTERNAL_API_TOKEN
               valueFrom:
                 secretKeyRef:
@@ -72,6 +63,14 @@ spec:
               value: validate
             - name: SPRING_SQL_INIT_MODE
               value: never
+            - name: SPRING_FLYWAY_ENABLED
+              value: "false"
+            - name: SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA
+              value: public
+            - name: SPRING_FLYWAY_DEFAULT_SCHEMA
+              value: public
+            - name: SPRING_FLYWAY_SCHEMAS
+              value: public
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness

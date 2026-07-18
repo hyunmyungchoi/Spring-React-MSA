@@ -101,6 +101,27 @@ resource "aws_route" "public_internet" {
   gateway_id             = aws_internet_gateway.this.id
 }
 
+resource "aws_eip" "nat" {
+  domain = "vpc"
+
+  tags = merge(var.common_tags, {
+    Name = "${var.name_prefix}-nat-eip"
+  })
+}
+
+resource "aws_nat_gateway" "this" {
+  count = var.enable_nat_gateway ? 1 : 0
+
+  allocation_id = aws_eip.nat.id
+  subnet_id     = aws_subnet.this["public-0"].id
+
+  tags = merge(var.common_tags, {
+    Name = "${var.name_prefix}-nat-a"
+  })
+
+  depends_on = [aws_internet_gateway.this]
+}
+
 resource "aws_route_table" "private_app" {
   vpc_id = aws_vpc.this.id
 
@@ -116,6 +137,25 @@ resource "aws_route_table" "private_data" {
   tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-private-data-rt"
     Tier = "private-data"
+  })
+}
+
+resource "aws_route" "private_app_internet" {
+  count = var.enable_nat_gateway ? 1 : 0
+
+  route_table_id         = aws_route_table.private_app.id
+  destination_cidr_block = "0.0.0.0/0"
+  nat_gateway_id         = aws_nat_gateway.this[0].id
+}
+
+resource "aws_vpc_endpoint" "s3" {
+  vpc_id            = aws_vpc.this.id
+  service_name      = "com.amazonaws.${var.aws_region}.s3"
+  vpc_endpoint_type = "Gateway"
+  route_table_ids   = [aws_route_table.private_app.id]
+
+  tags = merge(var.common_tags, {
+    Name = "${var.name_prefix}-s3-gateway-endpoint"
   })
 }
 
@@ -269,6 +309,19 @@ resource "aws_vpc_security_group_egress_rule" "ecs_to_data" {
 
   tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-ecs-to-${each.key}"
+  })
+}
+
+resource "aws_vpc_security_group_egress_rule" "ecs_external_https" {
+  security_group_id = aws_security_group.ecs.id
+  description       = "Allow ECS tasks to reach AWS public APIs and external HTTPS services"
+  cidr_ipv4         = "0.0.0.0/0"
+  from_port         = 443
+  to_port           = 443
+  ip_protocol       = "tcp"
+
+  tags = merge(var.common_tags, {
+    Name = "${var.name_prefix}-ecs-external-https-egress"
   })
 }
 

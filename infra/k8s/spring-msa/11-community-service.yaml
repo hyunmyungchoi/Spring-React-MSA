@@ -38,33 +38,10 @@ spec:
               value: ""
             - name: SERVER_TOMCAT_ACCESSLOG_BUFFERED
               value: "false"
-            - name: SPRING_DATASOURCE_URL
-              value: jdbc:postgresql://postgres:5432/msa
-            - name: SPRING_DATASOURCE_USERNAME
-              valueFrom:
-                configMapKeyRef:
-                  name: spring-msa-config
-                  key: POSTGRES_USER
-            - name: SPRING_DATASOURCE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: spring-msa-secret
-                  key: POSTGRES_PASSWORD
-            - name: SPRING_DATA_REDIS_HOST
-              value: redis
-            - name: SPRING_DATA_REDIS_PORT
-              value: "6379"
-            - name: SPRING_DATA_REDIS_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: spring-msa-secret
-                  key: REDIS_PASSWORD
             - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI
               value: http://user.localtest.me
             - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI
               value: http://spring-security-authorization-server:9000/oauth2/jwks
-            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
-              value: validate
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness

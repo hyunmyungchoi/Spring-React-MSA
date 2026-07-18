@@ -51,6 +51,16 @@ class SelectBuildMatrixTest(unittest.TestCase):
 
         self.assertEqual(stock_image["context"], "BackEnd")
 
+    def test_database_migrations_target_selects_exactly_three_flyway_images(self) -> None:
+        selected, update_targets = select_build_matrix.select_services(
+            "workflow_dispatch",
+            "database-migrations",
+            [],
+        )
+
+        self.assertEqual(selected, select_build_matrix.DATABASE_MIGRATION_IMAGES)
+        self.assertEqual(update_targets, select_build_matrix.DATABASE_MIGRATION_IMAGES)
+
 
 if __name__ == "__main__":
     unittest.main()

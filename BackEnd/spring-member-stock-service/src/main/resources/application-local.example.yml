@@ -8,6 +8,9 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
 
+  flyway:
+    enabled: ${SPRING_FLYWAY_ENABLED}
+
   data:
     redis:
       host: ${SPRING_DATA_REDIS_HOST}

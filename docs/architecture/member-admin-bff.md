@@ -39,7 +39,7 @@ Stock workspace는 관심 종목, 종목 정보, 가격을 조합한다. 일부 
 - Redis의 Member BFF 세션 hash 스캔
 - presence TTL key와 Redis Stream 이벤트 조회
 
-관리자 BFF는 회원 세션의 원본 ID를 조회 응답에 포함한다. UI 노출과 로그 기록 시 세션 ID가 인증 자격 증명처럼 취급되지 않도록 마스킹 또는 fingerprint만 노출하는 개선이 필요하다. presence 이벤트는 이미 SHA-256 fingerprint를 사용한다.
+현재 관리자 BFF는 회원 세션의 원본 ID를 조회 응답에 포함하므로 아직 목표 보안 계약을 만족하지 않는다. 목표 응답은 마스킹 값 또는 SHA-256 Fingerprint만 노출하며 Presence Event의 기존 Fingerprint 형식과 일관되게 맞춘다.
 
 ## 토큰과 세션 경계
 
@@ -57,8 +57,8 @@ Admin BFF는 Member BFF namespace를 읽기만 하고 회원 세션을 수정하
 
 ## 현재 위험과 후속 작업
 
-1. 공개 관리자 가입을 운영에서 차단한다.
-2. Admin BFF가 반환하는 원본 회원 session ID를 마스킹한다.
+1. 승인한 AWS Learning 경계에 따라 공개 관리자 가입을 차단하고 일회성 Bootstrap을 구현한다.
+2. Admin BFF 응답에서 원본 회원 Session ID를 제거하고 Fingerprint 또는 마스킹 값만 반환한다.
 3. Member BFF에 집중된 채팅 도메인이 커지면 별도 Chat Service 분리를 검토한다.
 4. Redis SCAN 기반 전체 세션 조회에 pagination과 결과 제한을 추가한다.
 5. BFF의 로그인·logout·권한 거부 통합 테스트를 보강한다.

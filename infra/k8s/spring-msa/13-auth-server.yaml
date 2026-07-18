@@ -89,7 +89,7 @@ spec:
             - name: ADMIN_BFF_POST_LOGOUT_REDIRECT_URI
               value: http://admin.localtest.me/auth
             - name: ADMIN_BFF_POST_LOGOUT_LOGIN_REDIRECT_URI
-              value: http://admin.localtest.me/login
+              value: http://admin.localtest.me/auth
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness

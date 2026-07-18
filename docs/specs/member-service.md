@@ -19,7 +19,7 @@
 
 Member BFF는 요청에 `ROLE_USER`만 부여해 User Service `POST /internal/users`를 호출한다. User Service는 BCrypt로 password를 저장한다. 성공은 HTTP 201과 `userId`, `loginId`, `email`, `username`, `enabled`, `roles`를 반환한다.
 
-충돌은 로그인 ID 또는 email 중복이며 HTTP 409다. 현재 최소 비밀번호 4자는 운영 정책으로 약하므로 강화 계획에 포함한다.
+충돌은 로그인 ID 또는 email 중복이며 HTTP 409다. 최소 4자 규칙은 이 프로젝트의 Learning 편의를 위해 유지하기로 결정했다. 이는 운영 권장 보안 기준이 아니라 명시적으로 수용한 위험이며, 향후 실제 운영 환경을 분리할 때는 별도 비밀번호 정책과 추가 인증 수단을 다시 결정해야 한다.
 
 ## 사용자 endpoint
 

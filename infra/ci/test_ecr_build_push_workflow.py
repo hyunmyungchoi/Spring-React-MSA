@@ -7,6 +7,7 @@ import unittest
 
 WORKFLOW_PATH = Path(__file__).resolve().parents[2] / ".github/workflows/ecr-build-push.yml"
 APPROVED_TARGETS = [
+    "database-migrations",
     "all",
     "spring-member-gateway",
     "spring-admin-gateway",
@@ -31,7 +32,7 @@ def target_guard_facts() -> tuple[list[str], bool, int, int]:
 
     guard = workflow[validate_index:selector_index]
     allow_match = re.search(
-        r"(?m)^\s+(all(?:\|spring-[a-z0-9-]+)+)\)\s*$",
+        r"(?m)^\s+((?:database-migrations\|)?all(?:\|spring-[a-z0-9-]+)+)\)\s*$",
         guard,
     )
     reject_match = re.search(
@@ -50,7 +51,7 @@ def static_guard_exit_code(deploy_target: str) -> int:
 
 
 class EcrBuildPushWorkflowTargetValidationTest(unittest.TestCase):
-    def test_allowlist_is_exactly_all_plus_eight_backends(self) -> None:
+    def test_allowlist_is_exactly_migration_group_all_and_eight_backends(self) -> None:
         allowed_targets, _, _, _ = target_guard_facts()
         self.assertEqual(allowed_targets, APPROVED_TARGETS)
 
@@ -64,6 +65,18 @@ class EcrBuildPushWorkflowTargetValidationTest(unittest.TestCase):
         _, _, validate_index, selector_index = target_guard_facts()
         self.assertGreaterEqual(validate_index, 0)
         self.assertGreater(selector_index, validate_index)
+
+    def test_workflow_promotes_without_docker_build(self) -> None:
+        workflow = WORKFLOW_PATH.read_text(encoding="utf-8")
+        self.assertNotIn("docker/build-push-action", workflow)
+        self.assertIn("registry_image_integrity.py promote", workflow)
+        self.assertIn("source_sha", workflow)
+        self.assertIn("packages: read", workflow)
+
+    def test_source_sha_must_be_reachable_from_master(self) -> None:
+        workflow = WORKFLOW_PATH.read_text(encoding="utf-8")
+        self.assertIn("git merge-base --is-ancestor", workflow)
+        self.assertIn("origin/master", workflow)
 
 
 if __name__ == "__main__":

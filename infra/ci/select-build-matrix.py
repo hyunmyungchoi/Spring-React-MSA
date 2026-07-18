@@ -79,6 +79,11 @@ FRONTEND_IMAGES: list[dict[str, str]] = [
 ]
 
 ZERO_SHA = "0" * 40
+DATABASE_MIGRATION_IMAGES = [
+    "spring-user-service",
+    "spring-member-stock-service",
+    "spring-member-bff-service",
+]
 
 
 def parse_args() -> argparse.Namespace:
@@ -195,6 +200,8 @@ def select_services(event_name: str, deploy_target: str, changed_files: list[str
     if event_name == "workflow_dispatch":
         if deploy_target == "all":
             return services, ["all"]
+        if deploy_target == "database-migrations":
+            return DATABASE_MIGRATION_IMAGES, DATABASE_MIGRATION_IMAGES
         if deploy_target in known_services:
             return [deploy_target], [deploy_target]
         raise SystemExit(f"Unknown deploy target: {deploy_target}")
@@ -241,6 +248,7 @@ def main() -> int:
         "has_backend": str(bool(backend_matrix)).lower(),
         "has_frontend": str(bool(frontend_matrix)).lower(),
         "update_targets": " ".join(update_targets),
+        "selected_images": " ".join(selected_services),
     }
     write_github_output(args.github_output, output_values)
 

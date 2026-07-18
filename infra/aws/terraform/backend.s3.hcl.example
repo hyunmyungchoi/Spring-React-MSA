@@ -1,0 +1,10 @@
+bucket       = "REPLACE_WITH_BOOTSTRAP_OUTPUT"
+key          = "learning/runtime/terraform.tfstate"
+region       = "ap-northeast-2"
+encrypt      = true
+use_lockfile = true
+
+assume_role = {
+  role_arn    = "REPLACE_WITH_BOOTSTRAP_OUTPUT"
+  session_name = "TerraformStateLearning"
+}

@@ -5,6 +5,8 @@
 - 관련 구조: [재해 복구 아키텍처](../architecture/disaster-recovery.md)
 
 > AWS ECS/RDS/ALB와 교차 환경 database replication이 아직 없으므로 이 절차를 현재 환경에서 실행하지 않는다. 리소스 이름과 명령은 DR 구현 후 실제 Terraform output에 맞춰 확정한다.
+>
+> Kubernetes↔AWS DR은 Learning 적용 범위에서 제외했다. 이 문서는 운영 환경 후속 학습용 초안이며 Learning 장애 대응에 사용하지 않는다.
 
 ## 실행 조건
 

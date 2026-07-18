@@ -5,29 +5,28 @@ spring:
 
   data:
     redis:
-      host: ${SPRING_DATA_REDIS_HOST:localhost}
-      port: ${SPRING_DATA_REDIS_PORT:16379}
-      password: ${SPRING_DATA_REDIS_PASSWORD:}
+      host: ${SPRING_DATA_REDIS_HOST}
+      port: ${SPRING_DATA_REDIS_PORT}
+      password: ${SPRING_DATA_REDIS_PASSWORD}
 
   security:
     oauth2:
       authorizationserver:
-        issuer: http://localhost:8080
+        issuer: ${AUTH_SERVER_ISSUER}
         client:
           bff-client:
             registration:
-              client-id: bff-client
-              client-secret: "$2a$10$BDeXFNHccQiu0ef5vYr/Bu0fAjSQzCgKc5NBppHdETy1G.W4KJzbS"
+              client-id: ${BFF_CLIENT_ID}
+              client-secret: ${BFF_CLIENT_SECRET_HASH}
               client-authentication-methods:
                 - client_secret_basic
               authorization-grant-types:
                 - authorization_code
                 - refresh_token
               redirect-uris:
-                - http://localhost:5173/bff/login/oauth2/code/member-bff
+                - ${BFF_OAUTH2_REDIRECT_URI}
               post-logout-redirect-uris:
-                - http://localhost:8080/
-                - http://localhost:5173/auth
+                - ${BFF_POST_LOGOUT_REDIRECT_URI}
               scopes:
                 - openid
                 - profile
@@ -36,18 +35,18 @@ spring:
 
           admin-bff-client:
             registration:
-              client-id: admin-bff-client
-              client-secret: "$2a$10$Dm7Jh0Txq5XD7GRJXZSFFuIZQL1fMzpohFZJPM2EcFVPJNDsfveWi"
+              client-id: ${ADMIN_BFF_CLIENT_ID}
+              client-secret: ${ADMIN_BFF_CLIENT_SECRET_HASH}
               client-authentication-methods:
                 - client_secret_basic
               authorization-grant-types:
                 - authorization_code
                 - refresh_token
               redirect-uris:
-                - http://localhost:5176/admin-bff/login/oauth2/code/admin-bff
+                - ${ADMIN_BFF_OAUTH2_REDIRECT_URI}
               post-logout-redirect-uris:
-                - http://localhost:5176
-                - http://localhost:5176/auth
+                - ${ADMIN_BFF_POST_LOGOUT_REDIRECT_URI}
+                - ${ADMIN_BFF_POST_LOGOUT_LOGIN_REDIRECT_URI}
               scopes:
                 - openid
                 - profile
@@ -56,13 +55,12 @@ spring:
 
 app:
   frontend:
-    user-login-uri: http://localhost:5173/auth
-    admin-login-uri: http://localhost:5176/auth
+    user-login-uri: ${USER_FRONTEND_LOGIN_URI}
+    admin-login-uri: ${ADMIN_FRONTEND_LOGIN_URI}
 
   user-service:
-    base-url: "http://localhost:8081"
+    base-url: ${USER_SERVICE_BASE_URL}
 
 springmsa:
   internal-api:
-    header-name: X-Internal-Token
-    token: local-dev-internal-token
+    token: ${SPRING_MSA_INTERNAL_API_TOKEN}

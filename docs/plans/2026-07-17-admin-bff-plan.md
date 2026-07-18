@@ -15,7 +15,7 @@
 
 ## P0: 공개 관리자 가입 차단
 
-현재 `POST /admin-bff/registration/admin`은 인증 없이 `ROLE_ADMIN` 사용자를 생성할 수 있다. production 배포 전에 다음 중 하나로 변경한다.
+현재 `POST /admin-bff/registration/admin`은 인증 없이 `ROLE_ADMIN` 사용자를 생성할 수 있다. AWS Learning Public Traffic을 열기 전에 다음 중 하나로 변경한다.
 
 권장안:
 

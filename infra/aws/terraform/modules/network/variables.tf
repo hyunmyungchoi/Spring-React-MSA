@@ -48,6 +48,16 @@ variable "private_data_subnet_cidrs" {
   }
 }
 
+variable "aws_region" {
+  description = "AWS region used to build regional VPC endpoint service names."
+  type        = string
+}
+
+variable "enable_nat_gateway" {
+  description = "Whether to create the single learning NAT Gateway and Private App default route."
+  type        = bool
+}
+
 variable "common_tags" {
   description = "Common tags applied to taggable network resources."
   type        = map(string)

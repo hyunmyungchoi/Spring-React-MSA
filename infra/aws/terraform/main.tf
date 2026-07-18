@@ -11,6 +11,12 @@ data "aws_iam_openid_connect_provider" "github" {
   url = "https://token.actions.githubusercontent.com"
 }
 
+data "aws_ssm_parameter" "ecs_optimized_al2023_ami" {
+  count = var.enable_ecs_compute_foundation ? 1 : 0
+
+  name = "/aws/service/ecs/optimized-ami/amazon-linux-2023/recommended/image_id"
+}
+
 module "network" {
   source = "./modules/network"
 
@@ -20,7 +26,51 @@ module "network" {
   public_subnet_cidrs       = var.public_subnet_cidrs
   private_app_subnet_cidrs  = var.private_app_subnet_cidrs
   private_data_subnet_cidrs = var.private_data_subnet_cidrs
+  aws_region                = var.aws_region
+  enable_nat_gateway        = var.enable_nat_gateway
   common_tags               = local.common_tags
+}
+
+module "data_layer" {
+  source = "./modules/data-layer"
+
+  name_prefix              = local.name_prefix
+  private_data_subnet_ids  = module.network.private_data_subnet_ids
+  data_security_group_id   = module.network.data_security_group_id
+  enable_data_layer        = var.enable_data_layer
+  db_engine_version        = var.db_engine_version
+  db_instance_class        = var.db_instance_class
+  application_secret_names = local.application_secret_names
+  common_tags              = local.common_tags
+}
+
+module "ecs_compute" {
+  count  = var.enable_ecs_compute_foundation ? 1 : 0
+  source = "./modules/ecs-compute"
+
+  name_prefix              = local.name_prefix
+  private_app_subnet_ids   = module.network.private_app_subnet_ids
+  ecs_security_group_id    = module.network.ecs_security_group_id
+  ecs_optimized_ami_id     = data.aws_ssm_parameter.ecs_optimized_al2023_ami[0].value
+  instance_type            = var.ecs_instance_type
+  learning_runtime_enabled = var.learning_runtime_enabled
+  common_tags              = local.common_tags
+}
+
+module "database_tasks" {
+  count  = var.enable_database_tasks_foundation ? 1 : 0
+  source = "./modules/database-tasks"
+
+  name_prefix             = local.name_prefix
+  aws_region              = var.aws_region
+  db_address              = module.data_layer.db_address
+  db_port                 = module.data_layer.db_port
+  db_name                 = module.data_layer.db_name
+  master_secret_arn       = nonsensitive(module.data_layer.master_user_secret_arn)
+  application_secret_arns = module.data_layer.application_secret_arns
+  ecr_repository_arns     = module.ecr.repository_arns
+  migration_images        = var.database_migration_images
+  common_tags             = local.common_tags
 }
 
 module "ecr" {

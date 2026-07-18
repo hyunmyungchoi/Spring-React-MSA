@@ -12,7 +12,7 @@ spring:
             cors-configurations:
               '[/**]':
                 allowedOrigins:
-                  - "http://localhost:5173"
+                  - ${GATEWAY_CORS_ALLOWED_ORIGIN}
                 allowedMethods:
                   - GET
                   - POST
@@ -25,28 +25,32 @@ spring:
 
           routes:
             - id: member-bff-service
-              uri: http://localhost:8079
+              uri: ${GATEWAY_BFF_URI}
               predicates:
                 - Path=/bff/**
+              filters:
+                - StripPrefix=1
+                - RewriteLocationResponseHeader=AS_IN_REQUEST, Location, ${PUBLIC_ORIGIN}
 
             - id: user-service
-              uri: http://localhost:8081
+              uri: ${GATEWAY_USER_SERVICE_URI}
               predicates:
                 - Path=/api/user/**
 
             - id: member-community-service
-              uri: http://localhost:8083
+              uri: ${GATEWAY_COMMUNITY_SERVICE_URI}
               predicates:
                 - Path=/api/community/**
 
             - id: member-stock-service
-              uri: http://localhost:8084
+              uri: ${GATEWAY_STOCK_SERVICE_URI}
               predicates:
                 - Path=/api/stock/**
 
             - id: authorization-server
-              uri: http://localhost:9000
+              uri: ${GATEWAY_AUTHORIZATION_SERVER_URI}
               predicates:
                 - Path=/oauth2/**,/.well-known/openid-configuration,/.well-known/oauth-authorization-server,/.well-known/oauth-protected-resource,/userinfo,/login,/login/**,/logout,/connect/**
               filters:
                 - PreserveHostHeader
+                - RewriteLocationResponseHeader=AS_IN_REQUEST, Location, ${PUBLIC_ORIGIN}

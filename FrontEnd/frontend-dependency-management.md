@@ -2,7 +2,7 @@
 
 ## Project Stack
 
-This frontend project uses React, TypeScript, Vite, React Router, Redux Toolkit, RTK Query, Tailwind CSS, and Axios.
+This frontend project uses React, TypeScript, Vite, React Router, Redux Toolkit, Tailwind CSS, and Axios. RTK Query is bundled with Redux Toolkit but is not used by the current API layer.
 
 ## Package Manager
 
@@ -65,7 +65,7 @@ pnpm add -D typescript@6.0.3 vite@8.0.13 @vitejs/plugin-react@6.0.2 tailwindcss@
 
 RTK Query is included in Redux Toolkit.
 
-Do not install it separately.
+Do not install it separately. The current Member API client uses Axios and the Admin API client uses `fetch`; the following import is only a future adoption example.
 
 ```ts
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
@@ -93,10 +93,13 @@ Create `.nvmrc`.
 
 ```bash
 pnpm install
-pnpm dev
-pnpm build
-pnpm preview
+pnpm --filter member dev
+pnpm --filter admin dev
+pnpm --filter member build:all
+pnpm --filter admin build:all
 ```
+
+Workspace root `package.json`에는 `dev`, `build`, `preview` script가 없으므로 app filter 없이 `pnpm dev` 또는 `pnpm build`를 실행하지 않는다.
 
 ## CI/CD Install Command
 

@@ -24,6 +24,16 @@ locals {
     "spring-admin-bff-service",
   ])
 
+  application_secret_names = toset([
+    "/spring-react-msa/learning/admin-bff",
+    "/spring-react-msa/learning/auth-server",
+    "/spring-react-msa/learning/member-bff",
+    "/spring-react-msa/learning/shared/internal-api",
+    "/spring-react-msa/learning/shared/redis",
+    "/spring-react-msa/learning/stock-service",
+    "/spring-react-msa/learning/user-service",
+  ])
+
   budget_thresholds = {
     "10" = 10
     "30" = 30

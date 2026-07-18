@@ -112,10 +112,12 @@ Spring 설정은 이 값을 다음 설정으로 바인딩한다.
 ```yaml
 toss:
   api:
-    base-url: ${TOSS_API_BASE_URL:https://openapi.tossinvest.com}
+    base-url: ${TOSS_API_BASE_URL}
     client-id: ${TOSS_API_CLIENT_ID}
     client-secret: ${TOSS_API_CLIENT_SECRET}
 ```
+
+세 값 모두 실행 환경에서 명시적으로 주입하며 코드 기본값을 두지 않는다. 로컬 기본 주소가 필요하면 Git에서 제외된 `.env.local`에 `https://openapi.tossinvest.com`을 설정한다.
 
 그리고 토스 가이드의 Client Credentials 흐름에 맞춰 토큰을 발급한다.
 

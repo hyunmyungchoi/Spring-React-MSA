@@ -69,6 +69,16 @@ spec:
               value: http://spring-security-authorization-server:9000/oauth2/jwks
             - name: SPRING_JPA_HIBERNATE_DDL_AUTO
               value: validate
+            - name: SPRING_SQL_INIT_MODE
+              value: never
+            - name: SPRING_FLYWAY_ENABLED
+              value: "false"
+            - name: SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA
+              value: public
+            - name: SPRING_FLYWAY_DEFAULT_SCHEMA
+              value: public
+            - name: SPRING_FLYWAY_SCHEMAS
+              value: public
             - name: MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED
               value: "true"
             - name: TOSS_API_BASE_URL

@@ -32,7 +32,7 @@ Authorization Server, Member/Admin BFF, User Service, Redis Session, Gateway/Ing
 | A-12 | authServerLogoutUrl까지 이동 | Auth/BFF 모두 logout, 재인증 필요 |
 | A-13 | internal token 누락/오류 | User `/internal/**` 401 |
 | A-14 | JWT 역할 변조/잘못된 issuer | Resource Server 401/403 |
-| A-15 | 익명 관리자 가입 | production 정책에서 거부되어야 함 |
+| A-15 | 익명 관리자 가입 | AWS Learning Public Traffic 정책에서 거부되어야 함 |
 
 A-15는 현재 코드에서는 허용되는 알려진 실패 항목이다. 운영 준비 gate에서 반드시 차단 상태로 전환한다.
 

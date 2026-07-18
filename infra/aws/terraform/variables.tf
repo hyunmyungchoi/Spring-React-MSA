@@ -74,6 +74,94 @@ variable "private_data_subnet_cidrs" {
   }
 }
 
+variable "enable_nat_gateway" {
+  description = "Whether to create the hourly-billed single NAT Gateway for the learning environment."
+  type        = bool
+  default     = false
+}
+
+variable "enable_data_layer" {
+  description = "Whether to create the persistent learning RDS and empty Secrets Manager containers."
+  type        = bool
+  default     = false
+}
+
+variable "enable_ecs_compute_foundation" {
+  description = "Whether to create the ECS cluster, EC2 launch template, zero-capacity ASG, and capacity provider."
+  type        = bool
+  default     = false
+}
+
+variable "learning_runtime_enabled" {
+  description = "Whether the Learning ECS ASG should run capacity. False keeps min, desired, and max at zero."
+  type        = bool
+  default     = false
+
+  validation {
+    condition = !var.learning_runtime_enabled || (
+      var.enable_ecs_compute_foundation && var.enable_nat_gateway
+    )
+    error_message = "learning_runtime_enabled requires enable_ecs_compute_foundation and enable_nat_gateway to be true."
+  }
+}
+
+variable "enable_database_tasks_foundation" {
+  description = "Whether to create the one-off database bootstrap task and optional Flyway migration task definitions."
+  type        = bool
+  default     = false
+
+  validation {
+    condition = !var.enable_database_tasks_foundation || (
+      var.enable_data_layer && var.enable_ecs_compute_foundation
+    )
+    error_message = "enable_database_tasks_foundation requires both the data layer and ECS compute foundation."
+  }
+}
+
+variable "database_migration_images" {
+  description = "Immutable ECR image URIs for database migrations. Keep empty until the current Flyway-enabled images are promoted."
+  type        = map(string)
+  default     = {}
+
+  validation {
+    condition     = var.enable_database_tasks_foundation || length(var.database_migration_images) == 0
+    error_message = "database_migration_images requires enable_database_tasks_foundation to be true."
+  }
+}
+
+variable "ecs_instance_type" {
+  description = "Approved EC2 instance type for the Learning ECS capacity provider."
+  type        = string
+  default     = "m6i.xlarge"
+
+  validation {
+    condition     = var.ecs_instance_type == "m6i.xlarge"
+    error_message = "ecs_instance_type must be m6i.xlarge for the approved two-AZ Learning design."
+  }
+}
+
+variable "db_engine_version" {
+  description = "PostgreSQL 16 version verified as available in ap-northeast-2."
+  type        = string
+  default     = "16.14"
+
+  validation {
+    condition     = startswith(var.db_engine_version, "16.")
+    error_message = "db_engine_version must remain on PostgreSQL major version 16."
+  }
+}
+
+variable "db_instance_class" {
+  description = "RDS instance class for the learning data layer."
+  type        = string
+  default     = "db.t4g.micro"
+
+  validation {
+    condition     = var.db_instance_class == "db.t4g.micro"
+    error_message = "db_instance_class must be db.t4g.micro for the approved learning design."
+  }
+}
+
 variable "enable_budget" {
   description = "Whether to include the AWS monthly cost budget. Enable only with a real alert email."
   type        = bool

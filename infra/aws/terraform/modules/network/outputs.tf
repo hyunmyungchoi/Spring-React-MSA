@@ -29,6 +29,26 @@ output "internet_gateway_id" {
   value       = aws_internet_gateway.this.id
 }
 
+output "nat_gateway_id" {
+  description = "ID of the single learning NAT Gateway, or null when disabled."
+  value       = one(aws_nat_gateway.this[*].id)
+}
+
+output "nat_eip_public_ip" {
+  description = "Elastic public IPv4 address retained for the learning NAT Gateway across OFF and ON cycles."
+  value       = aws_eip.nat.public_ip
+}
+
+output "s3_gateway_endpoint_id" {
+  description = "ID of the S3 Gateway VPC Endpoint associated with the Private App Route Table."
+  value       = aws_vpc_endpoint.s3.id
+}
+
+output "private_app_route_table_id" {
+  description = "ID of the route table shared by the two Private App subnets."
+  value       = aws_route_table.private_app.id
+}
+
 output "alb_security_group_id" {
   description = "ID of the ALB Security Group."
   value       = aws_security_group.alb.id

@@ -1,73 +1,42 @@
-# React + TypeScript + Vite
+# Admin Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+관리자용 React SPA다. Admin BFF의 별도 Session Cookie와 CSRF Token을 사용하며 Member Session으로 관리자 기능에 접근하지 않는다.
 
-Currently, two official plugins are available:
+## Routes
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+| Path | 기능 |
+|---|---|
+| `/` | 관리자 홈 |
+| `/auth` | 관리자 로그인과 현재 구현의 가입 UI |
+| `/manage/users` | 사용자·Member Session·Presence 조회 |
+| `/manage/logs` | 로그 화면 Entry; 실제 Admin BFF Log API는 아직 없음 |
 
-## React Compiler
+공개 관리자 가입은 현재 소스에 남아 있지만 AWS Learning Public Traffic에서는 차단한 뒤 최초 관리자를 Bootstrap해야 한다.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Local Development
 
-## Expanding the ESLint configuration
+`FrontEnd` Workspace Root에서 실행한다.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```powershell
+Set-Location C:\Portfolio\FrontEnd
+pnpm install --frozen-lockfile
+pnpm --filter admin dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Vite는 `http://localhost:5176`에서 실행되고 `/admin-bff`와 OAuth2/OIDC 요청을 Admin Gateway `http://localhost:8090`으로 Proxy한다.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Build
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```powershell
+pnpm --filter admin run lint
+pnpm --filter admin run build:all
 ```
+
+`build:all`은 통합 Admin Shell과 `users`, `logs` 전용 Entry를 만든다. Kubernetes는 각 결과를 별도 Nginx Image로 배포하고, AWS Learning 목표는 Admin 정적 파일을 Private S3와 CloudFront로 제공하는 것이다.
+
+## API 경계
+
+- Admin API Client: browser `fetch`, `credentials=include`
+- CSRF Bootstrap: `GET /admin-bff/auth/me`
+- 보호 기준: `ROLE_ADMIN`
+- 계약: [`../../../docs/specs/authentication.md`](../../../docs/specs/authentication.md), [`../../../docs/specs/admin-service.md`](../../../docs/specs/admin-service.md)

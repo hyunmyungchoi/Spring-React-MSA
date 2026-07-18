@@ -8,20 +8,24 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
 
-  data:
-    redis:
-      host: ${SPRING_DATA_REDIS_HOST}
-      port: ${SPRING_DATA_REDIS_PORT}
-      password: ${SPRING_DATA_REDIS_PASSWORD}
-
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
     open-in-view: false
+    properties:
+      hibernate:
+        default_schema: ${SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA}
+
+  flyway:
+    enabled: ${SPRING_FLYWAY_ENABLED}
+    default-schema: ${SPRING_FLYWAY_DEFAULT_SCHEMA}
+    schemas: ${SPRING_FLYWAY_SCHEMAS}
+    create-schemas: false
+    clean-disabled: true
 
   sql:
     init:
-      mode: never
+      mode: ${SPRING_SQL_INIT_MODE}
 
   security:
     oauth2:

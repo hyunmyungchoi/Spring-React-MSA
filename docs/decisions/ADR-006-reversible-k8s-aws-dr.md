@@ -1,8 +1,10 @@
 # ADR-006: Kubernetes와 AWS는 단일 writer Active-Passive DR로 전환한다
 
-- 상태: 제안
+- 상태: 보류 — Learning 적용 범위 제외
 - 결정일: 2026-07-17
 - 구현 상태: 미구현
+
+> 2026-07-18 범위 결정: 현재 프로젝트는 AWS Learning 단일 환경 완성을 우선한다. 이 ADR은 운영 환경 참고 제안으로 보존하지만 ECS/RDS/Frontend 배포와 Backup Restore 검증이 끝나기 전에는 구현하거나 승인 상태로 변경하지 않는다.
 
 ## 배경
 
@@ -23,6 +25,8 @@ Kubernetes를 선호 site, AWS를 warm standby site로 하는 reversible Active-
 7. Kafka 후속 event는 Transactional Outbox를 기준으로 재발행한다.
 8. 동일한 Git source SHA의 image만 양쪽 환경에서 사용한다.
 9. DNS/traffic control과 장애 관측은 가능한 한 두 site 바깥에 둔다.
+
+이 제안은 Learning 환경의 현재 목표 구조가 아니다. Learning에는 교차 환경 복제, RTO/RPO 보장, DNS Failover, Fencing과 Failback을 적용하지 않고 RDS Automated Backup, PITR와 Restore 훈련까지만 적용한다.
 
 ## 불변 조건
 

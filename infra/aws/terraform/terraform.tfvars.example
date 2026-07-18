@@ -7,6 +7,18 @@ public_subnet_cidrs       = ["10.20.0.0/24", "10.20.1.0/24"]
 private_app_subnet_cidrs  = ["10.20.10.0/24", "10.20.11.0/24"]
 private_data_subnet_cidrs = ["10.20.20.0/24", "10.20.21.0/24"]
 
+enable_nat_gateway = false
+enable_data_layer  = false
+
+# Create the persistent ECS/ASG foundation separately from running hourly EC2 capacity.
+enable_ecs_compute_foundation = false
+enable_database_tasks_foundation = false
+learning_runtime_enabled      = false
+ecs_instance_type             = "m6i.xlarge"
+
+# Example: user-service = "123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/...@sha256:<digest>"
+database_migration_images = {}
+
 monthly_budget_usd = 50
 enable_budget      = false
 budget_alert_email = null

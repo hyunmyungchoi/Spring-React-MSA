@@ -54,6 +54,14 @@ spec:
               value: validate
             - name: SPRING_SQL_INIT_MODE
               value: never
+            - name: SPRING_FLYWAY_ENABLED
+              value: "false"
+            - name: SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA
+              value: public
+            - name: SPRING_FLYWAY_DEFAULT_SCHEMA
+              value: public
+            - name: SPRING_FLYWAY_SCHEMAS
+              value: public
             - name: SPRING_DATA_REDIS_HOST
               value: redis
             - name: SPRING_DATA_REDIS_PORT

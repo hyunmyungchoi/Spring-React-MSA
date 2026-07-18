@@ -28,7 +28,9 @@ MANIFESTS: dict[str, list[str]] = {
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Update Spring MSA Kubernetes image tags.")
-    parser.add_argument("--sha", required=True, help="Image tag to write, usually github.sha.")
+    image_version = parser.add_mutually_exclusive_group(required=True)
+    image_version.add_argument("--sha", help="Image tag to write, usually github.sha.")
+    image_version.add_argument("--digest", help="Immutable OCI digest to write as sha256:<64 hex>.")
     parser.add_argument("--target", required=True, help="Deploy target name or 'all'.")
     parser.add_argument("--manifest-dir", default="infra/k8s/spring-msa")
     parser.add_argument("--registry", default="ghcr.io")
@@ -53,6 +55,18 @@ def update_image(text: str, image_name: str, image_ref: str) -> tuple[str, int]:
     return pattern.subn(lambda match: f"{match.group(1)}{image_ref}", text)
 
 
+def image_reference(registry: str, image_owner: str, image_name: str, sha: str | None, digest: str | None) -> str:
+    repository = f"{registry}/{image_owner}/{image_name}"
+    if digest is not None:
+        if not re.fullmatch(r"sha256:[0-9a-f]{64}", digest):
+            raise ValueError(f"Invalid OCI digest: {digest}")
+        return f"{repository}@{digest}"
+
+    if sha is None or not re.fullmatch(r"[0-9a-f]{40}", sha):
+        raise ValueError(f"Invalid full Git SHA: {sha}")
+    return f"{repository}:{sha}"
+
+
 def main() -> int:
     args = parse_args()
     manifest_dir = Path(args.manifest_dir)
@@ -72,7 +86,16 @@ def main() -> int:
         text = path.read_text(encoding="utf-8")
 
         for image_name in targets:
-            image_ref = f"{args.registry}/{args.image_owner}/{image_name}:{args.sha}"
+            try:
+                image_ref = image_reference(
+                    args.registry,
+                    args.image_owner,
+                    image_name,
+                    args.sha,
+                    args.digest,
+                )
+            except ValueError as error:
+                raise SystemExit(str(error)) from error
             text, count = update_image(text, image_name, image_ref)
 
             if count != 1:

@@ -38,7 +38,10 @@ Copy-Item C:\Portfolio\infra\k8s\spring-msa\examples\02-secrets.example.yaml `
 - issuer와 외부 Gateway URL
 - member/admin redirect 및 post-logout URL
 - internal API token
-- PostgreSQL/Redis/Toss/GHCR credential
+- PostgreSQL/Redis/Toss 자격 증명
+- `ghcr-secret`의 GitHub 사용자명, package read 권한 token, `username:token` Base64 값
+
+예제 파일은 `spring-msa-secret`, `spring-msa-oauth-secret`, `ghcr-secret` 세 Secret을 모두 포함한다. `change-me-*` placeholder가 하나라도 남은 상태로 Apply하지 않는다.
 
 ```powershell
 kubectl apply -f C:\Portfolio\infra\k8s\spring-msa\00-namespace.yaml

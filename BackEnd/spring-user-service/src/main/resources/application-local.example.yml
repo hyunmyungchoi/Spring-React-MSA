@@ -3,30 +3,33 @@ spring:
     activate:
       on-profile: local
 
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: http://localhost:8080
-          jwk-set-uri: http://localhost:9000/oauth2/jwks
-
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://127.0.0.1:15432/msa}
-    username: ${SPRING_DATASOURCE_USERNAME:${POSTGRES_USER:msa}}
-    password: ${SPRING_DATASOURCE_PASSWORD:${POSTGRES_PASSWORD:msa}}
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
     open-in-view: false
     properties:
       hibernate:
         format_sql: true
 
+  flyway:
+    enabled: ${SPRING_FLYWAY_ENABLED}
+
   sql:
     init:
-      mode: always
+      mode: ${SPRING_SQL_INIT_MODE}
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI}
+          jwk-set-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI}
 
 logging:
   level:
@@ -34,5 +37,4 @@ logging:
 
 springmsa:
   internal-api:
-    header-name: X-Internal-Token
-    token: local-dev-internal-token
+    token: ${SPRING_MSA_INTERNAL_API_TOKEN}

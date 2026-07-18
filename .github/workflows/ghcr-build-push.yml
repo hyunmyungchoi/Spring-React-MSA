@@ -14,6 +14,7 @@ on:
         type: choice
         options:
           - all
+          - database-migrations
           - spring-user-service
           - spring-member-community-service
           - spring-member-stock-service
@@ -33,10 +34,15 @@ permissions:
   contents: write
   packages: write
 
+concurrency:
+  group: ghcr-publish-${{ github.ref }}-${{ github.sha }}
+  cancel-in-progress: false
+
 env:
   REGISTRY: ghcr.io
   IMAGE_OWNER: hyunmyungchoi
   IMAGE_TAG: latest
+  CRANE_VERSION: v0.21.7
   DEPLOY_TARGET: ${{ github.event.inputs.deploy_target || 'all' }}
 
 jobs:
@@ -49,6 +55,7 @@ jobs:
       has_backend: ${{ steps.matrix.outputs.has_backend }}
       has_frontend: ${{ steps.matrix.outputs.has_frontend }}
       update_targets: ${{ steps.matrix.outputs.update_targets }}
+      selected_images: ${{ steps.matrix.outputs.selected_images }}
 
     steps:
       - name: Checkout
@@ -168,15 +175,48 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push Docker image
+      - name: Install crane
+        uses: imjasonh/setup-crane@v0.7
+        with:
+          version: ${{ env.CRANE_VERSION }}
+
+      - name: Check immutable GHCR image
+        id: existing
+        shell: bash
+        run: >-
+          python infra/ci/registry_image_integrity.py inspect
+          --image "${REGISTRY}/${IMAGE_OWNER}/${{ matrix.service }}:${GITHUB_SHA}"
+          --allow-missing
+          --github-output "${GITHUB_OUTPUT}"
+
+      - name: Build and push immutable SHA image
+        id: build
+        if: steps.existing.outputs.exists == 'false'
         uses: docker/build-push-action@v7
         with:
           context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
           push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.service }}:${{ env.IMAGE_TAG }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.service }}:${{ github.sha }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.service }}:${{ github.sha }}
+
+      - name: Verify immutable digest and update convenience tag
+        id: image
+        shell: bash
+        env:
+          BUILD_DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          image="${REGISTRY}/${IMAGE_OWNER}/${{ matrix.service }}"
+          python infra/ci/registry_image_integrity.py inspect \
+            --image "${image}:${GITHUB_SHA}" \
+            --github-output "${GITHUB_OUTPUT}"
+
+          resolved_digest="$(crane digest "${image}:${GITHUB_SHA}")"
+          if [[ -n "${BUILD_DIGEST}" && "${BUILD_DIGEST}" != "${resolved_digest}" ]]; then
+            echo "Build output digest does not match the digest stored in GHCR."
+            exit 1
+          fi
+
+          crane tag "${image}@${resolved_digest}" "${IMAGE_TAG}"
 
   build-frontend:
     name: Build frontend image (${{ matrix.service }})
@@ -207,15 +247,48 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push Docker image
+      - name: Install crane
+        uses: imjasonh/setup-crane@v0.7
+        with:
+          version: ${{ env.CRANE_VERSION }}
+
+      - name: Check immutable GHCR image
+        id: existing
+        shell: bash
+        run: >-
+          python infra/ci/registry_image_integrity.py inspect
+          --image "${REGISTRY}/${IMAGE_OWNER}/${{ matrix.service }}:${GITHUB_SHA}"
+          --allow-missing
+          --github-output "${GITHUB_OUTPUT}"
+
+      - name: Build and push immutable SHA image
+        id: build
+        if: steps.existing.outputs.exists == 'false'
         uses: docker/build-push-action@v7
         with:
           context: .
           file: ${{ matrix.dockerfile }}
           push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.service }}:${{ env.IMAGE_TAG }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.service }}:${{ github.sha }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.service }}:${{ github.sha }}
+
+      - name: Verify immutable digest and update convenience tag
+        id: image
+        shell: bash
+        env:
+          BUILD_DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          image="${REGISTRY}/${IMAGE_OWNER}/${{ matrix.service }}"
+          python infra/ci/registry_image_integrity.py inspect \
+            --image "${image}:${GITHUB_SHA}" \
+            --github-output "${GITHUB_OUTPUT}"
+
+          resolved_digest="$(crane digest "${image}:${GITHUB_SHA}")"
+          if [[ -n "${BUILD_DIGEST}" && "${BUILD_DIGEST}" != "${resolved_digest}" ]]; then
+            echo "Build output digest does not match the digest stored in GHCR."
+            exit 1
+          fi
+
+          crane tag "${image}@${resolved_digest}" "${IMAGE_TAG}"
 
   update-k8s-manifests:
     name: Update Kubernetes image tags
@@ -226,6 +299,7 @@ jobs:
       - build-frontend
     env:
       UPDATE_TARGETS: ${{ needs.prepare-build-matrix.outputs.update_targets }}
+      SELECTED_IMAGES: ${{ needs.prepare-build-matrix.outputs.selected_images }}
     if: >-
       ${{
         always()
@@ -243,25 +317,46 @@ jobs:
         with:
           ref: ${{ github.ref_name }}
 
-      - name: Update spring-msa image tags
+      - name: Login to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install crane
+        uses: imjasonh/setup-crane@v0.7
+        with:
+          version: ${{ env.CRANE_VERSION }}
+
+      - name: Update spring-msa image digests
         shell: bash
         run: |
-          for target in ${UPDATE_TARGETS}; do
+          for target in ${SELECTED_IMAGES}; do
+            digest="$(crane digest "${REGISTRY}/${IMAGE_OWNER}/${target}:${GITHUB_SHA}")"
             python infra/ci/update-k8s-image-tags.py \
-              --sha "${{ github.sha }}" \
+              --digest "${digest}" \
               --target "${target}" \
               --manifest-dir infra/k8s/spring-msa \
               --registry "${{ env.REGISTRY }}" \
               --image-owner "${{ env.IMAGE_OWNER }}"
           done
 
-      - name: Verify fixed image tags
+      - name: Verify digest-pinned image references
         shell: bash
         run: |
           if grep -R "image: ghcr.io/${IMAGE_OWNER}/.*:latest" infra/k8s/spring-msa; then
             echo "latest image tag remains in Kubernetes manifests"
             exit 1
           fi
+
+          for target in ${SELECTED_IMAGES}; do
+            if ! grep -R -A1 -- "- name: ${target}" infra/k8s/spring-msa \
+              | grep -Eq "image: ghcr.io/${IMAGE_OWNER}/${target}@sha256:[0-9a-f]{64}"; then
+              echo "${target} is not pinned to a GHCR digest in the Kubernetes manifests"
+              exit 1
+            fi
+          done
 
       - name: Commit manifest tag update
         shell: bash
@@ -274,5 +369,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add infra/k8s/spring-msa
-          git commit -m "chore(k8s): update ${UPDATE_TARGETS} image tag to ${GITHUB_SHA} [skip ci]"
+          git commit -m "chore(k8s): pin ${UPDATE_TARGETS} image digest for ${GITHUB_SHA} [skip ci]"
           git push

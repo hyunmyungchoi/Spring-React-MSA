@@ -19,6 +19,9 @@ spring:
     hibernate:
       ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
 
+  flyway:
+    enabled: ${SPRING_FLYWAY_ENABLED}
+
   sql:
     init:
       mode: ${SPRING_SQL_INIT_MODE}
