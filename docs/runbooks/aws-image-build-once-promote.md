@@ -80,6 +80,8 @@ ref           = master
 
 공식 `crane copy`는 원격 Image를 Digest를 유지한 채 복사하는 용도다. Dockerfile과 Source를 다시 빌드하지 않는다.
 
+> 실행 완료: Source SHA `f0c88e32b883c391dcf993dfbf40839312de0f39`를 기준으로 GHCR Run `29642831008`과 ECR Run `29643089643`이 성공했다. User Service, Member BFF, Stock Service 모두 GHCR과 ECR의 최상위 OCI Digest가 같음을 Workflow와 AWS ECR 직접 조회로 재검증했다.
+
 ## 4. Terraform Migration Image Map 생성
 
 Promote가 성공한 뒤 로그인된 로컬 터미널에서 읽기 전용 Helper를 실행한다.

@@ -41,7 +41,7 @@
 - Argo CD Application에 자동 동기화가 설정되어 있지 않아 Git 변경 후 수동 Sync가 필요하다.
 - 관리자 가입 API가 공개되어 있고 `ROLE_ADMIN`을 생성하므로 AWS Learning Public Traffic을 열기 전 별도 통제가 필요하다.
 - Admin Session 조회 응답은 아직 원본 `sessionId`를 반환하므로 AWS 공개 전 Fingerprint 또는 Masked ID로 교체해야 한다.
-- ECR Workflow는 현재 Source를 다시 Build하며 승인한 GHCR Build Once·Digest Promote 방식은 아직 구현되지 않았다.
+- GHCR Build Once와 ECR Digest Promote Workflow는 구현됐고, Database Migration 대상 3개 Image에서 재빌드 없는 Promote와 Digest 일치를 실제 검증했다.
 - Kubernetes↔AWS DR은 Learning 적용 범위에서 제외하고 후속 학습 과제로 보류했다.
 
 ## 문서 지도
@@ -109,10 +109,10 @@
 | [서비스 인벤토리](aws-migration/00-service-inventory.md) | ECS 대상 서비스와 환경 변수 | 저장소 기준 확인됨 |
 | [리소스 기준선](aws-migration/01-resource-baseline.md) | ECS on EC2 초기 용량 가정 | 추정치, 부하 검증 필요 |
 | [환경 매트릭스](aws-migration/02-environment-matrix.md) | 로컬·K8s·AWS 설정 차이 | ECS Task Definition 미구현 |
-| [DB 전환 준비](aws-migration/03-database-migration.md) | RDS schema와 migration gap | 실제 RDS Bootstrap 검증 완료, Flyway 이미지 Promote·Migration 실행 대기 |
+| [DB 전환 준비](aws-migration/03-database-migration.md) | RDS schema와 migration gap | Build Once·ECR Promote와 실제 RDS Flyway V1 3개 실행·검증 완료 |
 | [AWS Foundation](aws-migration/04-aws-foundation-design.md) | VPC/subnet/SG 설계 | Foundation 적용, workload 미구현 |
 | [ECR/OIDC 설계](aws-migration/05-ecr-github-oidc-design.md) | SHA 이미지와 GitHub OIDC | Apply·GitHub 변수·Backend 8개 게시 완료 |
 | [ECR/OIDC 구현 계획](aws-migration/06-ecr-github-oidc-implementation-plan.md) | 구현·승인 gate 실행 기록 | Task 6·단일/중복/전체 게시 검증 완료 |
-| [Learning Runtime 결정](aws-migration/07-learning-runtime-design.md) | NAT, State, ECS, RDS, Frontend, Secret, DNS 결정 | Data Layer 적용·검증, RDS 현재 정지 |
+| [Learning Runtime 결정](aws-migration/07-learning-runtime-design.md) | NAT, State, ECS, RDS, Frontend, Secret, DNS 결정 | Data Layer·DB Migration 적용·검증, RDS 현재 정지 |
 
 AWS 적용 여부는 Git만으로 확정할 수 없으므로 문서의 `저장소 상태`와 `AWS 적용 상태`를 구분한다. Terraform state, 저장 plan, 계정 식별자와 secret은 문서나 Git에 추가하지 않는다.

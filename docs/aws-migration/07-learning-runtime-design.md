@@ -1,12 +1,12 @@
 # AWS Learning Runtime 결정
 
-> 문서 상태: Learning 목표 설계 승인, Data Layer와 ECS Compute Foundation 적용·검증 완료
+> 문서 상태: Learning 목표 설계 승인, Data Layer·ECS Compute·DB Migration 적용·검증 완료
 >
 > 기준일: 2026-07-18
 >
-> 저장소 상태: Foundation·ECR·GitHub OIDC·Private App 송신·RDS/Secrets/Flyway·ECS Compute와 DB Bootstrap Task 적용, Application Task/Service 미구현
+> 저장소 상태: Foundation·ECR/OIDC·Private App 송신·RDS/Secrets·ECS Compute·DB Bootstrap/Flyway Task 적용, Application Task/Service 미구현
 >
-> AWS 적용 상태: Foundation·ECR/OIDC·S3 Remote Backend·Private App 송신·RDS/Secrets·ECS Compute 적용, Backend 8개 ECR 게시와 실제 RDS Role·Schema Bootstrap 검증 완료, RDS 정지·ECS ASG `0/0/0`
+> AWS 적용 상태: Foundation·ECR/OIDC·S3 Remote Backend·Private App 송신·RDS/Secrets·ECS Compute 적용, Build Once·ECR Promote와 실제 RDS Flyway V1 검증 완료, RDS 정지·ECS ASG `0/0/0`
 
 이 문서는 AWS Foundation 이후 Learning 환경에 추가할 Runtime의 승인된 결정을 기록한다. 현재 적용된 리소스와 운영 절차는 [Terraform 운영 Runbook](../../infra/aws/terraform/README.md), 이미 적용된 네트워크 기준선은 [AWS Foundation 설계](04-aws-foundation-design.md)를 따른다.
 
@@ -19,9 +19,9 @@
 | P0 | Private Subnet 송신 | 단일 Zonal NAT Gateway와 S3 Gateway Endpoint | 적용·검증 완료 |
 | P0 | Terraform State | S3 Remote Backend와 S3 Native Lockfile | 적용·이전·검증 완료 |
 | P0 | Learning 보안 경계 | 관리자 공개 가입 차단, 4자 비밀번호 위험 수용, 원본 Session ID 미노출 | 미구현 |
-| P0 | 이미지 무결성 | GHCR Build Once, OCI Digest 기준 ECR Promote | Workflow·검증 코드 구현 완료, `master` 반영·실제 Promote 대기 |
+| P0 | 이미지 무결성 | GHCR Build Once, OCI Digest 기준 ECR Promote | Workflow·`master` 반영·Migration Image 3개 실제 Promote 및 Digest 검증 완료 |
 | P1 | ECS 구조 | ECS on EC2, ASG Capacity Provider, Learning ON/OFF | Compute 적용·AWS 검증·재계획 완료, ASG `0/0/0`; Task/Service 미구현 |
-| P1 | 데이터베이스 | PostgreSQL 16 공유 인스턴스·서비스별 Schema·Flyway | DB Secret 초기화와 실제 RDS Bootstrap 검증 완료, Flyway 실행 대기 |
+| P1 | 데이터베이스 | PostgreSQL 16 공유 인스턴스·서비스별 Schema·Flyway | DB Secret·Bootstrap·Flyway V1 3개 실제 실행과 사후 검증 완료 |
 | P1 | Frontend | Private S3와 CloudFront | 미구현 |
 | P1 | Secret | Secrets Manager로 통일 | Container 7개·DB Task 최소 권한 IAM 적용, DB Secret 3개 초기화 완료 |
 | P1 | 도메인 | 기존 Hosted Zone Import와 별도 Global DNS State | 미구현 |
@@ -171,7 +171,7 @@ spring.sql.init.mode=never
 
 테스트 계정과 Seed Data는 AWS Learning Migration에 포함하지 않는다. Flyway는 Private App Subnet에서 실행하는 일회성 ECS Migration Task로 수행하고 성공 후 Application Service를 배포한다.
 
-세 서비스의 Flyway V1 SQL, PostgreSQL 16 Testcontainers 검증과 전용 `FlywayMigrationMain`을 구현했다. 서비스별 DB 사용자·Schema·Grant를 만드는 Bootstrap Task Definition과 최소 권한 IAM/Log Group을 AWS에 적용하고, Secret 3개 초기화와 실제 RDS Bootstrap을 완료했다. RDS 호환 Revision 2와 읽기 전용 검증 Task로 안전한 Role 3개, Schema 3개, 자기 Schema 권한 조합 3개, 교차 Schema 권한 0개를 확인했다. Digest 고정 Application Image를 사용하는 세 Migration Task의 코드는 구현했지만 현재 이미지 Digest가 없으므로 AWS 리소스는 만들지 않았다.
+세 서비스의 Flyway V1 SQL, PostgreSQL 16 Testcontainers 검증과 전용 `FlywayMigrationMain`을 구현했다. 서비스별 DB 사용자·Schema·Grant를 만드는 Bootstrap Task Definition과 최소 권한 IAM/Log Group을 AWS에 적용하고, Secret 3개 초기화와 실제 RDS Bootstrap을 완료했다. RDS 호환 Revision 2와 읽기 전용 검증 Task로 안전한 Role 3개, Schema 3개, 자기 Schema 권한 조합 3개, 교차 Schema 권한 0개를 확인했다. 이후 Build Once·Digest Promote한 ECR Image를 사용하는 Migration Task Definition 3개를 적용하고 실제 Flyway V1을 순차 실행했다. 사후 검증에서 History 3개, V1 성공 3개, Application Table과 올바른 소유자 각 5개, 실패 Migration·교차 권한·Seed Data 0개를 확인했다.
 
 검토한 저장 Plan으로 RDS, DB Subnet Group, Parameter Group과 빈 Secret Container 7개를 AWS에 적용했다. RDS 보안·Backup 설정, Managed Master Secret과 재계획 `No changes`를 검증한 뒤 비용 통제를 위해 RDS를 정지했다. 첫 Backup 완료와 최신 복원 가능 시각은 확인했지만 실제 PITR Restore 훈련은 아직 남아 있다.
 
@@ -252,7 +252,7 @@ Terraform이 관리할 Application Record는 다음과 같다.
 7. ECR SHA Tag가 이미 있으면 Digest가 같을 때만 Skip하고 다르면 실패한다.
 8. `latest`는 배포 기준으로 사용하지 않는다.
 
-현재 `.github/workflows/ecr-build-push.yml`은 Source를 다시 Build해 ECR에 Push한다. 따라서 Build Once·Promote 결정은 아직 구현되지 않았으며, 현재 GHCR/ECR Image가 같은 Source SHA Tag라는 사실만으로 같은 Binary라고 보장하지 않는다.
+현재 `.github/workflows/ghcr-build-push.yml`은 서비스·Source SHA당 최초 한 번만 Build하고 최상위 OCI Digest를 검증한다. `.github/workflows/ecr-build-push.yml`은 Docker Build 없이 `crane copy`로 GHCR Digest를 ECR에 Promote하고 두 Registry의 Digest가 같을 때만 성공한다. Database Migration 대상 3개 Image와 Source SHA `f0c88e32b883c391dcf993dfbf40839312de0f39`에서 이 동작을 실제 검증했다.
 
 ## 12. DR 범위
 
@@ -271,7 +271,7 @@ Learning에서 적용할 복구 기준은 다음으로 제한한다.
 1. 완료: 기존 Local State 백업과 S3 Backend Migration·Native Lockfile 검증
 2. 완료: 단일 NAT Gateway, 고정 EIP와 S3 Gateway Endpoint
 3. 완료: Secrets Manager Container 7개와 DB Bootstrap 최소 권한 IAM 적용, DB Secret 3개 초기화
-4. 진행 중: RDS와 Flyway SQL/Test 적용·검증, 실제 RDS Bootstrap과 Build Once·Promote 코드 완료, 원격 Image Promote·Migration 실행 대기
+4. 완료: RDS·Secret·Bootstrap, GHCR Build Once·ECR Promote, Flyway V1 3개 실제 실행과 사후 검증
 5. 완료: ECS Cluster, Launch Template, ASG와 Capacity Provider 적용·AWS 검증·재계획 `No changes`
 6. Task Definition, ECS Service, ALB와 내부 Service Discovery
 7. Frontend S3, CloudFront와 배포 Workflow

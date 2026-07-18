@@ -47,7 +47,7 @@ cd C:\Portfolio\BackEnd\spring-member-stock-service
 
 > 적용 완료: 검토한 저장 Plan을 SHA-256 승인 후 Apply해 `4 added, 0 changed, 0 destroyed`를 확인했다. 최초 Task Definition Revision 1은 RDS 호환성 수정 후 Revision 2로 교체했으며 현재 Revision 2가 `ACTIVE`다.
 
-`terraform.tfvars`는 다음 상태를 사용한다.
+최초 Bootstrap Foundation Apply 당시 `terraform.tfvars`는 다음 상태를 사용했다.
 
 ```hcl
 enable_database_tasks_foundation = true
@@ -55,7 +55,7 @@ database_migration_images        = {}
 learning_runtime_enabled         = false
 ```
 
-첫 Apply에서는 DB Bootstrap Task만 등록한다. 현재 소스의 Flyway 실행 코드가 포함된 새 이미지 Digest가 아직 없으므로 Migration Task는 생성하지 않는다. RDS는 정지 상태를 유지하고 ECS ASG도 `0/0/0`을 유지하므로 이 단계에서 EC2/RDS 실행 비용은 추가되지 않는다.
+첫 Apply에서는 DB Bootstrap Task만 등록했다. 당시에는 Flyway Image Digest가 없었으므로 Migration Task를 생성하지 않았고 RDS와 ECS 실행 용량도 OFF로 유지했다. 이후 6~7절의 Build Once·Promote와 별도 저장 Plan으로 Migration Task 3개를 추가했다.
 
 저장 Plan을 만든 뒤 변경 개수, 교체·삭제 0개, Plan 파일 SHA-256을 검토하고 명시적으로 승인된 Plan만 Apply한다.
 
@@ -132,6 +132,8 @@ cd C:\Portfolio
 
 GHCR과 ECR Digest가 완전히 같은지 검증한 뒤 ECR의 `repository_url@sha256:...` 값을 `database_migration_images`에 넣는다. `latest`나 변경 가능한 SHA Tag만으로 Task Definition을 만들지 않는다.
 
+> 실행 완료: Source SHA `f0c88e32b883c391dcf993dfbf40839312de0f39`에서 GHCR Actions Run `29642831008`로 세 Image를 최초 Build했고, ECR Actions Run `29643089643`으로 재빌드 없이 Promote했다. 세 서비스 모두 GHCR·ECR 최상위 OCI Digest 일치를 확인했다.
+
 ## 7. Flyway Task 등록 및 실행
 
 새 저장 Plan을 만들어 세 Migration Task Definition과 서비스별 최소 권한 Execution Role/Log Group을 적용한다. 각 Task는 애플리케이션 Task와 동일한 ECR 이미지 Digest를 사용하지만 전체 Spring Context 대신 전용 `FlywayMigrationMain`만 실행한다.
@@ -149,7 +151,15 @@ $tasks = terraform -chdir=infra/aws/terraform output -json database_migration_ta
 .\infra\aws\scripts\Invoke-LearningDatabaseTask.ps1 -TaskDefinition $tasks.'stock-service' -ExpectedAccountId $expectedAccountId
 ```
 
-각 Task의 Exit Code가 하나라도 `0`이 아니면 애플리케이션 배포로 넘어가지 않는다. 성공 후 각 Schema에 서비스 테이블과 독립된 `flyway_schema_history`가 존재하는지 확인한다.
+각 Task의 Exit Code가 하나라도 `0`이 아니면 애플리케이션 배포로 넘어가지 않는다. 세 Task가 성공하면 읽기 전용 검증 Task를 실행한다.
+
+```powershell
+.\infra\aws\scripts\Test-LearningFlywayMigrations.ps1 -ExpectedAccountId $expectedAccountId
+```
+
+검증은 서비스별 `flyway_schema_history` 3개와 V1 성공 이력 3개, 예상 Application Table 5개, Table 소유자, 교차 Schema 권한 0개, Seed Data 0건을 확인한다. 이 검증까지 통과해야 Migration 완료로 처리한다.
+
+> 실행 완료: 승인한 저장 Plan으로 Migration Log Group·최소 권한 Execution Role/Policy·Digest 고정 Task Definition을 서비스별 3개씩 총 12개 추가했다. Runtime ON과 RDS `available` 확인 후 User Service, Member BFF, Stock Service 순서로 실행해 모두 Exit Code `0`을 확인했다. `Test-LearningFlywayMigrations.ps1` 검증도 위의 모든 기대값으로 Exit Code `0`을 반환했다.
 
 ## 8. Runtime OFF
 
@@ -162,7 +172,7 @@ $tasks = terraform -chdir=infra/aws/terraform output -json database_migration_ta
 
 RDS는 최대 7일 후 AWS가 자동 재시작할 수 있으므로 `AutomaticRestartTime`과 Budget 알림을 계속 확인한다.
 
-> 실행 완료: 승인된 OFF Plan Apply 결과는 `0 added, 1 changed, 0 destroyed`다. ASG `min/desired/max=0/0/0`, EC2·ECS Container Instance·실행/대기 Task·Service 0개, RDS `stopped`, Terraform `No changes`를 확인했다. 현재 AWS가 표시한 `AutomaticRestartTime`은 2026-07-25 19:54:58 KST이다.
+> 실행 완료: Flyway 검증 후 승인된 OFF Plan Apply 결과는 `0 added, 1 changed, 0 destroyed`다. ASG `min/desired/max=0/0/0`, EC2·ECS Container Instance·실행/대기 Task·Service 0개, RDS `stopped`, Terraform `No changes`를 확인했다. 현재 AWS가 표시한 `AutomaticRestartTime`은 2026-07-25 22:34:06 KST이다.
 
 ## 실패 및 복구
 

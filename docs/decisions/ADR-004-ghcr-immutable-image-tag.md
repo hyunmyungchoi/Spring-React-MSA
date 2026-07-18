@@ -2,7 +2,7 @@
 
 - 상태: 승인
 - 결정일: 2026-07-17
-- 구현 상태: Workflow·검증 코드 구현 완료, GitHub `master` 반영과 실제 GHCR→ECR Promote 실행 대기
+- 구현 상태: Workflow·검증 코드·GitHub `master` 반영 완료, Database Migration Image 3개 GHCR Build Once·ECR Promote와 Digest 일치 실제 검증 완료
 
 ## 배경
 
@@ -10,14 +10,14 @@
 
 ## 결정
 
-현재 GitHub Actions는 각 Image를 GHCR에 다음 두 Tag로 Push한다.
+현재 GitHub Actions는 각 Image를 GHCR에 다음 두 Tag로 기록한다.
 
 - `latest`: 편의용 이동 태그
-- `${github.sha}`: Kubernetes 배포용 고정 태그
+- `${github.sha}`: Source 추적용 불변 태그
 
-현재 Kubernetes Manifest에는 Git SHA Tag를 기록한다. CI의 `update-k8s-image-tags.py`가 선택한 Image Line을 갱신하고, Manifest에 GHCR `:latest`가 남으면 Pipeline을 실패시킨다.
+CI의 `update-k8s-image-tags.py`는 선택한 Kubernetes Image를 GHCR 최상위 OCI Digest로 고정하고, Manifest에 GHCR `:latest`가 남으면 Pipeline을 실패시킨다. Database Migration 대상 3개 Manifest는 실제 검증된 Digest를 사용하며 나머지는 다음 서비스별 Build Once 시 같은 방식으로 전환한다.
 
-구현한 목표 동작은 다음과 같다.
+구현한 동작은 다음과 같다.
 
 1. GHCR Workflow가 서비스와 Source SHA당 한 번만 Build한다.
 2. Git SHA Tag와 최상위 OCI Manifest Digest를 기록한다.
@@ -51,7 +51,7 @@
 - 이미 Push한 Git SHA Tag에 다른 Manifest를 덮어쓰지 않는다.
 - Kubernetes에서 `imagePullPolicy: Always`에 기대어 이동 태그를 사용하지 않는다.
 - rollback 후보 SHA가 retention으로 삭제되지 않도록 최근 정상 release를 보호한다.
-- 실제 Promote 검증 전에는 동일 Source SHA만으로 GHCR/ECR Binary 동일성을 주장하지 않는다.
+- GHCR/ECR Binary 동일성은 실제 Promote Run에서 두 Registry의 최상위 Digest가 같은 경우에만 기록한다.
 - Kubernetes와 ECS Task Definition에는 검증된 Digest를 기록한다.
 - SBOM, image signature, vulnerability scan은 후속 supply-chain 단계로 추가한다.
 

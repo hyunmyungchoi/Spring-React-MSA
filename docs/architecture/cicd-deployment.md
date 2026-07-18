@@ -61,7 +61,7 @@ Application은 `master` branch의 `infra/k8s/spring-msa`를 감시하고 `spring
 
 ## AWS ECR 전환 경로
 
-최초 ECR 구현은 Kubernetes Delivery와 분리된 수동 재빌드 경로였으며 Backend 8개 게시 검증까지 완료했다. 현재 작업 트리에서는 이 Workflow를 Build Once·Promote 방식으로 교체했다. GitHub `master` 반영과 새 Source SHA의 실제 Promote 검증은 아직 남아 있다.
+최초 ECR 구현은 Kubernetes Delivery와 분리된 수동 재빌드 경로였으며 Backend 8개 게시 검증까지 완료했다. 이후 Workflow를 Build Once·Promote 방식으로 교체해 GitHub `master`에 반영했고, 새 Source SHA의 Database Migration Image 3개에서 실제 Promote를 검증했다.
 
 ```mermaid
 flowchart LR
@@ -72,22 +72,23 @@ flowchart LR
     I --> C
     C --> V["GHCR/ECR Digest 비교"]
     V --> E["ECR SHA Tag와 Digest"]
-    E -. "현재 소비자 없음" .-> X["미구현 ECS Task/Service"]
+    E --> M["적용된 Flyway Task Definition"]
+    E -. "후속" .-> X["미구현 Application ECS Task/Service"]
 ```
 
 - `.github/workflows/ecr-build-push.yml`은 backend 8개 또는 Database Migration 대상 3개를 선택한다.
 - ECR에는 `latest`를 발행하지 않고 전체 Git commit SHA만 사용한다.
 - 최초 Terraform module, 저장 Plan Apply, GitHub 변수 연결과 Backend 8개 재빌드 게시 검증은 완료했다.
 - ECR 전체 게시 기준은 SHA `3564959efa1637e60fe72f009d4fa1a5809de01b`, GitHub Actions run `29561837114`다.
-- 새 Workflow는 `source_sha`의 GHCR Image를 `crane copy`하고, 기존 ECR Tag가 같은 Digest면 Skip하며 다르면 실패한다. 로컬 단위 테스트와 GitHub Actions Lint는 통과했지만 실제 새 Promote Run은 아직 없다.
-- RDS/Secrets Terraform, DB Secret 초기화와 실제 RDS Role·Schema Bootstrap은 완료했고 Flyway SQL도 검증했다. 현재 Source를 포함한 불변 이미지 Promote와 ECS Flyway Migration Task는 아직 없으며 ECS Application Service, ALB, ElastiCache와 AWS 자동 배포도 아직 없다.
+- 새 Workflow는 `source_sha`의 GHCR Image를 `crane copy`하고, 기존 ECR Tag가 같은 Digest면 Skip하며 다르면 실패한다. Source SHA `f0c88e32b883c391dcf993dfbf40839312de0f39`의 GHCR Run `29642831008`과 ECR Run `29643089643`에서 세 Image의 Digest 일치를 실제 검증했다.
+- RDS/Secrets Terraform, DB Secret 초기화와 실제 RDS Role·Schema Bootstrap, Digest 고정 ECS Flyway Migration Task 3개와 실제 V1 실행을 완료했다. ECS Application Service, ALB, ElastiCache와 AWS 자동 배포는 아직 없다.
 - 실제 적용 상태와 승인 gate는 [`infra/aws/terraform/README.md`](../../infra/aws/terraform/README.md)를 기준으로 한다.
 
 GHCR→Kubernetes가 현재 delivery 기준이고 ECR→AWS는 migration lane이다. 한쪽 장애가 다른 쪽 image publication을 막지 않도록 workflow와 registry 권한을 독립적으로 유지한다.
 
 ### Build Once·Promote 구현
 
-현재 재빌드 방식은 같은 Source SHA를 사용하더라도 Build 시점의 Base Image나 Package Repository 상태 때문에 GHCR과 ECR의 Binary가 달라질 수 있다. 이를 제거하기 위해 다음 전환을 승인했다.
+과거 재빌드 방식은 같은 Source SHA를 사용하더라도 Build 시점의 Base Image나 Package Repository 상태 때문에 GHCR과 ECR의 Binary가 달라질 수 있었다. 이 위험을 제거하기 위해 다음 방식으로 전환했다.
 
 ```mermaid
 flowchart LR
@@ -106,7 +107,7 @@ flowchart LR
 - 기존 ECR SHA Tag가 있으면 Digest가 같을 때만 Skip하고 다르면 실패한다.
 - Kubernetes와 ECS는 각 Registry의 동일 Digest를 사용하며 `latest`는 배포 기준으로 사용하지 않는다.
 
-구현과 로컬 검증은 완료했다. 실제 원격 적용 순서는 [AWS Learning Image Build Once·Promote Runbook](../runbooks/aws-image-build-once-promote.md)을 따른다.
+구현·로컬 검증과 Database Migration 대상의 실제 원격 실행을 완료했다. 후속 서비스 실행 절차는 [AWS Learning Image Build Once·Promote Runbook](../runbooks/aws-image-build-once-promote.md)을 따른다.
 
 ## DR delivery 참고 원칙
 

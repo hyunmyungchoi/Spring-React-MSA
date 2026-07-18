@@ -1,10 +1,10 @@
 # Database Migration Readiness
 
-> 문서 상태: RDS Terraform·Flyway SQL·DB Bootstrap 및 Migration Task 기반 구현 완료
+> 문서 상태: RDS Terraform·DB Bootstrap·Build Once/Promote·Flyway V1 실제 실행 및 검증 완료
 >
 > 기준일: 2026-07-18
 >
-> AWS 적용 상태: RDS·Secret Container·Database Bootstrap Task 적용, DB Secret 3개 초기화와 실제 Role·Schema Bootstrap 검증 완료, Runtime OFF·RDS 정지·재계획 `No changes`
+> AWS 적용 상태: DB Secret 3개와 Role·Schema Bootstrap, Digest 고정 Migration Task 3개, 실제 Flyway V1·사후 검증 완료, Runtime OFF·RDS 정지·재계획 `No changes`
 
 테이블 소유권과 현재 제약은 [시스템 개요](../architecture/overview.md), [회원 서비스 스펙](../specs/member-service.md), [주식 서비스 스펙](../specs/stock-service.md), [실시간 채팅 스펙](../specs/realtime-chat.md)을 기준으로 한다.
 
@@ -67,7 +67,7 @@ Migration SQL에는 Schema 생성문을 넣지 않는다. Bootstrap 단계가 Sc
 - 서비스 Secret은 `db_username`, `db_password` JSON Key만 참조하며 실제 값은 Terraform 밖에서 최초 생성한다.
 - Bootstrap과 Migration Task는 Private App Subnet, Public IP 없음, TLS 필수, 읽기 전용 Root Filesystem을 사용한다.
 - Task Execution Role은 필요한 Secret ARN, Log Group, 해당 ECR Repository 읽기만 허용한다.
-- 현재 Flyway 코드가 포함된 새 ECR Digest가 없으므로 `database_migration_images = {}`를 유지해 Migration Task Definition은 아직 AWS에 만들지 않는다.
+- Flyway Source를 GHCR에서 서비스별 한 번만 Build하고 동일 OCI Digest로 ECR에 Promote한 뒤, `database_migration_images` 세 Key를 모두 Digest Reference로 고정한다.
 
 검토한 `tfplan-database-tasks-foundation`을 SHA-256 승인 후 Apply해 CloudWatch Log Group, Bootstrap Task Execution Role과 최소 권한 Inline Policy, ECS Task Definition 등 4개를 추가했다. 기존 리소스 변경·삭제는 없었고 AWS에서 Task Definition `ACTIVE`, Log 보존 7일, Secret 읽기 전용 권한을 확인했다. Foundation Apply 시점에는 RDS와 ECS 실행 용량이 OFF였고 세 Application Secret도 Version 0개였다.
 
@@ -75,9 +75,13 @@ Migration SQL에는 Schema 생성문을 넣지 않는다. Bootstrap 단계가 Sc
 
 짧은 Runtime ON에서 Bootstrap을 실제 실행했다. 최초 Revision 1은 일반 PostgreSQL SUPERUSER를 전제로 한 `NOSUPERUSER` 설정과 Schema 소유자 전환 때문에 RDS 제한 계정에서 실패했다. RDS 호환 방식으로 Role의 LOGIN·비밀번호만 동기화하고 Schema는 Bootstrap 관리 계정이 소유하도록 수정한 Revision 2는 Exit Code `0`으로 완료됐다.
 
-별도 읽기 전용 검증 Task도 Exit Code `0`으로 끝났으며 실제 RDS에서 안전한 Role 3개, Schema 3개, 자기 Schema 권한 조합 3개, 교차 Schema 권한 0개, Application Table 0개를 확인했다. 따라서 Role·Schema Bootstrap, Private App에서 Private Data RDS로 이어지는 Security Group 경계와 재실행 가능성은 검증됐다. Flyway는 아직 실행하지 않았으므로 Application Table이 없는 것이 현재의 정상 상태다.
+Bootstrap 직후 읽기 전용 검증 Task도 Exit Code `0`으로 끝났으며 실제 RDS에서 안전한 Role 3개, Schema 3개, 자기 Schema 권한 조합 3개, 교차 Schema 권한 0개, Application Table 0개를 확인했다. 따라서 Role·Schema Bootstrap, Private App에서 Private Data RDS로 이어지는 Security Group 경계와 재실행 가능성을 먼저 검증했다.
 
-검증 후 승인된 OFF Plan을 Apply해 ECS ASG를 `0/0/0`으로 내리고 RDS를 정지했다. ECS Container Instance와 실행/대기 Task는 0개, RDS는 `stopped`, Bootstrap Task Definition Revision 2는 `ACTIVE`, Remote State는 95개 주소이며 재계획은 `No changes`다. AWS가 표시한 자동 재시작 예정 시각은 2026-07-25 19:54:58 KST이다.
+Source SHA `f0c88e32b883c391dcf993dfbf40839312de0f39`의 User Service, Member BFF, Stock Service Image를 GHCR에서 한 번만 Build하고 ECR에 재빌드 없이 Promote했다. GHCR과 ECR의 최상위 OCI Digest가 서비스별로 같음을 검증한 뒤, 승인한 저장 Plan으로 Migration Log Group·최소 권한 Execution Role/Policy·Digest 고정 Task Definition을 서비스별 3개씩 총 12개 추가했다.
+
+짧은 Runtime ON에서 User Service → Member BFF → Stock Service 순서로 Flyway V1 Task를 실행했고 모두 Exit Code `0`으로 완료됐다. 별도 읽기 전용 검증 Task로 `flyway_schema_history` 3개, 성공 V1 이력 3개, Application Table 5개, 올바른 Table 소유자 5개, 실패 Migration 0개, 교차 Schema 권한 0개와 Seed/Application Row 0건을 실제 RDS에서 확인했다.
+
+검증 후 승인된 OFF Plan을 Apply해 ECS ASG를 `0/0/0`으로 내리고 RDS를 정지했다. EC2·ECS Container Instance·실행/대기 Task는 0개, RDS는 `stopped`, Remote State는 107개 주소이며 재계획은 `No changes`다. AWS가 표시한 자동 재시작 예정 시각은 2026-07-25 22:34:06 KST이다.
 
 RDS Terraform은 서울 리전에서 지원을 확인한 PostgreSQL `16.14`, `db.t4g.micro`, Single-AZ, 암호화된 고정 20 GiB `gp3`, Private Data Subnet 2개와 Data Security Group을 사용한다. RDS Master 비밀번호는 Terraform 값으로 만들지 않고 RDS Managed Master Secret을 사용한다.
 
@@ -105,15 +109,15 @@ Docker Compose PostgreSQL was inspected with `psql` after local services started
 
 ## Before AWS Application Deployment
 
-- 현재 Source를 Build Once·Digest Promote한 뒤 세 Flyway Migration Task Definition을 등록·실행한다.
-- 각 Flyway Task 성공 후 서비스별 Table과 독립된 `flyway_schema_history`를 실제 RDS에서 검증한다.
-- RDS Apply 뒤 Automated Backup과 PITR 가능 시점을 확인하고 별도 복원 RDS로 Restore 훈련한다.
+- 완료: 현재 Source를 Build Once·Digest Promote하고 세 Flyway Migration Task Definition을 등록·실행했다.
+- 완료: 서비스별 Table과 독립된 `flyway_schema_history`, 소유권과 권한 격리를 실제 RDS에서 검증했다.
+- 남은 작업: Automated Backup을 사용해 별도 복원 RDS로 PITR Restore 훈련을 수행한다.
 
 ## Current Gap Alignment
 
 - Community Service는 아직 메모리 저장 방식이므로 migration 대상 table이 없다.
 - Chat Outbox는 [ADR-003](../decisions/ADR-003-kafka-outbox-chat.md)의 목표이며 현재 schema에는 없다.
-- Flyway SQL, 전용 실행 진입점, DB Role Bootstrap Task, Secret 초기화와 실제 RDS Bootstrap은 완료했지만 Flyway Migration Task 등록·실행은 아직 하지 않았다.
+- Flyway V1까지 완료했지만 Backend Application Task Definition·Service와 이후 Schema 변경을 위한 V2 이상 Migration은 아직 없다.
 - Kubernetes↔AWS DR용 PostgreSQL 복제, promotion, write fencing과 failback 절차가 없다.
 
 RDS를 도입할 때 단순 Schema 이관과 재해 복구 복제를 하나의 작업으로 취급하지 않는다. Learning에서는 Flyway와 Backup/Restore까지만 구현하고 Kubernetes↔AWS DR은 후속 학습 과제로 보류한다. 전체 Runtime 경계는 [AWS Learning Runtime 결정](07-learning-runtime-design.md)을 따른다.

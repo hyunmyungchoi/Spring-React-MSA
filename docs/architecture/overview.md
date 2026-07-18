@@ -74,6 +74,6 @@ flowchart LR
 
 ## 배포 환경과 재해 복구 경계
 
-현재 동작이 저장소에서 검증되는 배포 경로는 GHCR 이미지와 로컬 Kubernetes/Argo CD다. AWS에는 Terraform Foundation·ECR/OIDC·RDS/Secrets·ECS Compute가 적용됐고 Backend 8개 ECR 게시, 서비스별 Flyway SQL과 실제 RDS의 DB 사용자/Schema Bootstrap을 검증했다. RDS는 비용 통제를 위해 현재 정지 상태이고 ECS ASG는 `0/0/0`이다. Flyway Migration Task와 ECS·ALB·ElastiCache Application Workload는 아직 없다.
+현재 동작이 저장소에서 검증되는 배포 경로는 GHCR 이미지와 로컬 Kubernetes/Argo CD다. AWS에는 Terraform Foundation·ECR/OIDC·RDS/Secrets·ECS Compute가 적용됐고 Backend 8개 ECR 게시, Database Migration Image 3개의 Build Once·Digest Promote와 실제 RDS Flyway V1을 검증했다. RDS는 비용 통제를 위해 현재 정지 상태이고 ECS ASG는 `0/0/0`이다. Flyway Migration Task 기반은 적용됐지만 ECS·ALB·ElastiCache Application Workload는 아직 없다.
 
 AWS 전환 자료는 [`docs/aws-migration`](../aws-migration/00-service-inventory.md)에 두고 현재 서비스 계약과 중복 작성하지 않는다. AWS Learning Runtime의 승인된 목표는 [AWS Learning Runtime 결정](../aws-migration/07-learning-runtime-design.md)을 따른다. Kubernetes를 선호 Site, AWS를 Warm Standby로 사용하는 Active-Passive DR은 Learning 적용 범위에서 제외했으며 [재해 복구 아키텍처](disaster-recovery.md)에 운영 환경 참고 제안으로만 보존한다.

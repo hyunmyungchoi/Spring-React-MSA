@@ -1,6 +1,6 @@
 # AWS Terraform 운영 Runbook
 
-이 디렉터리는 `spring-react-msa` 학습 환경의 현재 AWS 인프라를 관리한다. 기본 리전은 `ap-northeast-2`다. Foundation 기준선, Backend ECR/GitHub OIDC, Private App 송신, RDS/Secrets Data Layer, ECS Compute와 Database Bootstrap Task Foundation까지 Apply했고 실제 RDS에서 DB Role·Schema Bootstrap도 검증했다. RDS는 비용 통제를 위해 정지했고 ECS ASG는 `0/0/0`으로 유지한다. Flyway Migration 및 ECS Application Task/Service 같은 실제 Workload는 아직 배포하지 않는다. 후속 Runtime의 승인된 목표와 미구현 경계는 [AWS Learning Runtime 결정](../../../docs/aws-migration/07-learning-runtime-design.md)을 따른다.
+이 디렉터리는 `spring-react-msa` 학습 환경의 현재 AWS 인프라를 관리한다. 기본 리전은 `ap-northeast-2`다. Foundation 기준선, Backend ECR/GitHub OIDC, Private App 송신, RDS/Secrets Data Layer, ECS Compute, Database Bootstrap과 Flyway Migration Task까지 Apply했고 실제 RDS에서 Role·Schema·Flyway V1을 검증했다. RDS는 비용 통제를 위해 정지했고 ECS ASG는 `0/0/0`으로 유지한다. Backend Application Task/Service 같은 상시 Workload는 아직 배포하지 않는다. 후속 Runtime의 승인된 목표와 미구현 경계는 [AWS Learning Runtime 결정](../../../docs/aws-migration/07-learning-runtime-design.md)을 따른다.
 
 ## 현재 상태와 범위
 
@@ -80,13 +80,12 @@ Foundation Apply 결과는 `4 added, 0 changed, 0 destroyed`다. 최초 Task Def
 
 별도 SHA-256 승인으로 User Service, Member BFF, Stock Service Secret에 최초 `AWSCURRENT` Version을 생성했다. 각 값은 승인된 사용자명과 AWS가 생성한 40자 무작위 비밀번호만 포함하며 화면, Git, Terraform State에 저장하지 않았다. 재실행 시 기존 정상 Version 세 개를 모두 Skip했다.
 
-짧은 Runtime ON에서 Revision 2 Bootstrap Task가 Exit Code `0`으로 완료됐다. 별도 읽기 전용 검증 Task도 Exit Code `0`이었으며 안전한 Role 3개, Schema 3개, 자기 Schema 권한 조합 3개, 교차 Schema 권한 0개, Application Table 0개를 실제 RDS에서 확인했다. 이는 Bootstrap과 네트워크·Security Group 경계가 동작했다는 뜻이며 Flyway는 아직 실행하지 않았으므로 Application Table이 0개인 것이 정상이다.
+짧은 Runtime ON에서 Revision 2 Bootstrap Task가 Exit Code `0`으로 완료됐다. Bootstrap 직후 읽기 전용 검증 Task도 Exit Code `0`이었으며 안전한 Role 3개, Schema 3개, 자기 Schema 권한 조합 3개, 교차 Schema 권한 0개, Application Table 0개를 실제 RDS에서 확인했다. 이후 Digest 고정 Migration Task 3개를 적용·실행하고 Flyway V1 사후 검증까지 완료했다.
 
-검증 후 승인된 OFF Plan을 Apply해 ASG를 `min=0`, `desired=0`, `max=0`으로 내리고 RDS를 정지했다. 현재 ECS Container Instance·실행/대기 Task·Service는 모두 0개, RDS는 `stopped`, Bootstrap Task Definition Revision 2는 `ACTIVE`, Remote State는 95개 주소이며 재계획 결과는 `No changes`다. AWS가 표시한 RDS 자동 재시작 예정 시각은 2026-07-25 19:54:58 KST이므로 그 전에 상태와 Budget을 다시 확인한다.
+검증 후 승인된 OFF Plan을 Apply해 ASG를 `min=0`, `desired=0`, `max=0`으로 내리고 RDS를 정지했다. 현재 EC2·ECS Container Instance·실행/대기 Task·Service는 모두 0개, RDS는 `stopped`, Bootstrap Revision 2와 Migration Revision 1 세 개는 `ACTIVE`, Remote State는 107개 주소이며 재계획 결과는 `No changes`다. AWS가 표시한 RDS 자동 재시작 예정 시각은 2026-07-25 22:34:06 KST이므로 그 전에 상태와 Budget을 다시 확인한다.
 
 ### 현재 AWS에 생성하지 않은 대상
 
-- Flyway Migration ECS Task Definition과 Migration Task 실행 이력
 - ECS Application Task Definition, Service와 실행 중인 Container/EC2 Instance
 - ALB, Target Group, Listener, ACM, Route 53 Record
 - ElastiCache, MSK
@@ -193,10 +192,27 @@ Database Task Foundation의 현재 입력은 다음과 같다.
 
 ```hcl
 enable_database_tasks_foundation = true
-database_migration_images        = {}
+database_migration_images = {
+  user-service  = "<ECR URL>@sha256:<verified digest>"
+  member-bff    = "<ECR URL>@sha256:<verified digest>"
+  stock-service = "<ECR URL>@sha256:<verified digest>"
+}
 ```
 
-첫 값으로 DB Role/Schema Bootstrap Task Definition과 최소 권한 IAM/7일 Log Group을 적용했고, Secret 초기화와 실제 RDS Bootstrap 검증까지 완료했다. 두 번째 Map은 현재 Source가 포함된 불변 ECR Digest를 확보하기 전까지 비워 두므로 Flyway Migration Task Definition은 생성하지 않는다. 실제 Secret Version 생성과 Task 실행은 Terraform Apply와 별도의 승인 단계이며 [DB Bootstrap·Flyway Runbook](../../../docs/runbooks/aws-database-bootstrap-and-flyway.md)을 따른다.
+첫 값으로 DB Role/Schema Bootstrap Task Definition과 최소 권한 IAM/7일 Log Group을 적용했고, Secret 초기화와 실제 RDS Bootstrap 검증까지 완료했다. 두 번째 Map은 Git에서 제외된 `terraform.tfvars`에만 실제 ECR Digest Reference를 저장하며 세 Key 전체가 있어야 한다. 승인한 저장 Plan으로 Flyway Migration Task Definition 3개와 서비스별 IAM/Log Group을 적용하고 실제 Migration까지 검증했다. Secret Version 생성과 Task 실행은 Terraform Apply와 별도의 승인 단계이며 [DB Bootstrap·Flyway Runbook](../../../docs/runbooks/aws-database-bootstrap-and-flyway.md)을 따른다.
+
+## 검토 완료·적용된 Flyway Build Once·Migration 기록
+
+- Source SHA: `f0c88e32b883c391dcf993dfbf40839312de0f39`
+- GHCR Build Once: GitHub Actions Run `29642831008`, 서비스 3개 Test·Build·Digest 검증 성공
+- ECR Promote: GitHub Actions Run `29643089643`, 재빌드 없이 복사하고 GHCR·ECR Digest 일치 확인
+- Migration Foundation Plan SHA-256: `aefce55a1598c6aef45eeadc7753be9876362293e051584d4d125af030eac959`
+- Migration Foundation Apply: `12 added, 0 changed, 0 destroyed`
+- Runtime ON Plan SHA-256: `a5bd0f244804683f40e6f8732fbfbcd24378b51afb9179f3facb9144afca960d`
+- Flyway 실행: User Service → Member BFF → Stock Service, 모두 Exit Code `0`
+- 실제 RDS 검증: History 3, V1 성공 3, Table 5, 올바른 소유자 5, 실패·교차 권한·Seed Row 0
+- Runtime OFF Plan SHA-256: `d201b1122da65502450391326e9ef468290509f63bbe399bc0b8f03ee01af328`
+- 최종 상태: ASG `0/0/0`, EC2/ECS Task 0, RDS `stopped`, Remote State 107개, `No changes`
 
 ## 검토 완료된 `tfplan.ecr` Apply 기록
 
@@ -453,10 +469,8 @@ Application, Data, Kafka, SSH Port는 Internet에서 직접 접근할 수 없다
 
 ## 다음 단계
 
-1. 구현·로컬 검증을 마친 Build Once Workflow를 `master`에 반영하고 현재 Flyway Source Image 3개를 동일 OCI Digest로 ECR에 Promote
-2. 세 Flyway Migration Task Definition을 저장 Plan으로 적용하고 User Service, Member BFF, Stock Service 순서로 실행
-3. Backend 8개의 Application Task Definition, ECS Service, Service Discovery와 ALB 구현
-4. Frontend S3/CloudFront·Route 53/ACM 구현
-5. 관측성, Backup Restore 훈련과 Runtime 자동화
+1. Backend 8개의 Application Task Definition, ECS Service, Service Discovery와 ALB 구현
+2. Frontend S3/CloudFront·Route 53/ACM 구현
+3. 관측성, Backup Restore 훈련과 Runtime 자동화
 
 Kubernetes↔AWS DR은 Learning 적용 범위에서 제외하고 후속 학습 과제로 보류한다.
