@@ -8,7 +8,7 @@ export type AdminUserResponse = {
 }
 
 export type MemberSessionResponse = {
-  sessionId: string
+  sessionFingerprint: string
   userId: number | null
   loginId: string | null
   name: string | null

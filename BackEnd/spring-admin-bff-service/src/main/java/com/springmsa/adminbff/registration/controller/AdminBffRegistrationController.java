@@ -6,6 +6,7 @@ import com.springmsa.adminbff.registration.service.AdminBffRegistrationService;
 import com.springmsa.common.web.response.MsaResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
+@ConditionalOnProperty(prefix = "admin-bff.registration", name = "enabled", havingValue = "true")
 public class AdminBffRegistrationController {
 
     private final AdminBffRegistrationService adminBffRegistrationService;

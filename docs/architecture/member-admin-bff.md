@@ -57,8 +57,8 @@ Admin BFF는 Member BFF namespace를 읽기만 하고 회원 세션을 수정하
 
 ## 현재 위험과 후속 작업
 
-1. 승인한 AWS Learning 경계에 따라 공개 관리자 가입을 차단하고 일회성 Bootstrap을 구현한다.
-2. Admin BFF 응답에서 원본 회원 Session ID를 제거하고 Fingerprint 또는 마스킹 값만 반환한다.
+1. 완료: `prod`/AWS에서 공개 관리자 가입 Controller를 비활성화했다. 최초 관리자 일회성 Bootstrap은 후속 구현한다.
+2. 완료: Admin BFF와 Frontend에서 원본 회원 Session ID를 제거하고 SHA-256 Fingerprint만 반환한다.
 3. Member BFF에 집중된 채팅 도메인이 커지면 별도 Chat Service 분리를 검토한다.
 4. Redis SCAN 기반 전체 세션 조회에 pagination과 결과 제한을 추가한다.
 5. BFF의 로그인·logout·권한 거부 통합 테스트를 보강한다.

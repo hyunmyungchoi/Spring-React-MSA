@@ -93,16 +93,75 @@ variable "enable_ecs_compute_foundation" {
 }
 
 variable "learning_runtime_enabled" {
-  description = "Whether the Learning ECS ASG should run capacity. False keeps min, desired, and max at zero."
+  description = "Whether the disposable Learning cache, ALB, ECS capacity, and eight backend services should run."
   type        = bool
   default     = false
 
   validation {
     condition = !var.learning_runtime_enabled || (
-      var.enable_ecs_compute_foundation && var.enable_nat_gateway
+      var.enable_ecs_compute_foundation &&
+      var.enable_application_runtime_foundation &&
+      var.enable_nat_gateway &&
+      var.enable_data_layer
     )
-    error_message = "learning_runtime_enabled requires enable_ecs_compute_foundation and enable_nat_gateway to be true."
+    error_message = "learning_runtime_enabled requires the NAT, data layer, ECS compute, and application runtime foundations."
   }
+}
+
+variable "enable_application_runtime_foundation" {
+  description = "Whether to create eight digest-pinned task definitions, ECS services, Cloud Map, target groups, IAM, and logs."
+  type        = bool
+  default     = false
+
+  validation {
+    condition = !var.enable_application_runtime_foundation || (
+      var.enable_data_layer &&
+      var.enable_ecs_compute_foundation &&
+      var.enable_database_tasks_foundation
+    )
+    error_message = "enable_application_runtime_foundation requires the data, ECS compute, and database task foundations."
+  }
+}
+
+variable "application_images" {
+  description = "Immutable ECR image URIs for all eight backend services, keyed by short runtime name."
+  type        = map(string)
+  default     = {}
+
+  validation {
+    condition = !var.enable_application_runtime_foundation || toset(keys(var.application_images)) == toset([
+      "admin-bff",
+      "admin-gateway",
+      "authorization-server",
+      "community-service",
+      "member-bff",
+      "member-gateway",
+      "stock-service",
+      "user-service",
+    ])
+    error_message = "application_images must contain all eight backend runtime keys when the application runtime foundation is enabled."
+  }
+}
+
+variable "redis_password" {
+  description = "Valkey password supplied ephemerally from Secrets Manager only while the Learning runtime is ON."
+  type        = string
+  default     = null
+  nullable    = true
+  sensitive   = true
+  ephemeral   = true
+}
+
+variable "redis_password_version" {
+  description = "Operator-controlled write-only Valkey password rotation version."
+  type        = number
+  default     = 1
+}
+
+variable "toss_api_client_id" {
+  description = "Non-secret Toss API client ID injected into the stock service."
+  type        = string
+  default     = ""
 }
 
 variable "enable_database_tasks_foundation" {

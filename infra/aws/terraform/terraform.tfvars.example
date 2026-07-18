@@ -13,11 +13,20 @@ enable_data_layer  = false
 # Create the persistent ECS/ASG foundation separately from running hourly EC2 capacity.
 enable_ecs_compute_foundation = false
 enable_database_tasks_foundation = false
+enable_application_runtime_foundation = false
 learning_runtime_enabled      = false
 ecs_instance_type             = "m6i.xlarge"
 
 # Example: user-service = "123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/...@sha256:<digest>"
 database_migration_images = {}
+
+# All eight values are required when enable_application_runtime_foundation is true.
+# Example: member-gateway = "123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/...@sha256:<digest>"
+application_images = {}
+
+# Supply redis_password only as an ephemeral TF_VAR_redis_password value while Runtime is ON.
+redis_password_version = 1
+toss_api_client_id      = ""
 
 monthly_budget_usd = 50
 enable_budget      = false

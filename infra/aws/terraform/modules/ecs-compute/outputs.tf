@@ -36,3 +36,8 @@ output "runtime_capacity" {
     max     = local.asg_max_size
   }
 }
+
+output "awsvpc_trunking" {
+  description = "Account-level ECS task ENI trunking setting required to place all eight awsvpc tasks on one Learning instance."
+  value       = aws_ecs_account_setting_default.awsvpc_trunking.value
+}

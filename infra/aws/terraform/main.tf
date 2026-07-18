@@ -57,6 +57,19 @@ module "ecs_compute" {
   common_tags              = local.common_tags
 }
 
+module "cache" {
+  source = "./modules/cache"
+
+  name_prefix             = local.name_prefix
+  aws_region              = var.aws_region
+  private_data_subnet_ids = module.network.private_data_subnet_ids
+  data_security_group_id  = module.network.data_security_group_id
+  runtime_enabled         = var.learning_runtime_enabled
+  redis_password          = var.redis_password
+  redis_password_version  = var.redis_password_version
+  common_tags             = local.common_tags
+}
+
 module "database_tasks" {
   count  = var.enable_database_tasks_foundation ? 1 : 0
   source = "./modules/database-tasks"
@@ -71,6 +84,33 @@ module "database_tasks" {
   ecr_repository_arns     = module.ecr.repository_arns
   migration_images        = var.database_migration_images
   common_tags             = local.common_tags
+}
+
+module "application_runtime" {
+  count  = var.enable_application_runtime_foundation ? 1 : 0
+  source = "./modules/application-runtime"
+
+  name_prefix              = local.name_prefix
+  aws_region               = var.aws_region
+  vpc_id                   = module.network.vpc_id
+  public_subnet_ids        = module.network.public_subnet_ids
+  private_app_subnet_ids   = module.network.private_app_subnet_ids
+  alb_security_group_id    = module.network.alb_security_group_id
+  ecs_security_group_id    = module.network.ecs_security_group_id
+  ecs_cluster_arn          = module.ecs_compute[0].cluster_arn
+  capacity_provider_name   = module.ecs_compute[0].capacity_provider_name
+  service_images           = var.application_images
+  ecr_repository_arns      = module.ecr.repository_arns
+  application_secret_arns  = module.data_layer.application_secret_arns
+  redis_host_parameter_arn = module.cache.redis_host_parameter_arn
+  db_address               = module.data_layer.db_address
+  db_port                  = module.data_layer.db_port
+  db_name                  = module.data_layer.db_name
+  learning_runtime_enabled = var.learning_runtime_enabled
+  toss_api_client_id       = var.toss_api_client_id
+  common_tags              = local.common_tags
+
+  depends_on = [module.cache]
 }
 
 module "ecr" {

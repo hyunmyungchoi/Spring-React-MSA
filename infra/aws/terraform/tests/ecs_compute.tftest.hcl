@@ -32,6 +32,14 @@ run "runtime_off_contract" {
 
   assert {
     condition = (
+      aws_ecs_account_setting_default.awsvpc_trunking.name == "awsvpcTrunking" &&
+      aws_ecs_account_setting_default.awsvpc_trunking.value == "enabled"
+    )
+    error_message = "The one-instance Learning design must enable awsvpcTrunking before launching the eight task ENIs."
+  }
+
+  assert {
+    condition = (
       aws_launch_template.ecs.instance_type == "m6i.xlarge" &&
       tobool(aws_launch_template.ecs.network_interfaces[0].associate_public_ip_address) == false &&
       aws_launch_template.ecs.metadata_options[0].http_tokens == "required" &&

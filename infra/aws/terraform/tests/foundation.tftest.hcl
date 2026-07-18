@@ -200,11 +200,11 @@ run "network_contract" {
 
   assert {
     condition = (
-      length(aws_vpc_security_group_ingress_rule.ecs_internal) == 6 &&
-      length(aws_vpc_security_group_egress_rule.ecs_internal) == 6 &&
-      toset([for rule in values(aws_vpc_security_group_ingress_rule.ecs_internal) : rule.from_port]) == toset([8079, 8087, 9000, 8081, 8083, 8084])
+      length(aws_vpc_security_group_ingress_rule.ecs_internal) == 8 &&
+      length(aws_vpc_security_group_egress_rule.ecs_internal) == 8 &&
+      toset([for rule in values(aws_vpc_security_group_ingress_rule.ecs_internal) : rule.from_port]) == toset([8079, 8080, 8081, 8083, 8084, 8087, 8090, 9000])
     )
-    error_message = "ECS self-referencing rules must contain the six service ports."
+    error_message = "ECS self-referencing rules must contain all eight backend service ports."
   }
 
   assert {

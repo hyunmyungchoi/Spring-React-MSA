@@ -4,7 +4,7 @@
 >
 > 기준일: 2026-07-18
 >
-> AWS 적용 상태: RDS/Secrets와 ECS Compute 적용·검증 완료, RDS 정지·ECS ASG `0/0/0`; ECS Task Definition과 ElastiCache 미적용
+> AWS 적용 상태: RDS/Secrets와 ECS Compute 적용·검증 완료, RDS 정지·ECS ASG `0/0/0`; ECS Task Definition·Service와 Valkey Terraform 코드 구현·로컬 검증 완료, AWS 미적용
 
 인증 URI와 쿠키/CSRF 계약의 기준은 [인증 스펙](../specs/authentication.md)이다. 이 표는 `application.yml`과 `application-prod.yml`에서 실제로 요구하는 환경별 주입 값을 관리하며 Secret의 실제 값은 기록하지 않는다. AWS Secret 경계는 [AWS Learning Runtime 결정](07-learning-runtime-design.md)을 따른다.
 
@@ -27,9 +27,10 @@ AWS root domain: `hyuncloudlab.com`
 | `SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA` | 기본 `public` 사용 | `public` | 서비스별 `user_service`, `member_bff`, `stock_service` | No |
 | `SPRING_FLYWAY_DEFAULT_SCHEMA` | Flyway 비활성 | `public`, Flyway 비활성 | Migration 대상 서비스 Schema | No |
 | `SPRING_FLYWAY_SCHEMAS` | Flyway 비활성 | `public`, Flyway 비활성 | Migration 대상 서비스 Schema 하나 | No |
-| `SPRING_DATA_REDIS_HOST` | `redis` | `redis` | ElastiCache endpoint | No |
-| `SPRING_DATA_REDIS_PORT` | `6379` | `6379` | ElastiCache port | No |
+| `SPRING_DATA_REDIS_HOST` | `redis` | `redis` | Runtime ON에만 존재하는 SSM String의 Valkey endpoint | No |
+| `SPRING_DATA_REDIS_PORT` | `6379` | `6379` | `6379` | No |
 | `SPRING_DATA_REDIS_PASSWORD` | `.env.local` if enabled | Kubernetes Secret | `/spring-react-msa/learning/shared/redis` | Yes |
+| `SPRING_DATA_REDIS_SSL_ENABLED` | `false` | `false` | `true` | No |
 | `APP_KAFKA_ENABLED` | `false` by default | `true` | 첫 AWS 전환은 `false` | No |
 | `SPRING_KAFKA_BOOTSTRAP_SERVERS` | Kafka 사용 시 주소, 비활성 시 빈 문자열 주입 | `kafka.kafka.svc.cluster.local:9092` | 첫 전환에서 Kafka 비활성 시 빈 문자열 주입 | No |
 
@@ -56,35 +57,36 @@ AWS root domain: `hyuncloudlab.com`
 | `PUBLIC_ORIGIN` | `localhost:5173` | 미사용 | 미사용 |
 | `GATEWAY_CORS_ALLOWED_ORIGIN` | `http://localhost:5173` | `http://user.localtest.me` | `https://app.hyuncloudlab.com` |
 | `ADMIN_GATEWAY_CORS_ALLOWED_ORIGIN` | `http://localhost:5176` | `http://admin.localtest.me` | `https://admin.hyuncloudlab.com` |
+| `ADMIN_BFF_REGISTRATION_ENABLED` | `true` | `true` 명시 | `false` 고정 |
 
 ## OAuth와 내부 Service URL
 
-AWS의 `<service-discovery-name>`은 승인한 Service Connect 또는 Cloud Map 세부 설계에서 확정한다. 이 값이 확정되기 전에는 ECS Task Definition을 Apply하지 않는다.
+AWS 내부 통신은 Service Connect Sidecar 없이 Cloud Map Private DNS를 사용한다. 각 주소는 `<service>.learning.spring-react-msa.internal` A Record이며 ECS Task는 `awsvpc`와 Account `awsvpcTrunking=enabled`를 사용한다.
 
 | 변수명 | 로컬 Docker | 로컬 Kubernetes | AWS Learning ECS |
 |---|---|---|---|
-| `BFF_OAUTH2_TOKEN_URI` | `http://spring-member-gateway:8080/oauth2/token` | 동일 | `http://<member-gateway>:8080/oauth2/token` |
-| `BFF_OAUTH2_USERINFO_URI` | `http://spring-member-gateway:8080/userinfo` | 동일 | `http://<member-gateway>:8080/userinfo` |
-| `BFF_OAUTH2_JWK_SET_URI` | `http://spring-member-gateway:8080/oauth2/jwks` | `http://spring-security-authorization-server:9000/oauth2/jwks` | `http://<authorization-server>:9000/oauth2/jwks` |
-| `ADMIN_BFF_OAUTH2_TOKEN_URI` | `http://spring-admin-gateway:8090/oauth2/token` | 동일 | `http://<admin-gateway>:8090/oauth2/token` |
-| `ADMIN_BFF_OAUTH2_USERINFO_URI` | `http://spring-admin-gateway:8090/userinfo` | 동일 | `http://<admin-gateway>:8090/userinfo` |
-| `ADMIN_BFF_OAUTH2_JWK_SET_URI` | `http://spring-admin-gateway:8090/oauth2/jwks` | `http://spring-security-authorization-server:9000/oauth2/jwks` | `http://<authorization-server>:9000/oauth2/jwks` |
-| `USER_SERVICE_BASE_URL` | `http://spring-user-service:8081` | 동일 | `http://<user-service>:8081` |
-| `BFF_API_USER_API_BASE_URL` | `http://spring-user-service:8081` | 동일 | `http://<user-service>:8081` |
-| `BFF_API_USER_INTERNAL_BASE_URL` | `http://spring-user-service:8081` | 동일 | `http://<user-service>:8081` |
-| `BFF_API_COMMUNITY_API_BASE_URL` | `http://spring-member-community-service:8083` | 동일 | `http://<community-service>:8083` |
-| `BFF_API_STOCK_API_BASE_URL` | `http://spring-member-stock-service:8084` | 동일 | `http://<stock-service>:8084` |
-| `ADMIN_BFF_API_USER_API_BASE_URL` | `http://spring-member-gateway:8080` | `http://spring-user-service:8081` | `http://<user-service>:8081` |
-| `ADMIN_BFF_API_USER_INTERNAL_BASE_URL` | `http://spring-user-service:8081` | 동일 | `http://<user-service>:8081` |
-| `GATEWAY_BFF_URI` | `http://spring-member-bff-service:8079` | 동일 | `http://<member-bff>:8079` |
-| `GATEWAY_USER_SERVICE_URI` | `http://spring-user-service:8081` | 동일 | `http://<user-service>:8081` |
-| `GATEWAY_COMMUNITY_SERVICE_URI` | `http://spring-member-community-service:8083` | 동일 | `http://<community-service>:8083` |
-| `GATEWAY_STOCK_SERVICE_URI` | `http://spring-member-stock-service:8084` | 동일 | `http://<stock-service>:8084` |
-| `GATEWAY_AUTHORIZATION_SERVER_URI` | `http://spring-security-authorization-server:9000` | 동일 | `http://<authorization-server>:9000` |
-| `ADMIN_GATEWAY_ADMIN_BFF_URI` | `http://spring-admin-bff-service:8087` | 동일 | `http://<admin-bff>:8087` |
-| `ADMIN_GATEWAY_AUTHORIZATION_SERVER_URI` | `http://spring-security-authorization-server:9000` | 동일 | `http://<authorization-server>:9000` |
+| `BFF_OAUTH2_TOKEN_URI` | `http://spring-member-gateway:8080/oauth2/token` | 동일 | `http://member-gateway.learning.spring-react-msa.internal:8080/oauth2/token` |
+| `BFF_OAUTH2_USERINFO_URI` | `http://spring-member-gateway:8080/userinfo` | 동일 | `http://member-gateway.learning.spring-react-msa.internal:8080/userinfo` |
+| `BFF_OAUTH2_JWK_SET_URI` | `http://spring-member-gateway:8080/oauth2/jwks` | `http://spring-security-authorization-server:9000/oauth2/jwks` | `http://authorization-server.learning.spring-react-msa.internal:9000/oauth2/jwks` |
+| `ADMIN_BFF_OAUTH2_TOKEN_URI` | `http://spring-admin-gateway:8090/oauth2/token` | 동일 | `http://admin-gateway.learning.spring-react-msa.internal:8090/oauth2/token` |
+| `ADMIN_BFF_OAUTH2_USERINFO_URI` | `http://spring-admin-gateway:8090/userinfo` | 동일 | `http://admin-gateway.learning.spring-react-msa.internal:8090/userinfo` |
+| `ADMIN_BFF_OAUTH2_JWK_SET_URI` | `http://spring-admin-gateway:8090/oauth2/jwks` | `http://spring-security-authorization-server:9000/oauth2/jwks` | `http://authorization-server.learning.spring-react-msa.internal:9000/oauth2/jwks` |
+| `USER_SERVICE_BASE_URL` | `http://spring-user-service:8081` | 동일 | `http://user-service.learning.spring-react-msa.internal:8081` |
+| `BFF_API_USER_API_BASE_URL` | `http://spring-user-service:8081` | 동일 | `http://user-service.learning.spring-react-msa.internal:8081` |
+| `BFF_API_USER_INTERNAL_BASE_URL` | `http://spring-user-service:8081` | 동일 | `http://user-service.learning.spring-react-msa.internal:8081` |
+| `BFF_API_COMMUNITY_API_BASE_URL` | `http://spring-member-community-service:8083` | 동일 | `http://community-service.learning.spring-react-msa.internal:8083` |
+| `BFF_API_STOCK_API_BASE_URL` | `http://spring-member-stock-service:8084` | 동일 | `http://stock-service.learning.spring-react-msa.internal:8084` |
+| `ADMIN_BFF_API_USER_API_BASE_URL` | `http://spring-member-gateway:8080` | `http://spring-user-service:8081` | `http://user-service.learning.spring-react-msa.internal:8081` |
+| `ADMIN_BFF_API_USER_INTERNAL_BASE_URL` | `http://spring-user-service:8081` | 동일 | `http://user-service.learning.spring-react-msa.internal:8081` |
+| `GATEWAY_BFF_URI` | `http://spring-member-bff-service:8079` | 동일 | `http://member-bff.learning.spring-react-msa.internal:8079` |
+| `GATEWAY_USER_SERVICE_URI` | `http://spring-user-service:8081` | 동일 | `http://user-service.learning.spring-react-msa.internal:8081` |
+| `GATEWAY_COMMUNITY_SERVICE_URI` | `http://spring-member-community-service:8083` | 동일 | `http://community-service.learning.spring-react-msa.internal:8083` |
+| `GATEWAY_STOCK_SERVICE_URI` | `http://spring-member-stock-service:8084` | 동일 | `http://stock-service.learning.spring-react-msa.internal:8084` |
+| `GATEWAY_AUTHORIZATION_SERVER_URI` | `http://spring-security-authorization-server:9000` | 동일 | `http://authorization-server.learning.spring-react-msa.internal:9000` |
+| `ADMIN_GATEWAY_ADMIN_BFF_URI` | `http://spring-admin-bff-service:8087` | 동일 | `http://admin-bff.learning.spring-react-msa.internal:8087` |
+| `ADMIN_GATEWAY_AUTHORIZATION_SERVER_URI` | `http://spring-security-authorization-server:9000` | 동일 | `http://authorization-server.learning.spring-react-msa.internal:9000` |
 | `SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI` | `http://spring-member-gateway:8080` | `http://user.localtest.me` | `https://app.hyuncloudlab.com` |
-| `SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI` | `http://spring-security-authorization-server:9000/oauth2/jwks` | 동일 | `http://<authorization-server>:9000/oauth2/jwks` |
+| `SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI` | `http://spring-security-authorization-server:9000/oauth2/jwks` | 동일 | `http://authorization-server.learning.spring-react-msa.internal:9000/oauth2/jwks` |
 | `TOSS_API_BASE_URL` | `https://openapi.tossinvest.com` | 동일 | 동일 |
 
 ## Secret과 Client Identity
@@ -103,7 +105,7 @@ Client ID는 공개 식별자이므로 Secret이 아니지만 Client Secret과 H
 | `TOSS_API_CLIENT_ID` | `.env.local` | 현재 Kubernetes Secret, 후속 ConfigMap 이동 가능 | ECS 일반 환경 변수 | No |
 | `TOSS_API_CLIENT_SECRET` | `.env.local` | Kubernetes Secret | `/spring-react-msa/learning/stock-service` | Yes |
 
-AWS ECS Task Definitions are intentionally not part of this repository state yet. Flyway 환경 변수의 AWS 값은 승인된 계약이며 아직 Task Definition에 적용된 현재값은 아니다. `docker-compose-aws.yml`은 ECS 배포 정의로 만들지 않는다.
+AWS ECS Application Task Definition 8개, Service 8개, Cloud Map과 ALB/Target Group Terraform 코드는 구현됐고 로컬 계약 테스트를 통과했다. 아직 Git SHA 기준 Backend 8개 Image Promote와 저장 Plan 승인 전이므로 실제 AWS에는 적용하지 않았다. `docker-compose-aws.yml`은 ECS 배포 정의로 만들지 않는다.
 
 비밀이 아닌 값은 ECS 일반 환경 변수 또는 SSM Parameter Store `String`으로 관리한다. SSM SecureString은 사용하지 않는다. Terraform은 Secret Container와 ARN 참조만 관리하고 실제 Secret Value를 `.tf`, `.tfvars`, Output 또는 State에 넣지 않는다.
 

@@ -1,6 +1,6 @@
 # AWS Terraform 운영 Runbook
 
-이 디렉터리는 `spring-react-msa` 학습 환경의 현재 AWS 인프라를 관리한다. 기본 리전은 `ap-northeast-2`다. Foundation 기준선, Backend ECR/GitHub OIDC, Private App 송신, RDS/Secrets Data Layer, ECS Compute, Database Bootstrap과 Flyway Migration Task까지 Apply했고 실제 RDS에서 Role·Schema·Flyway V1을 검증했다. RDS는 비용 통제를 위해 정지했고 ECS ASG는 `0/0/0`으로 유지한다. Backend Application Task/Service 같은 상시 Workload는 아직 배포하지 않는다. 후속 Runtime의 승인된 목표와 미구현 경계는 [AWS Learning Runtime 결정](../../../docs/aws-migration/07-learning-runtime-design.md)을 따른다.
+이 디렉터리는 `spring-react-msa` 학습 환경의 현재 AWS 인프라를 관리한다. 기본 리전은 `ap-northeast-2`다. Foundation 기준선, Backend ECR/GitHub OIDC, Private App 송신, RDS/Secrets Data Layer, ECS Compute, Database Bootstrap과 Flyway Migration Task까지 Apply했고 실제 RDS에서 Role·Schema·Flyway V1을 검증했다. RDS는 비용 통제를 위해 정지했고 ECS ASG는 `0/0/0`으로 유지한다. Backend 8개의 Application Runtime Terraform 코드는 구현·로컬 계약 검증까지 완료했지만 아직 Image 8개 Promote와 저장 Plan 승인 전이므로 AWS에는 배포하지 않았다. 후속 Runtime의 승인된 목표와 미구현 경계는 [AWS Learning Runtime 결정](../../../docs/aws-migration/07-learning-runtime-design.md)을 따른다.
 
 ## 현재 상태와 범위
 
@@ -86,9 +86,9 @@ Foundation Apply 결과는 `4 added, 0 changed, 0 destroyed`다. 최초 Task Def
 
 ### 현재 AWS에 생성하지 않은 대상
 
-- ECS Application Task Definition, Service와 실행 중인 Container/EC2 Instance
+- ECS Application Task Definition/Service, Cloud Map Application Namespace와 실행 중인 Container/EC2 Instance. Terraform 코드는 준비됐지만 아직 미적용이다.
 - ALB, Target Group, Listener, ACM, Route 53 Record
-- ElastiCache, MSK
+- Valkey/ElastiCache, MSK
 - S3 Frontend Bucket, CloudFront, Frontend ECR Repository
 - 자동 배포
 
@@ -105,6 +105,18 @@ Foundation Apply 결과는 `4 added, 0 changed, 0 destroyed`다. 최초 Task Def
 - 값이 없는 Secrets Manager Container 7개
 
 Terraform에는 `aws_secretsmanager_secret_version`이 없으므로 실제 비밀번호와 Token은 State에 넣지 않는다. RDS가 만드는 Master Secret을 포함하면 Apply 뒤 Secrets Manager 과금 대상은 총 8개다. RDS와 Secret에는 `prevent_destroy`를 적용했고, `enable_data_layer=false`로 되돌리는 것은 단순 OFF가 아니라 삭제 시도이므로 허용하지 않는다. Runtime OFF는 RDS 정지 절차를 사용한다.
+
+### 로컬 구현을 마친 Application Runtime
+
+- `modules/application-runtime`: Backend 8개 Digest 고정 Task Definition, ECS Service, 서비스별 최소 권한 Execution Role, 7일 CloudWatch Log Group, Cloud Map Private DNS와 Gateway Target Group을 관리한다.
+- `modules/cache`: Runtime ON에만 Valkey 7.2 `cache.t4g.micro` 단일 Node와 SSM Redis Host Parameter를 만든다. 저장·전송 암호화와 RBAC를 사용하며 OFF에서는 세션/Cache와 함께 삭제한다.
+- `modules/ecs-compute`: 한 `m6i.xlarge`에 8개 `awsvpc` Task ENI를 수용하도록 Account `awsvpcTrunking=enabled`를 관리한다.
+- `learning_runtime_enabled=false`: ASG와 Service를 0으로 유지하고 ALB·Valkey를 만들지 않는다.
+- `learning_runtime_enabled=true`: ASG `1/1/2`, Service별 Task 1개, Public ALB 1개와 Valkey Node 1개를 만든다.
+
+Valkey Password는 Secrets Manager에서 읽어 `TF_VAR_redis_password` Ephemeral Variable로만 전달한다. Provider `passwords_wo` Write-only Argument를 사용하므로 Plan과 State에 저장하지 않는다. Application Task는 실제 Password를 `/spring-react-msa/learning/shared/redis`에서 직접 주입받고 Endpoint만 SSM `String`으로 읽는다.
+
+Runtime Secret은 Terraform Apply와 분리한다. `Initialize-LearningRuntimeSecrets.ps1`이 기존 DB Secret JSON을 보존하면서 OAuth/Toss Key를 추가하고, Redis Password와 내부 API Token은 AWS가 생성한다. 스크립트는 Secret Value를 화면에 출력하지 않으며 실행 전 별도 SHA-256 승인을 받는다.
 
 ### 적용된 Private App 송신 확장
 
@@ -469,8 +481,10 @@ Application, Data, Kafka, SSH Port는 Internet에서 직접 접근할 수 없다
 
 ## 다음 단계
 
-1. Backend 8개의 Application Task Definition, ECS Service, Service Discovery와 ALB 구현
-2. Frontend S3/CloudFront·Route 53/ACM 구현
-3. 관측성, Backup Restore 훈련과 Runtime 자동화
+1. 현재 변경을 Commit/Push하고 Backend 8개를 GHCR Build Once → ECR Digest Promote
+2. Runtime Secret 초기화 후 Application Foundation OFF 저장 Plan 생성·승인·Apply
+3. 별도 Runtime ON Plan으로 RDS/Valkey/ECS/ALB를 짧게 실행해 8개 Health와 내부 호출 Smoke Test
+4. Runtime OFF와 RDS 정지 검증
+5. Frontend S3/CloudFront·Route 53/ACM, 관측성, Backup Restore와 Runtime 자동화
 
 Kubernetes↔AWS DR은 Learning 적용 범위에서 제외하고 후속 학습 과제로 보류한다.

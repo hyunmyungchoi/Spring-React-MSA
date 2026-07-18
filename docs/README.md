@@ -25,7 +25,7 @@
 | Data | PostgreSQL 16, Redis 7 |
 | Messaging | Kafka 3.7.0 |
 | Platform | Docker Compose, Kubernetes, ingress-nginx, GHCR, Argo CD |
-| AWS migration | Foundation·ECR/OIDC·Private App 송신·RDS/Secrets·ECS Compute 적용, DB Secret 초기화와 실제 Role·Schema Bootstrap 검증 완료, RDS 정지·ECS ASG `0/0/0` |
+| AWS migration | Foundation·ECR/OIDC·Private App 송신·RDS/Secrets·ECS Compute 적용, 실제 Flyway V1 검증 완료, Application Runtime Terraform 구현·로컬 검증 완료, AWS Runtime은 OFF |
 | Observability | Prometheus, Grafana, Loki, Promtail, Kafka exporters |
 
 ## 문서 상태 표현
@@ -39,8 +39,8 @@
 - 채팅 이벤트는 트랜잭션 커밋 후 Kafka로 전송하지만 영속 Outbox 테이블과 relay는 아직 없다.
 - 커뮤니티 게시물은 프로세스 메모리에 저장되어 재시작 시 사라진다.
 - Argo CD Application에 자동 동기화가 설정되어 있지 않아 Git 변경 후 수동 Sync가 필요하다.
-- 관리자 가입 API가 공개되어 있고 `ROLE_ADMIN`을 생성하므로 AWS Learning Public Traffic을 열기 전 별도 통제가 필요하다.
-- Admin Session 조회 응답은 아직 원본 `sessionId`를 반환하므로 AWS 공개 전 Fingerprint 또는 Masked ID로 교체해야 한다.
+- Admin BFF의 관리자 가입 Controller는 설정 Flag로 제어하며 `prod` 기본값은 비활성이다. 로컬 Kubernetes만 명시적으로 활성화하고 AWS ECS는 비활성으로 고정한다. 최초 관리자 Bootstrap 절차는 아직 남아 있다.
+- Admin Session 조회 응답과 Frontend 타입에서 원본 `sessionId`를 제거하고 SHA-256 `sessionFingerprint`만 사용한다.
 - GHCR Build Once와 ECR Digest Promote Workflow는 구현됐고, Database Migration 대상 3개 Image에서 재빌드 없는 Promote와 Digest 일치를 실제 검증했다.
 - Kubernetes↔AWS DR은 Learning 적용 범위에서 제외하고 후속 학습 과제로 보류했다.
 
@@ -88,6 +88,7 @@
 - [Argo CD 배포](runbooks/argocd-deployment.md)
 - [롤백](runbooks/rollback.md)
 - [공통 오류](runbooks/common-errors.md)
+- [AWS Application Runtime](runbooks/aws-application-runtime.md)
 - [AWS Learning RDS 운영·복구](runbooks/aws-rds-learning.md)
 - [AWS DB Bootstrap·Flyway 실행](runbooks/aws-database-bootstrap-and-flyway.md)
 - [AWS Image Build Once·ECR Promote](runbooks/aws-image-build-once-promote.md)
@@ -108,11 +109,11 @@
 | --- | --- | --- |
 | [서비스 인벤토리](aws-migration/00-service-inventory.md) | ECS 대상 서비스와 환경 변수 | 저장소 기준 확인됨 |
 | [리소스 기준선](aws-migration/01-resource-baseline.md) | ECS on EC2 초기 용량 가정 | 추정치, 부하 검증 필요 |
-| [환경 매트릭스](aws-migration/02-environment-matrix.md) | 로컬·K8s·AWS 설정 차이 | ECS Task Definition 미구현 |
+| [환경 매트릭스](aws-migration/02-environment-matrix.md) | 로컬·K8s·AWS 설정 차이 | ECS Task Definition 코드 구현·로컬 계약 검증, AWS 미적용 |
 | [DB 전환 준비](aws-migration/03-database-migration.md) | RDS schema와 migration gap | Build Once·ECR Promote와 실제 RDS Flyway V1 3개 실행·검증 완료 |
 | [AWS Foundation](aws-migration/04-aws-foundation-design.md) | VPC/subnet/SG 설계 | Foundation 적용, workload 미구현 |
 | [ECR/OIDC 설계](aws-migration/05-ecr-github-oidc-design.md) | SHA 이미지와 GitHub OIDC | Apply·GitHub 변수·Backend 8개 게시 완료 |
 | [ECR/OIDC 구현 계획](aws-migration/06-ecr-github-oidc-implementation-plan.md) | 구현·승인 gate 실행 기록 | Task 6·단일/중복/전체 게시 검증 완료 |
-| [Learning Runtime 결정](aws-migration/07-learning-runtime-design.md) | NAT, State, ECS, RDS, Frontend, Secret, DNS 결정 | Data Layer·DB Migration 적용·검증, RDS 현재 정지 |
+| [Learning Runtime 결정](aws-migration/07-learning-runtime-design.md) | NAT, State, ECS, RDS, Frontend, Secret, DNS 결정 | Data Layer·DB Migration 적용·검증, Application Runtime 코드 준비, AWS Runtime OFF |
 
 AWS 적용 여부는 Git만으로 확정할 수 없으므로 문서의 `저장소 상태`와 `AWS 적용 상태`를 구분한다. Terraform state, 저장 plan, 계정 식별자와 secret은 문서나 Git에 추가하지 않는다.

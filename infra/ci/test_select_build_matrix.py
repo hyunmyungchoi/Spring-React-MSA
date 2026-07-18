@@ -61,6 +61,16 @@ class SelectBuildMatrixTest(unittest.TestCase):
         self.assertEqual(selected, select_build_matrix.DATABASE_MIGRATION_IMAGES)
         self.assertEqual(update_targets, select_build_matrix.DATABASE_MIGRATION_IMAGES)
 
+    def test_all_backend_target_excludes_frontend_images(self) -> None:
+        selected, update_targets = select_build_matrix.select_services(
+            "workflow_dispatch",
+            "all-backend",
+            [],
+        )
+
+        self.assertEqual(selected, select_build_matrix.ALL_BACKEND_IMAGES)
+        self.assertEqual(update_targets, select_build_matrix.ALL_BACKEND_IMAGES)
+
 
 if __name__ == "__main__":
     unittest.main()

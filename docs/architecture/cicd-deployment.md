@@ -26,7 +26,7 @@ flowchart LR
 - `spring-msa-common-kafka`: Member BFF
 - member/admin 공통 프런트 파일: 각 workspace의 모든 feature image
 - 특정 feature 소스/Dockerfile: 해당 feature image
-- 수동 실행: `deploy_target` 하나 또는 `all`
+- 수동 실행: `deploy_target` 하나, Backend 8개만 선택하는 `all-backend`, 또는 전체를 선택하는 `all`
 
 매핑 자체는 `infra/ci/test_select_build_matrix.py`로 검증한다.
 
@@ -81,7 +81,7 @@ flowchart LR
 - 최초 Terraform module, 저장 Plan Apply, GitHub 변수 연결과 Backend 8개 재빌드 게시 검증은 완료했다.
 - ECR 전체 게시 기준은 SHA `3564959efa1637e60fe72f009d4fa1a5809de01b`, GitHub Actions run `29561837114`다.
 - 새 Workflow는 `source_sha`의 GHCR Image를 `crane copy`하고, 기존 ECR Tag가 같은 Digest면 Skip하며 다르면 실패한다. Source SHA `f0c88e32b883c391dcf993dfbf40839312de0f39`의 GHCR Run `29642831008`과 ECR Run `29643089643`에서 세 Image의 Digest 일치를 실제 검증했다.
-- RDS/Secrets Terraform, DB Secret 초기화와 실제 RDS Role·Schema Bootstrap, Digest 고정 ECS Flyway Migration Task 3개와 실제 V1 실행을 완료했다. ECS Application Service, ALB, ElastiCache와 AWS 자동 배포는 아직 없다.
+- RDS/Secrets Terraform, DB Secret 초기화와 실제 RDS Role·Schema Bootstrap, Digest 고정 ECS Flyway Migration Task 3개와 실제 V1 실행을 완료했다. ECS Application Service, Cloud Map, ALB와 Valkey 코드는 로컬 구현·검증 단계이며 AWS Apply와 자동 배포는 아직 없다.
 - 실제 적용 상태와 승인 gate는 [`infra/aws/terraform/README.md`](../../infra/aws/terraform/README.md)를 기준으로 한다.
 
 GHCR→Kubernetes가 현재 delivery 기준이고 ECR→AWS는 migration lane이다. 한쪽 장애가 다른 쪽 image publication을 막지 않도록 workflow와 registry 권한을 독립적으로 유지한다.

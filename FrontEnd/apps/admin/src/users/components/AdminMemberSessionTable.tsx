@@ -34,8 +34,8 @@ function AdminMemberSessionTable({ sessions }: AdminMemberSessionTableProps) {
         </thead>
         <tbody>
           {sessions.map((session) => (
-            <tr key={session.sessionId}>
-              <td title={session.sessionId}>{shortSessionId(session.sessionId)}</td>
+            <tr key={session.sessionFingerprint}>
+              <td title={session.sessionFingerprint}>{shortFingerprint(session.sessionFingerprint)}</td>
               <td>
                 <span className={`admin-status-pill ${session.online ? 'online' : 'offline'}`}>
                   {session.online ? 'Online' : 'Offline'}
@@ -57,12 +57,12 @@ function AdminMemberSessionTable({ sessions }: AdminMemberSessionTableProps) {
   )
 }
 
-function shortSessionId(sessionId: string) {
-  if (sessionId.length <= 12) {
-    return sessionId
+function shortFingerprint(sessionFingerprint: string) {
+  if (sessionFingerprint.length <= 12) {
+    return sessionFingerprint
   }
 
-  return `${sessionId.slice(0, 12)}...`
+  return `${sessionFingerprint.slice(0, 12)}...`
 }
 
 function formatValue(value: string | number | null) {

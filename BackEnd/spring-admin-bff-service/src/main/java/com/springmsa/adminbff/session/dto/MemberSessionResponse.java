@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.util.List;
 
 public record MemberSessionResponse(
-        String sessionId,
+        String sessionFingerprint,
         Long userId,
         String loginId,
         String name,

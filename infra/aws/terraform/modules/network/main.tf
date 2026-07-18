@@ -39,6 +39,8 @@ locals {
   }
 
   internal_service_ports = {
+    member-gateway       = 8080
+    admin-gateway        = 8090
     member-bff           = 8079
     admin-bff            = 8087
     authorization-server = 9000

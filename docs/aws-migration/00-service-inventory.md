@@ -4,7 +4,7 @@
 >
 > 기준일: 2026-07-18
 >
-> AWS 적용 상태: ECS Compute Foundation 적용·ASG `0/0/0`, ECS workload 미구현
+> AWS 적용 상태: ECS Compute Foundation 적용·ASG `0/0/0`; Application Runtime Terraform 구현·로컬 검증 완료, AWS workload 미적용
 
 이 문서는 AWS에서 달라지는 배치와 환경 변수만 관리한다. 서비스 책임과 현재 요청 흐름의 기준 문서는 [MSA 구성](../architecture/msa-structure.md), [인증 흐름](../architecture/authentication-flow.md), [회원 서비스 스펙](../specs/member-service.md), [관리자 서비스 스펙](../specs/admin-service.md)이다.
 
@@ -38,7 +38,7 @@ Recommended public endpoints:
 
 - Common: `SPRING_PROFILES_ACTIVE`, `JAVA_TOOL_OPTIONS`
 - Database: `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_JPA_HIBERNATE_DDL_AUTO`, `SPRING_SQL_INIT_MODE`, `SPRING_FLYWAY_ENABLED`, `SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA`, `SPRING_FLYWAY_DEFAULT_SCHEMA`, `SPRING_FLYWAY_SCHEMAS`
-- Redis: `SPRING_DATA_REDIS_HOST`, `SPRING_DATA_REDIS_PORT`
+- Redis: `SPRING_DATA_REDIS_HOST`, `SPRING_DATA_REDIS_PORT`, `SPRING_DATA_REDIS_SSL_ENABLED`
 - OAuth client identity: `BFF_CLIENT_ID`, `ADMIN_BFF_CLIENT_ID`
 - OAuth/public URLs: `AUTH_SERVER_ISSUER`, `USER_FRONTEND_LOGIN_URI`, `ADMIN_FRONTEND_LOGIN_URI`, `BFF_FRONTEND_REDIRECT_URI`, `BFF_OAUTH2_AUTHORIZATION_URI`, `BFF_OAUTH2_TOKEN_URI`, `BFF_OAUTH2_USERINFO_URI`, `BFF_OAUTH2_JWK_SET_URI`, `BFF_OAUTH2_REDIRECT_URI`, `BFF_POST_LOGOUT_REDIRECT_URI`, `BFF_OAUTH2_END_SESSION_URI`, `BFF_OAUTH2_LOGOUT_URI`, `ADMIN_BFF_FRONTEND_REDIRECT_URI`, `ADMIN_BFF_OAUTH2_AUTHORIZATION_URI`, `ADMIN_BFF_OAUTH2_TOKEN_URI`, `ADMIN_BFF_OAUTH2_USERINFO_URI`, `ADMIN_BFF_OAUTH2_JWK_SET_URI`, `ADMIN_BFF_OAUTH2_REDIRECT_URI`, `ADMIN_BFF_POST_LOGOUT_REDIRECT_URI`, `ADMIN_BFF_POST_LOGOUT_LOGIN_REDIRECT_URI`, `ADMIN_BFF_OAUTH2_END_SESSION_URI`, `ADMIN_BFF_OAUTH2_LOGOUT_URI`
 - Internal service URLs: `USER_SERVICE_BASE_URL`, `BFF_API_USER_API_BASE_URL`, `BFF_API_USER_INTERNAL_BASE_URL`, `BFF_API_COMMUNITY_API_BASE_URL`, `BFF_API_STOCK_API_BASE_URL`, `ADMIN_BFF_API_USER_API_BASE_URL`, `ADMIN_BFF_API_USER_INTERNAL_BASE_URL`
@@ -46,6 +46,7 @@ Recommended public endpoints:
 - Gateway routing/CORS: `PUBLIC_ORIGIN`, `GATEWAY_CORS_ALLOWED_ORIGIN`, `ADMIN_GATEWAY_CORS_ALLOWED_ORIGIN`, `GATEWAY_BFF_URI`, `GATEWAY_USER_SERVICE_URI`, `GATEWAY_COMMUNITY_SERVICE_URI`, `GATEWAY_STOCK_SERVICE_URI`, `GATEWAY_AUTHORIZATION_SERVER_URI`, `ADMIN_GATEWAY_ADMIN_BFF_URI`, `ADMIN_GATEWAY_AUTHORIZATION_SERVER_URI`
 - Kafka optional switch: `APP_KAFKA_ENABLED`, `SPRING_KAFKA_BOOTSTRAP_SERVERS`
 - External API: `TOSS_API_BASE_URL`, `TOSS_API_CLIENT_ID`
+- Admin 가입 경계: `ADMIN_BFF_REGISTRATION_ENABLED`
 
 ## Secret Environment Variables
 
@@ -64,5 +65,7 @@ Recommended public endpoints:
 - Git에서 제외되는 서비스별 `application-local.yml`도 실제 자격 증명을 직접 기록하지 않고 환경 변수 placeholder만 사용한다.
 - Local Kubernetes manifests live in `infra/k8s/spring-msa` and intentionally use `localtest.me`.
 - AWS ECS의 비밀이 아닌 값은 Task Definition 환경 변수 또는 SSM Parameter Store `String`, 비밀값은 Secrets Manager로 주입한다. SSM SecureString은 사용하지 않는다.
+- AWS Application Task Definition은 OCI Digest로 고정하고 서비스별 최소 권한 Execution Role만 사용한다. Runtime OFF에서는 8개 ECS Service를 `desired_count=0`으로 유지한다.
+- 내부 통신은 `awsvpcTrunking`을 활성화한 `awsvpc` Task와 Cloud Map Private DNS `learning.spring-react-msa.internal`을 사용한다.
 - Java code and `application-prod.yml` must not contain concrete AWS public URLs.
 - Kubernetes↔AWS DR은 Learning 적용 범위에서 제외했다. 기존 [재해 복구 아키텍처](../architecture/disaster-recovery.md)는 후속 운영 환경 참고 설계다.

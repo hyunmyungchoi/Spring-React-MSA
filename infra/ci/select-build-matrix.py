@@ -84,6 +84,7 @@ DATABASE_MIGRATION_IMAGES = [
     "spring-member-stock-service",
     "spring-member-bff-service",
 ]
+ALL_BACKEND_IMAGES = [image["service"] for image in BACKEND_IMAGES]
 
 
 def parse_args() -> argparse.Namespace:
@@ -200,6 +201,8 @@ def select_services(event_name: str, deploy_target: str, changed_files: list[str
     if event_name == "workflow_dispatch":
         if deploy_target == "all":
             return services, ["all"]
+        if deploy_target == "all-backend":
+            return ALL_BACKEND_IMAGES, ALL_BACKEND_IMAGES
         if deploy_target == "database-migrations":
             return DATABASE_MIGRATION_IMAGES, DATABASE_MIGRATION_IMAGES
         if deploy_target in known_services:

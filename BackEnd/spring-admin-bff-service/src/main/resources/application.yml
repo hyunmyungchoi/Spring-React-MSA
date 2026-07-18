@@ -18,6 +18,8 @@ spring:
         namespace: spring:session:admin-bff
 
 admin-bff:
+  registration:
+    enabled: true
   member-session:
     redis:
       namespace: spring:session:bff

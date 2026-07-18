@@ -114,6 +114,41 @@ output "ecs_runtime_capacity" {
   value       = try(module.ecs_compute[0].runtime_capacity, null)
 }
 
+output "ecs_awsvpc_trunking" {
+  description = "Account-level awsvpcTrunking value managed by the ECS compute foundation."
+  value       = try(module.ecs_compute[0].awsvpc_trunking, null)
+}
+
+output "redis_replication_group_id" {
+  description = "Disposable Learning Valkey replication group ID, or null while Runtime is OFF."
+  value       = module.cache.replication_group_id
+}
+
+output "redis_host_parameter_name" {
+  description = "Stable SSM parameter name that exists only while the disposable Valkey runtime is ON."
+  value       = module.cache.redis_host_parameter_name
+}
+
+output "application_task_definition_arns" {
+  description = "Eight backend task definition ARNs, or an empty map when the application foundation is disabled."
+  value       = try(module.application_runtime[0].task_definition_arns, {})
+}
+
+output "application_ecs_service_names" {
+  description = "Eight backend ECS service names, or an empty map when the application foundation is disabled."
+  value       = try(module.application_runtime[0].ecs_service_names, {})
+}
+
+output "application_service_discovery_namespace" {
+  description = "Cloud Map private DNS namespace, or null when the application foundation is disabled."
+  value       = try(module.application_runtime[0].service_discovery_namespace, null)
+}
+
+output "public_alb_dns_name" {
+  description = "Disposable public ALB DNS name, or null while Runtime is OFF."
+  value       = try(module.application_runtime[0].public_alb_dns_name, null)
+}
+
 output "database_bootstrap_task_definition_arn" {
   description = "Database bootstrap task definition ARN, or null when the database task foundation is disabled."
   value       = try(module.database_tasks[0].bootstrap_task_definition_arn, null)

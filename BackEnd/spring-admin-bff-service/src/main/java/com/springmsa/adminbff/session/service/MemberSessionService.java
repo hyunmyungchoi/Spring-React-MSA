@@ -10,14 +10,20 @@ import com.springmsa.adminbff.session.redis.MemberSessionPresence;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.Comparator;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class MemberSessionService {
+
+    private static final String SESSION_FINGERPRINT_ALGORITHM = "SHA-256";
 
     private final MemberSessionRedisRepository memberSessionRedisRepository;
     private final MemberPresenceRedisRepository memberPresenceRedisRepository;
@@ -50,7 +56,7 @@ public class MemberSessionService {
         MemberSessionPresence presence = memberPresenceRedisRepository.findBySessionId(session.sessionId());
 
         return Optional.of(new MemberSessionResponse(
-                session.sessionId(),
+                sessionFingerprint(session.sessionId()),
                 session.userId(),
                 session.loginId(),
                 session.name(),
@@ -99,5 +105,14 @@ public class MemberSessionService {
 
     private Instant lastAccessedAtOrEpoch(MemberSessionResponse response) {
         return response.lastAccessedAt() == null ? Instant.EPOCH : response.lastAccessedAt();
+    }
+
+    private String sessionFingerprint(String sessionId) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance(SESSION_FINGERPRINT_ALGORITHM);
+            return HexFormat.of().formatHex(digest.digest(sessionId.getBytes(StandardCharsets.UTF_8)));
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 digest is not available", e);
+        }
     }
 }

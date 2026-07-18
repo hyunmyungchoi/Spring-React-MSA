@@ -12,6 +12,11 @@ locals {
   })
 }
 
+resource "aws_ecs_account_setting_default" "awsvpc_trunking" {
+  name  = "awsvpcTrunking"
+  value = "enabled"
+}
+
 resource "aws_ecs_cluster" "this" {
   name = "${var.name_prefix}-cluster"
 
@@ -165,6 +170,7 @@ resource "aws_autoscaling_group" "ecs" {
   }
 
   depends_on = [
+    aws_ecs_account_setting_default.awsvpc_trunking,
     aws_iam_role_policy_attachment.ecs_instance,
     aws_iam_role_policy_attachment.ssm_instance,
   ]
