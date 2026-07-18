@@ -4,7 +4,7 @@
 >
 > 기준일: 2026-07-18
 >
-> 저장소 상태: Foundation·ECR/OIDC·Private App 송신·RDS/Secrets·ECS Compute·DB Bootstrap/Flyway Task 적용, Application Task/Service 미구현
+> 저장소 상태: Foundation·ECR/OIDC·Private App 송신·RDS/Secrets·ECS Compute·DB Bootstrap/Flyway Task 적용, Application Task/Service·Cloud Map·ALB·Valkey 코드 구현 및 로컬 검증 완료
 >
 > AWS 적용 상태: Foundation·ECR/OIDC·S3 Remote Backend·Private App 송신·RDS/Secrets·ECS Compute 적용, Build Once·ECR Promote와 실제 RDS Flyway V1 검증 완료, RDS 정지·ECS ASG `0/0/0`
 
@@ -18,9 +18,9 @@
 |---|---|---|---|
 | P0 | Private Subnet 송신 | 단일 Zonal NAT Gateway와 S3 Gateway Endpoint | 적용·검증 완료 |
 | P0 | Terraform State | S3 Remote Backend와 S3 Native Lockfile | 적용·이전·검증 완료 |
-| P0 | Learning 보안 경계 | 관리자 공개 가입 차단, 4자 비밀번호 위험 수용, 원본 Session ID 미노출 | 미구현 |
-| P0 | 이미지 무결성 | GHCR Build Once, OCI Digest 기준 ECR Promote | Workflow·`master` 반영·Migration Image 3개 실제 Promote 및 Digest 검증 완료 |
-| P1 | ECS 구조 | ECS on EC2, ASG Capacity Provider, Learning ON/OFF | Compute 적용·AWS 검증·재계획 완료, ASG `0/0/0`; Task/Service 미구현 |
+| P0 | Learning 보안 경계 | 관리자 공개 가입 차단, 4자 비밀번호 위험 수용, 원본 Session ID 미노출 | 코드 구현·로컬 테스트 완료, AWS 배포 전 |
+| P0 | 이미지 무결성 | GHCR Build Once, OCI Digest 기준 ECR Promote | Backend 8개 Build Once·Promote·8/8 Digest 검증 완료 |
+| P1 | ECS 구조 | ECS on EC2, ASG Capacity Provider, Learning ON/OFF | Compute 적용·AWS 검증 완료, ASG `0/0/0`; Task/Service 코드 구현·로컬 검증 완료 |
 | P1 | 데이터베이스 | PostgreSQL 16 공유 인스턴스·서비스별 Schema·Flyway | DB Secret·Bootstrap·Flyway V1 3개 실제 실행과 사후 검증 완료 |
 | P1 | Frontend | Private S3와 CloudFront | 미구현 |
 | P1 | Secret | Secrets Manager로 통일 | Container 7개·DB Task 최소 권한 IAM 적용, DB Secret 3개 초기화 완료 |
@@ -119,7 +119,7 @@ State에는 리소스 식별자와 민감한 속성이 기록될 수 있다. 실
 
 Backend 8개는 각각 독립된 Task Definition과 ECS Service를 가진다. Runtime ON에서는 Service별 `desired_count=1`, OFF에서는 `0`을 사용한다. 서비스별 CPU/Memory 시작값은 [ECS Resource Baseline](01-resource-baseline.md)을 따른다.
 
-현재 Terraform은 `enable_ecs_compute_foundation`, `enable_application_runtime_foundation`, `learning_runtime_enabled`를 분리한다. Compute Foundation은 적용됐고 Application Foundation 코드는 Task Definition/Service/Cloud Map/Target Group/IAM/Log Group을 유지하는 구조로 구현했다. `learning_runtime_enabled=false`에서는 8개 Service가 `desired_count=0`이고 유료 ALB와 Valkey가 없으며, `true`에서만 ASG `1/1/2`, Service별 Task 1개, Public ALB와 단일 Valkey를 만든다. 아직 Application Image 8개 Promote와 저장 Plan 승인 전이므로 이 부분은 실제 AWS에 적용하지 않았다.
+현재 Terraform은 `enable_ecs_compute_foundation`, `enable_application_runtime_foundation`, `learning_runtime_enabled`를 분리한다. Compute Foundation은 적용됐고 Application Foundation 코드는 Task Definition/Service/Cloud Map/Target Group/IAM/Log Group을 유지하는 구조로 구현했다. `learning_runtime_enabled=false`에서는 8개 Service가 `desired_count=0`이고 유료 ALB와 Valkey가 없으며, `true`에서만 ASG `1/1/2`, Service별 Task 1개, Public ALB와 단일 Valkey를 만든다. Application Image 8개 Promote는 완료했지만 저장 Plan 승인 전이므로 이 부분은 실제 AWS에 적용하지 않았다.
 
 Container Instance는 두 Private App Subnet을 사용하고 Public IP와 SSH Ingress를 갖지 않는다. ECS 최적화 Amazon Linux 2023 AMI, `m6i.xlarge`, 암호화한 30 GiB `gp3`, IMDSv2 필수와 SSM Session Manager 접근을 사용한다. Container Insights는 Learning 비용을 줄이기 위해 Compute 단계에서 비활성화하고, Task Log와 최소 Alarm은 Service/관측성 단계에서 별도 확정한다.
 
@@ -259,7 +259,7 @@ Terraform이 관리할 Application Record는 다음과 같다.
 7. ECR SHA Tag가 이미 있으면 Digest가 같을 때만 Skip하고 다르면 실패한다.
 8. `latest`는 배포 기준으로 사용하지 않는다.
 
-현재 `.github/workflows/ghcr-build-push.yml`은 서비스·Source SHA당 최초 한 번만 Build하고 최상위 OCI Digest를 검증한다. `.github/workflows/ecr-build-push.yml`은 Docker Build 없이 `crane copy`로 GHCR Digest를 ECR에 Promote하고 두 Registry의 Digest가 같을 때만 성공한다. Database Migration 대상 3개 Image와 Source SHA `f0c88e32b883c391dcf993dfbf40839312de0f39`에서 이 동작을 실제 검증했다.
+현재 `.github/workflows/ghcr-build-push.yml`은 서비스·Source SHA당 최초 한 번만 Build하고 최상위 OCI Digest를 검증한다. `.github/workflows/ecr-build-push.yml`은 Docker Build 없이 `crane copy`로 GHCR Digest를 ECR에 Promote하고 두 Registry의 Digest가 같을 때만 성공한다. Source SHA `a7b3e0387c6817fd5a781ccf3ac532e04f38c9e1`의 Backend 8개를 GHCR Run `29648349144`에서 Build Once하고 ECR Run `29648492164`에서 Promote해 8/8 Digest 일치를 실제 검증했다.
 
 ## 12. DR 범위
 
@@ -280,7 +280,7 @@ Learning에서 적용할 복구 기준은 다음으로 제한한다.
 3. 완료: Secrets Manager Container 7개와 DB Bootstrap 최소 권한 IAM 적용, DB Secret 3개 초기화
 4. 완료: RDS·Secret·Bootstrap, GHCR Build Once·ECR Promote, Flyway V1 3개 실제 실행과 사후 검증
 5. 완료: ECS Cluster, Launch Template, ASG와 Capacity Provider 적용·AWS 검증·재계획 `No changes`
-6. 진행 중: Task Definition, ECS Service, Cloud Map, ALB/Target Group, Valkey와 P0 공개 보안 코드를 구현하고 로컬 테스트 완료; Image 8개 Promote·저장 Plan·Apply·Smoke Test 미완료
+6. 진행 중: Task Definition, ECS Service, Cloud Map, ALB/Target Group, Valkey와 P0 공개 보안 코드를 구현하고 로컬 테스트와 Image 8개 Promote 완료; 저장 Plan·Apply·Smoke Test 미완료
 7. Frontend S3, CloudFront와 배포 Workflow
 8. ACM, 기존 Hosted Zone Import와 Route 53 Record
 9. CloudWatch Logs, Metrics, Alarms와 Learning ON/OFF 운영 절차
@@ -300,7 +300,6 @@ Learning에서 적용할 복구 기준은 다음으로 제한한다.
 
 첫 Runtime Apply 전에 남은 작업은 다음과 같다.
 
-- 현재 Source SHA로 Backend 8개를 GHCR Build Once하고 동일 Digest로 ECR Promote
 - Runtime Secret 6개를 `Initialize-LearningRuntimeSecrets.ps1`로 초기화하고 Key 존재만 검증
 - Git에서 제외된 `terraform.tfvars`에 Digest 8개와 비밀이 아닌 Toss Client ID 반영
 - Runtime OFF Application Foundation 저장 Plan을 먼저 검토·Apply한 뒤, 별도 Runtime ON Plan으로 유료 리소스를 검토

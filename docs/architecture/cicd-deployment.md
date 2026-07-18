@@ -61,7 +61,7 @@ Application은 `master` branch의 `infra/k8s/spring-msa`를 감시하고 `spring
 
 ## AWS ECR 전환 경로
 
-최초 ECR 구현은 Kubernetes Delivery와 분리된 수동 재빌드 경로였으며 Backend 8개 게시 검증까지 완료했다. 이후 Workflow를 Build Once·Promote 방식으로 교체해 GitHub `master`에 반영했고, 새 Source SHA의 Database Migration Image 3개에서 실제 Promote를 검증했다.
+최초 ECR 구현은 Kubernetes Delivery와 분리된 수동 재빌드 경로였으며 Backend 8개 게시 검증까지 완료했다. 이후 Workflow를 Build Once·Promote 방식으로 교체해 GitHub `master`에 반영했고, 새 Source SHA의 Database Migration Image 3개와 Application Runtime용 Backend 8개에서 실제 Promote를 검증했다.
 
 ```mermaid
 flowchart LR
@@ -73,14 +73,14 @@ flowchart LR
     C --> V["GHCR/ECR Digest 비교"]
     V --> E["ECR SHA Tag와 Digest"]
     E --> M["적용된 Flyway Task Definition"]
-    E -. "후속" .-> X["미구현 Application ECS Task/Service"]
+    E -. "후속 Apply" .-> X["Application ECS Task/Service"]
 ```
 
 - `.github/workflows/ecr-build-push.yml`은 backend 8개 또는 Database Migration 대상 3개를 선택한다.
 - ECR에는 `latest`를 발행하지 않고 전체 Git commit SHA만 사용한다.
 - 최초 Terraform module, 저장 Plan Apply, GitHub 변수 연결과 Backend 8개 재빌드 게시 검증은 완료했다.
 - ECR 전체 게시 기준은 SHA `3564959efa1637e60fe72f009d4fa1a5809de01b`, GitHub Actions run `29561837114`다.
-- 새 Workflow는 `source_sha`의 GHCR Image를 `crane copy`하고, 기존 ECR Tag가 같은 Digest면 Skip하며 다르면 실패한다. Source SHA `f0c88e32b883c391dcf993dfbf40839312de0f39`의 GHCR Run `29642831008`과 ECR Run `29643089643`에서 세 Image의 Digest 일치를 실제 검증했다.
+- 새 Workflow는 `source_sha`의 GHCR Image를 `crane copy`하고, 기존 ECR Tag가 같은 Digest면 Skip하며 다르면 실패한다. Source SHA `a7b3e0387c6817fd5a781ccf3ac532e04f38c9e1`의 GHCR Run `29648349144`와 ECR Run `29648492164`에서 Backend 8개 모두의 Digest 일치를 실제 검증했다.
 - RDS/Secrets Terraform, DB Secret 초기화와 실제 RDS Role·Schema Bootstrap, Digest 고정 ECS Flyway Migration Task 3개와 실제 V1 실행을 완료했다. ECS Application Service, Cloud Map, ALB와 Valkey 코드는 로컬 구현·검증 단계이며 AWS Apply와 자동 배포는 아직 없다.
 - 실제 적용 상태와 승인 gate는 [`infra/aws/terraform/README.md`](../../infra/aws/terraform/README.md)를 기준으로 한다.
 
@@ -107,7 +107,7 @@ flowchart LR
 - 기존 ECR SHA Tag가 있으면 Digest가 같을 때만 Skip하고 다르면 실패한다.
 - Kubernetes와 ECS는 각 Registry의 동일 Digest를 사용하며 `latest`는 배포 기준으로 사용하지 않는다.
 
-구현·로컬 검증과 Database Migration 대상의 실제 원격 실행을 완료했다. 후속 서비스 실행 절차는 [AWS Learning Image Build Once·Promote Runbook](../runbooks/aws-image-build-once-promote.md)을 따른다.
+구현·로컬 검증, Database Migration 대상과 Application Runtime Backend 8개의 실제 원격 실행을 완료했다. 후속 서비스 실행 절차는 [AWS Learning Application Runtime Runbook](../runbooks/aws-application-runtime.md)을 따른다.
 
 ## DR delivery 참고 원칙
 

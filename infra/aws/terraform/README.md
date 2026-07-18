@@ -1,6 +1,6 @@
 # AWS Terraform 운영 Runbook
 
-이 디렉터리는 `spring-react-msa` 학습 환경의 현재 AWS 인프라를 관리한다. 기본 리전은 `ap-northeast-2`다. Foundation 기준선, Backend ECR/GitHub OIDC, Private App 송신, RDS/Secrets Data Layer, ECS Compute, Database Bootstrap과 Flyway Migration Task까지 Apply했고 실제 RDS에서 Role·Schema·Flyway V1을 검증했다. RDS는 비용 통제를 위해 정지했고 ECS ASG는 `0/0/0`으로 유지한다. Backend 8개의 Application Runtime Terraform 코드는 구현·로컬 계약 검증까지 완료했지만 아직 Image 8개 Promote와 저장 Plan 승인 전이므로 AWS에는 배포하지 않았다. 후속 Runtime의 승인된 목표와 미구현 경계는 [AWS Learning Runtime 결정](../../../docs/aws-migration/07-learning-runtime-design.md)을 따른다.
+이 디렉터리는 `spring-react-msa` 학습 환경의 현재 AWS 인프라를 관리한다. 기본 리전은 `ap-northeast-2`다. Foundation 기준선, Backend ECR/GitHub OIDC, Private App 송신, RDS/Secrets Data Layer, ECS Compute, Database Bootstrap과 Flyway Migration Task까지 Apply했고 실제 RDS에서 Role·Schema·Flyway V1을 검증했다. RDS는 비용 통제를 위해 정지했고 ECS ASG는 `0/0/0`으로 유지한다. Backend 8개의 Application Runtime Terraform 코드와 Build Once·ECR Digest Promote까지 완료했지만 Application Foundation 저장 Plan 승인 전이므로 Task/Service·Cloud Map·ALB·Valkey는 AWS에 아직 배포하지 않았다. 후속 Runtime의 승인된 목표와 미구현 경계는 [AWS Learning Runtime 결정](../../../docs/aws-migration/07-learning-runtime-design.md)을 따른다.
 
 ## 현재 상태와 범위
 
@@ -481,7 +481,7 @@ Application, Data, Kafka, SSH Port는 Internet에서 직접 접근할 수 없다
 
 ## 다음 단계
 
-1. 현재 변경을 Commit/Push하고 Backend 8개를 GHCR Build Once → ECR Digest Promote
+1. 완료: Source SHA `a7b3e0387c6817fd5a781ccf3ac532e04f38c9e1`의 Backend 8개 GHCR Build Once → ECR Digest Promote와 8/8 Digest 일치 검증
 2. Runtime Secret 초기화 후 Application Foundation OFF 저장 Plan 생성·승인·Apply
 3. 별도 Runtime ON Plan으로 RDS/Valkey/ECS/ALB를 짧게 실행해 8개 Health와 내부 호출 Smoke Test
 4. Runtime OFF와 RDS 정지 검증
