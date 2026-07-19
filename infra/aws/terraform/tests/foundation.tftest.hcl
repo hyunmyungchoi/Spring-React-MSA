@@ -11,6 +11,21 @@ mock_provider "aws" {
       url = "token.actions.githubusercontent.com"
     }
   }
+
+  mock_data "aws_caller_identity" {
+    defaults = {
+      account_id = "111122223333"
+      arn        = "arn:aws:iam::111122223333:root"
+      id         = "111122223333"
+    }
+  }
+
+  mock_data "aws_partition" {
+    defaults = {
+      partition  = "aws"
+      dns_suffix = "amazonaws.com"
+    }
+  }
 }
 
 run "foundation_plan" {
@@ -98,6 +113,37 @@ run "budget_requires_email" {
   }
 
   expect_failures = [var.budget_alert_email]
+}
+
+run "observability_foundation_contract" {
+  command = plan
+
+  variables {
+    enable_data_layer               = true
+    enable_observability_foundation = true
+    budget_alert_email              = "terraform-test@example.com"
+  }
+
+  assert {
+    condition = (
+      length(module.observability) == 1 &&
+      length(module.observability[0].rds_alarm_names) == 3
+    )
+    error_message = "The enabled observability foundation must create one module instance and three RDS alarms."
+  }
+}
+
+run "observability_requires_email" {
+  command = plan
+
+  variables {
+    enable_budget                   = false
+    enable_data_layer               = true
+    enable_observability_foundation = true
+    budget_alert_email              = null
+  }
+
+  expect_failures = [var.enable_observability_foundation]
 }
 
 run "network_contract" {

@@ -25,8 +25,8 @@
 | Data | PostgreSQL 16, Redis 7 |
 | Messaging | Kafka 3.7.0 |
 | Platform | Docker Compose, Kubernetes, ingress-nginx, GHCR, Argo CD |
-| AWS migration | WebSocket 교정 전체 검증 완료; Runtime OFF·RDS 정지·재계획 `No changes` 완료 |
-| Observability | Prometheus, Grafana, Loki, Promtail, Kafka exporters |
+| AWS migration | Runtime OFF·RDS 정지 유지; 관측성 Foundation Saved Plan `7/0/0` 검증 완료·Apply 대기 |
+| Observability | Kubernetes Prometheus·Grafana·Loki와 AWS CloudWatch Log·Budget·RDS Alarm/SNS 계약 |
 
 ## 문서 상태 표현
 
@@ -94,6 +94,7 @@
 - [AWS Image Build Once·ECR Promote](runbooks/aws-image-build-once-promote.md)
 - [AWS Frontend S3·CloudFront 배포](runbooks/aws-frontend-hosting.md)
 - [AWS Route 53·ACM·TLS·API Origin](runbooks/aws-domain-tls.md)
+- [AWS 관측성 Foundation](runbooks/aws-observability.md)
 - [Kubernetes에서 AWS로 장애 전환](runbooks/k8s-to-aws-failover.md)
 - [AWS에서 Kubernetes로 원복](runbooks/aws-to-k8s-failback.md)
 
@@ -116,6 +117,6 @@
 | [AWS Foundation](aws-migration/04-aws-foundation-design.md) | VPC/subnet/SG 설계 | Foundation 유지, Runtime ON 검증 후 현재 OFF |
 | [ECR/OIDC 설계](aws-migration/05-ecr-github-oidc-design.md) | SHA 이미지와 GitHub OIDC | Apply·GitHub 변수·Backend 8개 게시 완료 |
 | [ECR/OIDC 구현 계획](aws-migration/06-ecr-github-oidc-implementation-plan.md) | 구현·승인 gate 실행 기록 | Task 6·단일/중복/전체 게시 검증 완료 |
-| [Learning Runtime 결정](aws-migration/07-learning-runtime-design.md) | NAT, State, ECS, RDS, Frontend, Secret, DNS 결정 | Runtime ON HTTPS·OAuth·Session와 후속 OFF 완료, WebSocket 교정 Image 승격 완료·ECS 적용과 재검증 대기 |
+| [Learning Runtime 결정](aws-migration/07-learning-runtime-design.md) | NAT, State, ECS, RDS, Frontend, Secret, DNS 결정 | Runtime ON HTTPS·OAuth·Session·WebSocket 검증과 후속 OFF 완료; 관측성 Foundation Apply 대기 |
 
 AWS 적용 여부는 Git만으로 확정할 수 없으므로 문서의 `저장소 상태`와 `AWS 적용 상태`를 구분한다. Terraform state, 저장 plan, 계정 식별자와 secret은 문서나 Git에 추가하지 않는다.

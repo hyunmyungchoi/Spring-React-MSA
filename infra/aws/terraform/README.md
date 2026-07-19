@@ -86,10 +86,18 @@ DB Migration 검증 후에는 승인된 OFF Plan으로 ASG `0/0/0`과 RDS 정지
 
 ### 현재 AWS에 아직 생성하지 않은 대상
 
-- Root·Member·Admin Route 53 A/AAAA Alias와 CloudFront Custom Domain/API Origin
+- SNS Operations Topic·Email Subscription, 사용자 정의 RDS Alarm 3개와 RDS Event Subscription
 - MSK/Kafka
 
-Route 53/ACM/TLS 코드는 구현했고 현재 Terraform 전체 테스트 `23 passed, 0 failed`다. Bootstrap State Role 권한과 별도 Global DNS State를 적용해 기존 Hosted Zone Import, ACM 인증서 2개 `ISSUED`, DNS 검증 CNAME 4개를 완료했다. Runtime OFF Custom Domain/A·AAAA/HTTPS API Origin Gate C도 적용해 정적 curl 6/6, Root 308, TLS와 재계획 `No changes`를 검증했다.
+Route 53/ACM/TLS는 Bootstrap State Role 권한과 별도 Global DNS State를 적용해 기존 Hosted Zone Import, ACM 인증서 2개 `ISSUED`, DNS 검증 CNAME 4개를 완료했다. Runtime OFF Custom Domain/A·AAAA/HTTPS API Origin도 적용해 정적 curl 6/6, Root 308, TLS와 재계획 `No changes`를 검증했다.
+
+### 관측성 Foundation 준비 상태
+
+기존 CloudWatch Log Group 12개는 7일 보존이고 월 USD 50 Budget 1개에는 실제 비용 USD 10/30/40/50 알림이 있다. 별도 사용자 정의 Alarm과 SNS Topic은 아직 AWS에 적용하지 않았다.
+
+`modules/observability`는 Runtime OFF에도 유지되는 SNS Operations Topic·Policy·Email Subscription, RDS CPU/Freeable Memory/Free Storage Alarm 3개와 RDS Event Subscription을 정의한다. RDS 정지 중 지표 누락은 `notBreaching`으로 처리한다. 루트 플래그는 기본 `false`이고 Data Layer와 유효한 추적 제외 알림 Email이 있어야 활성화할 수 있다.
+
+현재 Terraform 정적 검증과 전체 mock 계약 테스트는 `26 passed, 0 failed`다. Runtime OFF `tfplan-observability-foundation-off`는 189,381 bytes, SHA-256 `9d0be211791325fcbf32ac1df2762cc66bab0bb970dc7f62fe094340ad507613`, `7 added, 0 changed, 0 destroyed`로 검토했다. 실제 ECS/ASG/ALB/Valkey/RDS는 OFF이고 관측성 대상 리소스는 아직 0개다. 명시적 Apply 승인과 Apply 뒤 SNS Email 확인은 남아 있다. 운영 절차는 [`docs/runbooks/aws-observability.md`](../../../docs/runbooks/aws-observability.md)를 따른다.
 
 ### 적용된 Data Layer
 
@@ -561,7 +569,7 @@ Application, Data, Kafka, SSH Port는 Internet에서 직접 접근할 수 없다
 5. 완료: Frontend S3 6개·CloudFront 2개 Apply, GitHub 변수, 첫 전체 배포 6/6과 정적 curl 6/6·`No changes` 검증
 6. 완료: Global DNS State 권한·Hosted Zone Import·ACM·Route 53/CloudFront/TLS와 API·OAuth·WebSocket Origin, 정적 curl 6/6와 `No changes`
 7. 완료: WebSocket Gateway Route·Member BFF Public Origin 교정 적용, Runtime ON HTTPS·OAuth·Session·WebSocket 네 프레임·채팅 영속성·Logout·`No changes` 검증
-8. 관측성·Alarm·Runtime 자동화와 최초 관리자 Bootstrap
+8. 진행 중: 관측성 Foundation 코드·정적 검증·Terraform 테스트 26개·Runtime OFF Saved Plan `7/0/0` 검토 완료. Apply·SNS Email 확인 뒤 Runtime 자동화와 최초 관리자 Bootstrap 진행
 9. Backup Restore와 전체 Smoke Test
 
 Kubernetes↔AWS DR은 Learning 적용 범위에서 제외하고 후속 학습 과제로 보류한다.

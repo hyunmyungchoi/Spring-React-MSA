@@ -81,6 +81,18 @@ module "data_layer" {
   common_tags              = local.common_tags
 }
 
+module "observability" {
+  count  = var.enable_observability_foundation ? 1 : 0
+  source = "./modules/observability"
+
+  name_prefix            = local.name_prefix
+  aws_region             = var.aws_region
+  alert_email            = coalesce(var.budget_alert_email, "disabled@example.invalid")
+  db_instance_identifier = module.data_layer.db_instance_identifier
+  db_instance_arn        = module.data_layer.db_instance_arn
+  common_tags            = local.common_tags
+}
+
 module "ecs_compute" {
   count  = var.enable_ecs_compute_foundation ? 1 : 0
   source = "./modules/ecs-compute"

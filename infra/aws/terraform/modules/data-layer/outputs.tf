@@ -3,6 +3,11 @@ output "db_instance_identifier" {
   value       = one(aws_db_instance.this[*].identifier)
 }
 
+output "db_instance_arn" {
+  description = "RDS instance ARN, or null when the data layer is disabled."
+  value       = one(aws_db_instance.this[*].arn)
+}
+
 output "db_address" {
   description = "Private RDS endpoint address, or null when the data layer is disabled."
   value       = one(aws_db_instance.this[*].address)

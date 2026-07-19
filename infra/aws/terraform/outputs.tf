@@ -63,6 +63,11 @@ output "db_instance_identifier" {
   value       = module.data_layer.db_instance_identifier
 }
 
+output "db_instance_arn" {
+  description = "Learning RDS instance ARN, or null when disabled."
+  value       = module.data_layer.db_instance_arn
+}
+
 output "db_address" {
   description = "Private learning RDS endpoint, or null when disabled."
   value       = module.data_layer.db_address
@@ -87,6 +92,21 @@ output "rds_master_user_secret_arn" {
 output "application_secret_arns" {
   description = "Map of application secret container names to ARNs. Values are populated outside Terraform."
   value       = module.data_layer.application_secret_arns
+}
+
+output "operations_sns_topic_arn" {
+  description = "Operations SNS topic ARN, or null when the observability foundation is disabled."
+  value       = try(module.observability[0].operations_sns_topic_arn, null)
+}
+
+output "rds_alarm_names" {
+  description = "RDS CloudWatch alarm names, or an empty map when the observability foundation is disabled."
+  value       = try(module.observability[0].rds_alarm_names, {})
+}
+
+output "rds_event_subscription_name" {
+  description = "RDS event subscription name, or null when the observability foundation is disabled."
+  value       = try(module.observability[0].rds_event_subscription_name, null)
 }
 
 output "ecs_cluster_name" {

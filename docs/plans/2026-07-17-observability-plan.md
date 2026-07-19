@@ -80,3 +80,31 @@ Dashboard JSON은 Git에서 version 관리한다.
 - 의도적 5xx/latency/Kafka lag로 alert fire/resolve 확인
 - Grafana dashboard에서 배포 전후 SHA와 지표 비교
 - 로그 redaction 자동 테스트
+
+## AWS Learning 적용 단계
+
+Kubernetes 관측성 계획과 별도로 AWS Learning 환경은 비용이 낮고 Runtime OFF에서도 유효한 기반부터 적용한다.
+
+### 1단계: 영속 Foundation
+
+- 기존 CloudWatch Log Group 12개와 7일 보존을 유지한다.
+- 기존 월 USD 50 Budget과 실제 비용 USD 10/30/40/50 알림을 유지한다.
+- SNS Operations Topic과 Email Subscription을 만든다.
+- RDS CPU, Freeable Memory, Free Storage Alarm 3개를 만든다.
+- RDS availability/backup/failure/low storage/maintenance/notification Event Subscription을 만든다.
+- RDS 정지 중 지표 누락은 정상으로 취급한다.
+
+저장소 구현, mock 기반 Terraform 테스트 26개와 Runtime OFF Saved Plan `7 added, 0 changed, 0 destroyed` 검토는 완료했다. 명시적 Apply 승인, SNS Email 확인과 실알림 검증은 아직 남아 있다. 상세 절차는 [AWS 관측성 Foundation 런북](../runbooks/aws-observability.md)을 따른다.
+
+### 2단계: Runtime 수명주기 관측
+
+- Container Insights 비용을 확인한 뒤 활성화 여부를 결정한다.
+- Backend 서비스별 Task Count, CPU, Memory Alarm 범위를 결정한다.
+- Runtime ON 동안에만 존재하는 ALB Alarm의 생성·삭제 수명주기를 Terraform에 고정한다.
+- Runtime ON/OFF 스케줄과 RDS 최대 정지 기간 자동 시작 감시를 연결한다.
+
+### 3단계: 운영 초기화
+
+- 최초 관리자 Bootstrap을 일회성·감사 가능한 절차로 구현한다.
+- Bootstrap 뒤 관리자 가입 기능이 AWS `prod`에서 계속 비활성인지 확인한다.
+- 전체 HTTPS·OAuth·Session·WebSocket curl Smoke와 Backup Restore 검증으로 마무리한다.

@@ -86,6 +86,21 @@ variable "enable_data_layer" {
   default     = false
 }
 
+variable "enable_observability_foundation" {
+  description = "Whether to create the persistent SNS operations channel, RDS alarms, and RDS event subscription."
+  type        = bool
+  default     = false
+
+  validation {
+    condition = !var.enable_observability_foundation || (
+      var.enable_data_layer &&
+      var.budget_alert_email != null &&
+      can(regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", var.budget_alert_email))
+    )
+    error_message = "enable_observability_foundation requires the data layer and a valid budget_alert_email."
+  }
+}
+
 variable "enable_ecs_compute_foundation" {
   description = "Whether to create the ECS cluster, EC2 launch template, zero-capacity ASG, and capacity provider."
   type        = bool
