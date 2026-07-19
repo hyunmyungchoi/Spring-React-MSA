@@ -94,7 +94,7 @@ Kubernetes 관측성 계획과 별도로 AWS Learning 환경은 비용이 낮고
 - RDS availability/backup/failure/low storage/maintenance/notification Event Subscription을 만든다.
 - RDS 정지 중 지표 누락은 정상으로 취급한다.
 
-저장소 구현, mock 기반 Terraform 테스트 26개와 Runtime OFF Saved Plan `7 added, 0 changed, 0 destroyed` 검토는 완료했다. 명시적 Apply 승인, SNS Email 확인과 실알림 검증은 아직 남아 있다. 상세 절차는 [AWS 관측성 Foundation 런북](../runbooks/aws-observability.md)을 따른다.
+첫 Runtime OFF Plan Apply는 SNS Topic 1개 생성 뒤 wildcard Topic Policy가 AWS에서 거부돼 부분 실패했다. 정책을 `sns:Publish` 전용으로 교정하고 전체 mock 테스트 `26 passed, 0 failed`와 부분 state 기준 복구 Plan `6 added, 0 changed, 0 destroyed`를 검증했다. 새 Apply 승인, SNS Email 확인과 실알림 검증은 아직 남아 있다. 상세 절차는 [AWS 관측성 Foundation 런북](../runbooks/aws-observability.md)을 따른다.
 
 ### 2단계: Runtime 수명주기 관측
 

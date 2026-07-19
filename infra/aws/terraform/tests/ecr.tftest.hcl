@@ -94,8 +94,9 @@ run "root_ecr_inventory" {
   command = plan
 
   variables {
-    enable_budget      = false
-    budget_alert_email = null
+    enable_budget                   = false
+    enable_observability_foundation = false
+    budget_alert_email              = null
   }
 
   assert {

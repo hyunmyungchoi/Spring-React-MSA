@@ -32,9 +32,10 @@ run "foundation_plan" {
   command = plan
 
   variables {
-    enable_budget      = true
-    budget_alert_email = "terraform-test@example.com"
-    enable_nat_gateway = true
+    enable_budget                   = true
+    enable_observability_foundation = false
+    budget_alert_email              = "terraform-test@example.com"
+    enable_nat_gateway              = true
   }
 
   assert {
@@ -87,10 +88,11 @@ run "budget_disabled_without_email" {
   command = plan
 
   variables {
-    enable_budget            = false
-    budget_alert_email       = null
-    enable_nat_gateway       = false
-    learning_runtime_enabled = false
+    enable_budget                   = false
+    enable_observability_foundation = false
+    budget_alert_email              = null
+    enable_nat_gateway              = false
+    learning_runtime_enabled        = false
   }
 
   assert {
@@ -108,8 +110,9 @@ run "budget_requires_email" {
   command = plan
 
   variables {
-    enable_budget      = true
-    budget_alert_email = null
+    enable_budget                   = true
+    enable_observability_foundation = false
+    budget_alert_email              = null
   }
 
   expect_failures = [var.budget_alert_email]

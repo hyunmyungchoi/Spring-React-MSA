@@ -41,21 +41,9 @@ resource "aws_sns_topic" "operations" {
 
 data "aws_iam_policy_document" "operations" {
   statement {
-    sid       = "AccountAdministration"
-    effect    = "Allow"
-    actions   = ["SNS:*"]
-    resources = [aws_sns_topic.operations.arn]
-
-    principals {
-      type        = "AWS"
-      identifiers = ["arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:root"]
-    }
-  }
-
-  statement {
     sid       = "RdsEventPublish"
     effect    = "Allow"
-    actions   = ["SNS:Publish"]
+    actions   = ["sns:Publish"]
     resources = [aws_sns_topic.operations.arn]
 
     principals {
@@ -79,7 +67,7 @@ data "aws_iam_policy_document" "operations" {
   statement {
     sid       = "CloudWatchAlarmPublish"
     effect    = "Allow"
-    actions   = ["SNS:Publish"]
+    actions   = ["sns:Publish"]
     resources = [aws_sns_topic.operations.arn]
 
     principals {

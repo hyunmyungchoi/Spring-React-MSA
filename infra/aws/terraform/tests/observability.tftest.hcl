@@ -44,6 +44,15 @@ run "observability_contract" {
   }
 
   assert {
+    condition = alltrue(flatten([
+      for statement in data.aws_iam_policy_document.operations.statement : [
+        for action in statement.actions : action == "sns:Publish"
+      ]
+    ]))
+    error_message = "The SNS topic policy must grant only sns:Publish and must not contain an out-of-scope wildcard action."
+  }
+
+  assert {
     condition     = length(aws_cloudwatch_metric_alarm.rds) == 3
     error_message = "Exactly three persistent RDS alarms must be configured."
   }
