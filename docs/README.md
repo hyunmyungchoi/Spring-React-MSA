@@ -25,7 +25,7 @@
 | Data | PostgreSQL 16, Redis 7 |
 | Messaging | Kafka 3.7.0 |
 | Platform | Docker Compose, Kubernetes, ingress-nginx, GHCR, Argo CD |
-| AWS migration | Runtime ON; HTTPS·OAuth·Session·WebSocket·채팅 영속성 검증과 Member BFF Origin 교정 완료 |
+| AWS migration | Runtime ON; HTTPS·OAuth·Session·WebSocket·채팅 영속성 검증 완료, 후속 Runtime OFF Plan 승인 대기 |
 | Observability | Prometheus, Grafana, Loki, Promtail, Kafka exporters |
 
 ## 문서 상태 표현

@@ -1,12 +1,12 @@
 # AWS Learning Runtime 결정
 
-> 문서 상태: Learning 목표 설계 승인, WebSocket Gateway·Member BFF Origin 교정 적용과 Runtime ON 전체 공개 경로 검증 완료
+> 문서 상태: Learning 목표 설계 승인, WebSocket Gateway·Member BFF Origin 교정 적용과 Runtime ON 전체 공개 경로 검증 완료, Runtime OFF Plan 승인 대기
 >
 > 기준일: 2026-07-19
 >
 > 저장소 상태: Foundation·ECR/OIDC·Private App 송신·RDS/Secrets·ECS Compute·DB Bootstrap/Flyway·Application Runtime·Frontend Hosting·Public Domain/TLS 코드 적용, Terraform 계약 테스트 23/23 완료
 >
-> AWS 적용 상태: Gateway 전용 `ws://` Route와 Member BFF Public Origin 계약을 모두 적용했다. 승인된 Origin 교정 Saved Plan은 Member BFF Task Definition과 ECS Service만 `1 added, 1 changed, 1 destroyed`로 갱신했고 Revision 3이 `HEALTHY`·`COMPLETED`로 수렴했다. ECS·Rollout·Container Health 8/8, ASG `1/1/2`, ALB Target 2/2, Valkey·RDS `available`이며 curl 기반 Registration·Password Login·OAuth Authorization Code·BFF Session·CSRF Heartbeat·Logout이 통과했다. 공개 `wss://`는 `CONNECTED`, `HISTORY`, `PONG`, `CHAT_MESSAGE`를 모두 수신했고 전송 메시지의 REST History 재조회도 200으로 확인했다. 동일 Runtime ON 입력 재계획은 `No changes`이며 Runtime은 ON 상태다.
+> AWS 적용 상태: Gateway 전용 `ws://` Route와 Member BFF Public Origin 계약을 모두 적용했다. 승인된 Origin 교정 Saved Plan은 Member BFF Task Definition과 ECS Service만 `1 added, 1 changed, 1 destroyed`로 갱신했고 Revision 3이 `HEALTHY`·`COMPLETED`로 수렴했다. ECS·Rollout·Container Health 8/8, ASG `1/1/2`, ALB Target 2/2, Valkey·RDS `available`이며 curl 기반 Registration·Password Login·OAuth Authorization Code·BFF Session·CSRF Heartbeat·Logout이 통과했다. 공개 `wss://`는 `CONNECTED`, `HISTORY`, `PONG`, `CHAT_MESSAGE`를 모두 수신했고 전송 메시지의 REST History 재조회도 200으로 확인했다. 동일 Runtime ON 입력 재계획은 `No changes`다. 현재 Runtime은 ON이며 비용 종료용 Saved Plan 적용과 RDS 정지는 별도 승인 전이다.
 
 이 문서는 AWS Foundation 이후 Learning 환경에 추가할 Runtime의 승인된 결정을 기록한다. 현재 적용된 리소스와 운영 절차는 [Terraform 운영 Runbook](../../infra/aws/terraform/README.md), 이미 적용된 네트워크 기준선은 [AWS Foundation 설계](04-aws-foundation-design.md)를 따른다.
 
