@@ -4,7 +4,7 @@
 >
 > 기준일: 2026-07-19
 >
-> AWS 적용 상태: Runtime ON에서 ASG `1/1/2`, Service 8개 `1/1/0`, RDS·Valkey·Public ALB와 Health·Digest·Cloud Map 8/8, curl Smoke 6/6 검증 완료; 현재 Runtime OFF로 Service/ASG 0, ALB·Valkey 삭제, RDS 정지. Frontend Hosting Foundation은 Apply·검증 완료, 첫 배포 대기
+> AWS 적용 상태: Runtime ON에서 ASG `1/1/2`, Service 8개 `1/1/0`, RDS·Valkey·Public ALB와 Health·Digest·Cloud Map 8/8, curl Smoke 6/6 검증 완료; 현재 Runtime OFF로 Service/ASG 0, ALB·Valkey 삭제, RDS 정지. Frontend Hosting은 Apply·첫 전체 배포 6/6·정적 curl 6/6 검증 완료
 
 이 문서는 AWS에서 달라지는 배치와 환경 변수만 관리한다. 서비스 책임과 현재 요청 흐름의 기준 문서는 [MSA 구성](../architecture/msa-structure.md), [인증 흐름](../architecture/authentication-flow.md), [회원 서비스 스펙](../specs/member-service.md), [관리자 서비스 스펙](../specs/admin-service.md)이다.
 

@@ -104,7 +104,7 @@ flowchart LR
 - 최초 Terraform module, 저장 Plan Apply, GitHub 변수 연결과 Backend 8개 재빌드 게시 검증은 완료했다.
 - ECR 전체 게시 기준은 SHA `3564959efa1637e60fe72f009d4fa1a5809de01b`, GitHub Actions run `29561837114`다.
 - 새 Workflow는 `source_sha`의 GHCR Image를 `crane copy`하고, 기존 ECR Tag가 같은 Digest면 Skip하며 다르면 실패한다. Source SHA `a7b3e0387c6817fd5a781ccf3ac532e04f38c9e1`의 GHCR Run `29648349144`와 ECR Run `29648492164`에서 Backend 8개 모두의 Digest 일치를 실제 검증했다.
-- RDS/Secrets Terraform, DB Secret 초기화, 실제 RDS Role·Schema Bootstrap과 Flyway V1을 완료했다. Digest 고정 ECS Application Service 8개, Cloud Map, ALB와 Valkey도 Runtime ON에서 검증한 뒤 현재 Runtime OFF로 전환했다. AWS 정적 Frontend S3·CloudFront Foundation과 배포 IAM은 Apply·검증했으며 GitHub Variable 연결과 첫 배포는 아직 하지 않았다.
+- RDS/Secrets Terraform, DB Secret 초기화, 실제 RDS Role·Schema Bootstrap과 Flyway V1을 완료했다. Digest 고정 ECS Application Service 8개, Cloud Map, ALB와 Valkey도 Runtime ON에서 검증한 뒤 현재 Runtime OFF로 전환했다. AWS 정적 Frontend S3·CloudFront Foundation과 배포 IAM을 Apply하고 GitHub Variable, 첫 전체 배포 6/6과 curl 6/6까지 검증했다.
 - 실제 적용 상태와 승인 gate는 [`infra/aws/terraform/README.md`](../../infra/aws/terraform/README.md)를 기준으로 한다.
 
 GHCR→Kubernetes가 현재 delivery 기준이고 ECR→AWS는 migration lane이다. 한쪽 장애가 다른 쪽 image publication을 막지 않도록 workflow와 registry 권한을 독립적으로 유지한다.

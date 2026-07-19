@@ -2,7 +2,7 @@
 
 이 Runbook은 여섯 Frontend를 서로 독립적으로 Build·배포하면서 공개 진입점은 Member와 Admin CloudFront 두 개로 유지하는 절차를 정의한다.
 
-> 실행 상태(2026-07-19): Terraform module, CloudFront 경로 함수, 선택 배포 Workflow와 계약 테스트를 구현했다. pnpm `10.0.0`으로 여섯 산출물의 lint·build를 검증했고 Terraform `validate`, `test` 20/20을 통과했다. 승인한 Saved Plan을 Apply해 S3 6개·CloudFront 2개와 배포 IAM을 생성하고 AWS 계약과 재계획 `No changes`를 검증했다. Bucket은 현재 모두 비어 있으며 GitHub Repository Variable 연결과 첫 배포는 아직 하지 않았다.
+> 실행 상태(2026-07-19): Terraform module, CloudFront 경로 함수, 선택 배포 Workflow와 계약 테스트를 구현했다. pnpm `10.0.0`으로 여섯 산출물의 lint·build를 검증했고 Terraform `validate`, `test` 20/20을 통과했다. 승인한 Saved Plan을 Apply해 S3 6개·CloudFront 2개와 배포 IAM을 생성하고 AWS 계약과 재계획 `No changes`를 검증했다. GitHub Variable 3개를 연결하고 첫 `all` 배포와 CloudFront curl 6/6 HTTP 200까지 완료했다.
 
 ## 배포 경계
 
@@ -105,6 +105,8 @@ gh variable set AWS_ADMIN_CLOUDFRONT_DISTRIBUTION_ID `
 
 Distribution 생성에는 시간이 걸릴 수 있다. Status가 `Deployed`가 되고 Bucket Policy가 정확한 Distribution ARN만 허용하는지 확인한다. Bucket이 비어 있는 동안 CloudFront의 403은 예상 상태이며 배포 성공으로 판정하지 않는다.
 
+> 실행 완료: Role ARN과 Member/Admin Distribution ID를 값 비노출 방식으로 Repository Variable 세 곳에 등록하고 변수 이름과 Active Workflow를 확인했다.
+
 ## 4. 선택 배포
 
 Stock만 배포하는 명령은 다음과 같다.
@@ -119,6 +121,12 @@ gh workflow run aws-frontend-deploy.yml `
 이 실행은 `member` Workspace의 `build:stock`만 실행하고 Stock 전용 Bucket만 동기화하며 Member Distribution의 `/stock`, `/stock/*`만 무효화한다. Member와 Community Bucket에는 Upload/Delete를 수행하지 않는다.
 
 그룹 배포는 `all-member`, `all-admin`, 전체 배포는 `all`을 사용한다. Workflow 동시 실행은 직렬화해 같은 Distribution의 Invalidation과 배포 순서가 서로 추월하지 않게 한다.
+
+첫 전체 배포 기록:
+
+- Source SHA: `f29249373feae470e2c30758e3245d43d22fef25`
+- GitHub Actions: [Run 29677216377](https://github.com/hyunmyungchoi/Spring-React-MSA/actions/runs/29677216377)
+- 결과: Matrix 준비·계약 테스트 성공, Frontend 6개 Job과 pnpm/Build/S3 Sync/Invalidation 필수 단계 24/24 성공
 
 ## 5. curl Smoke Test
 
@@ -137,6 +145,8 @@ curl.exe --fail --silent --show-error --location --head "https://$($domains.admi
 ```
 
 모두 HTTP 2xx여야 한다. Stock 단독 재배포 뒤에는 Stock Asset과 Entry 문서만 바뀌고 Community 객체 Version과 페이지 응답이 유지되는지도 확인한다.
+
+> 첫 Smoke 완료: S3 Entry 문서의 `no-cache`와 Hash Asset의 1년 immutable Cache metadata를 6/6 확인했다. Member Root·Community·Stock과 Admin Root·Users·Logs의 curl은 모두 HTTP 200·HTML이었다.
 
 ## 6. 현재 단계의 제한
 

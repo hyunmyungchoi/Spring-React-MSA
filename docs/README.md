@@ -25,7 +25,7 @@
 | Data | PostgreSQL 16, Redis 7 |
 | Messaging | Kafka 3.7.0 |
 | Platform | Docker Compose, Kubernetes, ingress-nginx, GHCR, Argo CD |
-| AWS migration | Runtime ON curl 6/6 검증 후 Runtime OFF 적용; Frontend S3 6개·CloudFront 2개 Foundation Apply·검증 완료, 첫 배포 대기 |
+| AWS migration | Runtime ON curl 6/6 검증 후 Runtime OFF 적용; Frontend S3 6개·CloudFront 2개 Apply·첫 배포 6/6·정적 curl 6/6 완료 |
 | Observability | Prometheus, Grafana, Loki, Promtail, Kafka exporters |
 
 ## 문서 상태 표현
@@ -115,6 +115,6 @@
 | [AWS Foundation](aws-migration/04-aws-foundation-design.md) | VPC/subnet/SG 설계 | Foundation 유지, Runtime ON 검증 후 현재 OFF |
 | [ECR/OIDC 설계](aws-migration/05-ecr-github-oidc-design.md) | SHA 이미지와 GitHub OIDC | Apply·GitHub 변수·Backend 8개 게시 완료 |
 | [ECR/OIDC 구현 계획](aws-migration/06-ecr-github-oidc-implementation-plan.md) | 구현·승인 gate 실행 기록 | Task 6·단일/중복/전체 게시 검증 완료 |
-| [Learning Runtime 결정](aws-migration/07-learning-runtime-design.md) | NAT, State, ECS, RDS, Frontend, Secret, DNS 결정 | Runtime OFF 완료, Frontend Hosting Foundation Apply·검증 완료/첫 배포 대기 |
+| [Learning Runtime 결정](aws-migration/07-learning-runtime-design.md) | NAT, State, ECS, RDS, Frontend, Secret, DNS 결정 | Runtime OFF 완료, Frontend Hosting Apply·첫 배포·curl 검증 완료 |
 
 AWS 적용 여부는 Git만으로 확정할 수 없으므로 문서의 `저장소 상태`와 `AWS 적용 상태`를 구분한다. Terraform state, 저장 plan, 계정 식별자와 secret은 문서나 Git에 추가하지 않는다.

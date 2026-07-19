@@ -1,12 +1,12 @@
 # AWS Learning Runtime 결정
 
-> 문서 상태: Learning 목표 설계 승인, Runtime ON/OFF와 Frontend Hosting Foundation 적용·검증 완료
+> 문서 상태: Learning 목표 설계 승인, Runtime ON/OFF와 Frontend Hosting 적용·첫 배포·curl 검증 완료
 >
 > 기준일: 2026-07-19
 >
 > 저장소 상태: Foundation·ECR/OIDC·Private App 송신·RDS/Secrets·ECS Compute·DB Bootstrap/Flyway·Application Runtime과 Frontend Hosting 코드 적용, Terraform 계약 테스트 20/20 완료
 >
-> AWS 적용 상태: Runtime ON에서 RDS·Valkey·Public ALB, ASG `1/1/2`, ECS Service 8개 `1/1/0`, Health·Digest·Cloud Map 8/8, ALB Target 2/2와 curl Smoke 6/6을 검증했다. 후속 Runtime OFF 적용을 완료해 현재 Service/Task/ASG/EC2 0, ALB·Valkey 삭제, RDS `stopped`다. Frontend S3 6개·CloudFront 2개와 배포 IAM도 Apply·검증했으며 Bucket은 비어 있고 첫 배포 대기 상태다. Terraform은 `No changes`다.
+> AWS 적용 상태: Runtime ON에서 RDS·Valkey·Public ALB, ASG `1/1/2`, ECS Service 8개 `1/1/0`, Health·Digest·Cloud Map 8/8, ALB Target 2/2와 curl Smoke 6/6을 검증했다. 후속 Runtime OFF 적용을 완료해 현재 Service/Task/ASG/EC2 0, ALB·Valkey 삭제, RDS `stopped`다. Frontend S3 6개·CloudFront 2개와 배포 IAM도 Apply했고 첫 전체 배포 6/6과 정적 curl 6/6 HTTP 200을 검증했다. Terraform은 `No changes`다.
 
 이 문서는 AWS Foundation 이후 Learning 환경에 추가할 Runtime의 승인된 결정을 기록한다. 현재 적용된 리소스와 운영 절차는 [Terraform 운영 Runbook](../../infra/aws/terraform/README.md), 이미 적용된 네트워크 기준선은 [AWS Foundation 설계](04-aws-foundation-design.md)를 따른다.
 
@@ -22,7 +22,7 @@
 | P0 | 이미지 무결성 | GHCR Build Once, OCI Digest 기준 ECR Promote | Backend 8개 Build Once·Promote·8/8 Digest 검증 완료 |
 | P1 | ECS 구조 | ECS on EC2, ASG Capacity Provider, Learning ON/OFF | Runtime ON에서 ASG `1/1/2`, Service 8개 `1/1/0` 배치 검증 완료 |
 | P1 | 데이터베이스 | PostgreSQL 16 공유 인스턴스·서비스별 Schema·Flyway | DB Secret·Bootstrap·Flyway V1 3개 실제 실행과 사후 검증 완료 |
-| P1 | Frontend | 독립 Private S3 6개와 Member/Admin CloudFront 2개 | Foundation Apply·AWS 계약·`No changes` 검증 완료, 첫 배포 대기 |
+| P1 | Frontend | 독립 Private S3 6개와 Member/Admin CloudFront 2개 | Apply·AWS 계약·첫 전체 배포·curl 6/6 검증 완료 |
 | P1 | Secret | Secrets Manager로 통일 | Container 7개·최소 권한 IAM 적용, DB Secret 3개와 Runtime Secret 6개 계약 초기화 완료 |
 | P1 | 도메인 | 기존 Hosted Zone Import와 별도 Global DNS State | 미구현 |
 | P2 | DR | Learning 범위에서 제외하고 후속 학습 과제로 보류 | 보류 |
@@ -201,7 +201,7 @@ RDS는 Runtime OFF 때 삭제하지 않고 정지한다. Automated Backup 보존
 
 CloudFront용 ACM 인증서는 `us-east-1`, ALB용 인증서는 `ap-northeast-2`에서 관리한다. Learning Runtime의 ALB Origin은 Public Subnet에 두되 Security Group과 Origin 검증 수단으로 CloudFront 경로를 제한해야 한다.
 
-현재 Terraform module은 BucketOwnerEnforced, Public Access 전체 차단, SSE-S3, Versioning, 7일 Noncurrent Version 정리, OAC `always` SigV4를 고정한다. `.github/workflows/aws-frontend-deploy.yml`은 Node `24.18.0`, pnpm `10.0.0`, Frozen Lockfile과 GitHub OIDC를 사용한다. 여섯 Frontend Lint·Build, 선택 Matrix 계약 14개와 Terraform `validate`·`test` 20/20을 통과했다. Saved Plan SHA-256 `f49031685f65ff8ed8274316e34e1c195431a3d1912ac279114b14b23f0aa5e8`을 승인된 그대로 Apply해 `49 added, 0 changed, 0 destroyed`로 완료했다. AWS에서 S3 보안 6/6, CloudFront `Deployed` 2/2·Origin 3+3·Function 연결 6개, Function `DEPLOYED` 2/2, OAC와 IAM Trust를 확인했고 재계획은 `No changes`였다. GitHub Repository Variable 연결, 첫 Upload와 CloudFront curl Smoke는 다음 실행 단계다. 상세 절차는 [AWS Frontend Runbook](../runbooks/aws-frontend-hosting.md)을 따른다.
+현재 Terraform module은 BucketOwnerEnforced, Public Access 전체 차단, SSE-S3, Versioning, 7일 Noncurrent Version 정리, OAC `always` SigV4를 고정한다. `.github/workflows/aws-frontend-deploy.yml`은 Node `24.18.0`, pnpm `10.0.0`, Frozen Lockfile과 GitHub OIDC를 사용한다. 여섯 Frontend Lint·Build, 선택 Matrix 계약 14개와 Terraform `validate`·`test` 20/20을 통과했다. Saved Plan SHA-256 `f49031685f65ff8ed8274316e34e1c195431a3d1912ac279114b14b23f0aa5e8`을 승인된 그대로 Apply해 `49 added, 0 changed, 0 destroyed`로 완료했다. AWS에서 S3 보안 6/6, CloudFront `Deployed` 2/2·Origin 3+3·Function 연결 6개, Function `DEPLOYED` 2/2, OAC와 IAM Trust를 확인했고 재계획은 `No changes`였다. Source SHA `f29249373feae470e2c30758e3245d43d22fef25`의 [Run 29677216377](https://github.com/hyunmyungchoi/Spring-React-MSA/actions/runs/29677216377)에서 6개 배포 Job과 필수 단계 24/24가 성공했고, S3 Cache metadata 6/6과 CloudFront 정적 curl 6/6 HTTP 200을 확인했다. 상세 절차는 [AWS Frontend Runbook](../runbooks/aws-frontend-hosting.md)을 따른다.
 
 ## 8. Secret 관리
 
@@ -289,7 +289,7 @@ Learning에서 적용할 복구 기준은 다음으로 제한한다.
 5. 완료: ECS Cluster, Launch Template, ASG와 Capacity Provider 적용·AWS 검증·재계획 `No changes`
 6. 완료: Runtime Secret 초기화, Application Foundation, Runtime ON·서비스 계약 교정과 curl Smoke 6/6, 재계획 `No changes` 검증
 7. 완료: Runtime OFF Saved Plan 적용, ECS/ASG 0·Valkey/ALB 삭제·RDS 정지와 재계획 `No changes` 검증
-8. 진행 중: Frontend S3 6개·CloudFront 2개 Foundation Apply와 AWS 계약·`No changes` 검증 완료; GitHub 변수·첫 배포·curl Smoke 대기
+8. 완료: Frontend S3 6개·CloudFront 2개 Apply, GitHub 변수, 첫 전체 배포 6/6과 정적 curl 6/6·`No changes` 검증
 9. ACM, 기존 Hosted Zone Import와 Route 53 Record
 10. CloudWatch Logs, Metrics, Alarms와 Learning ON/OFF 운영 절차
 11. Backup Restore와 전체 Smoke Test
@@ -317,7 +317,6 @@ Application Foundation 최초 Apply는 56개 리소스를 추가했다. 빈 Clou
 Runtime ON 검증 이후 남은 작업은 다음과 같다.
 
 - CloudWatch Log 보존 기간, Alarm 임계값과 Budget 예상 비용
-- Frontend AWS Apply, GitHub OIDC 변수 연결과 CloudFront curl Smoke
 - 최초 관리자 Bootstrap의 실행 주체와 감사 방식
 - Learning OFF/ON 명령의 순서, 실패 시 Rollback과 RDS 자동 재시작 감시
 

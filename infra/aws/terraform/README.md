@@ -1,6 +1,6 @@
 # AWS Terraform 운영 Runbook
 
-이 디렉터리는 `spring-react-msa` 학습 환경의 현재 AWS 인프라를 관리한다. 기본 리전은 `ap-northeast-2`다. Foundation 기준선, Backend ECR/GitHub OIDC, Private App 송신, RDS/Secrets Data Layer, ECS Compute, Database Bootstrap·Flyway Migration, Application Foundation과 Runtime ON 서비스 계약 교정·Smoke 검증 후 Runtime OFF까지 Apply했다. 현재 ECS Service 8개 `0/0/0`, Task·Container Instance·EC2 0, ASG `0/0/0`, Public ALB·Valkey 삭제, RDS `stopped`다. Cloud Map Service 8개, Digest 고정 Task Definition 8개와 Gateway Target Group 2개는 유지한다. Frontend S3 6개·CloudFront 2개와 배포 IAM도 Apply·검증했고 Bucket은 비어 있으며 첫 배포 대기 상태다. Terraform 재계획은 `No changes`다. 후속 Runtime의 승인된 목표와 미구현 경계는 [AWS Learning Runtime 결정](../../../docs/aws-migration/07-learning-runtime-design.md)을 따른다.
+이 디렉터리는 `spring-react-msa` 학습 환경의 현재 AWS 인프라를 관리한다. 기본 리전은 `ap-northeast-2`다. Foundation 기준선, Backend ECR/GitHub OIDC, Private App 송신, RDS/Secrets Data Layer, ECS Compute, Database Bootstrap·Flyway Migration, Application Foundation과 Runtime ON 서비스 계약 교정·Smoke 검증 후 Runtime OFF까지 Apply했다. 현재 ECS Service 8개 `0/0/0`, Task·Container Instance·EC2 0, ASG `0/0/0`, Public ALB·Valkey 삭제, RDS `stopped`다. Cloud Map Service 8개, Digest 고정 Task Definition 8개와 Gateway Target Group 2개는 유지한다. Frontend S3 6개·CloudFront 2개와 배포 IAM도 Apply했고 첫 전체 배포 6/6과 정적 curl 6/6 HTTP 200을 검증했다. Terraform 재계획은 `No changes`다. 후속 Runtime의 승인된 목표와 미구현 경계는 [AWS Learning Runtime 결정](../../../docs/aws-migration/07-learning-runtime-design.md)을 따른다.
 
 ## 현재 상태와 범위
 
@@ -88,7 +88,6 @@ DB Migration 검증 후에는 승인된 OFF Plan으로 ASG `0/0/0`과 RDS 정지
 
 - ACM Certificate와 Route 53 Record
 - MSK/Kafka
-- Frontend GitHub Repository Variable 연결과 첫 선택 배포·curl Smoke; Hosting Foundation과 Workflow 코드는 적용·검증 완료
 
 ### 적용된 Data Layer
 
@@ -160,7 +159,7 @@ Runtime OFF Saved Plan `tfplan-runtime-off-after-application-smoke`의 승인된
 - `.github/workflows/aws-frontend-deploy.yml`: 선택한 Frontend Workspace·Build Script·Bucket·Invalidation 경로만 사용한다.
 - `spring-stock-web` 선택 시 Stock 전용 Bucket과 `/stock`, `/stock/*`만 바뀌며 Member·Community 배포는 실행하지 않는다.
 
-pnpm `10.0.0` Frozen Lockfile로 여섯 Lint·Build와 Entry 문서를 확인했고 Python 선택/Workflow 계약 14개, Terraform `validate`와 `test` 20/20을 통과했다. Saved Plan `tfplan-frontend-hosting-foundation`은 143,862 bytes, SHA-256 `f49031685f65ff8ed8274316e34e1c195431a3d1912ac279114b14b23f0aa5e8`이었으며 승인한 파일을 Apply해 `49 added, 0 changed, 0 destroyed`로 완료했다. S3 보안 계약 6/6, 빈 Bucket 6/6, CloudFront `Deployed` 2/2·Origin 3+3·경로 네 개·Function 연결 6개, Function `DEPLOYED` 2/2, OAC `always/sigv4`, OIDC `master` Trust와 재계획 `No changes`를 확인했다. 적용된 Saved Plan은 재사용하지 않고 삭제한다. GitHub Variable, 첫 Upload와 CloudFront curl 검증은 [AWS Frontend Runbook](../../../docs/runbooks/aws-frontend-hosting.md)의 다음 단계다. ACM·Route 53·Custom Domain과 ALB API Origin은 이번 Apply에 넣지 않았다.
+pnpm `10.0.0` Frozen Lockfile로 여섯 Lint·Build와 Entry 문서를 확인했고 Python 선택/Workflow 계약 14개, Terraform `validate`와 `test` 20/20을 통과했다. Saved Plan `tfplan-frontend-hosting-foundation`은 143,862 bytes, SHA-256 `f49031685f65ff8ed8274316e34e1c195431a3d1912ac279114b14b23f0aa5e8`이었으며 승인한 파일을 Apply해 `49 added, 0 changed, 0 destroyed`로 완료했다. S3 보안 계약 6/6, CloudFront `Deployed` 2/2·Origin 3+3·경로 네 개·Function 연결 6개, Function `DEPLOYED` 2/2, OAC `always/sigv4`, OIDC `master` Trust와 재계획 `No changes`를 확인했다. 적용된 Saved Plan은 재사용하지 않고 삭제했다. GitHub Variable 3개를 값 비노출 방식으로 연결하고 Source SHA `f29249373feae470e2c30758e3245d43d22fef25`의 [Run 29677216377](https://github.com/hyunmyungchoi/Spring-React-MSA/actions/runs/29677216377)에서 Frontend 6개 Job과 필수 단계 24/24를 성공시켰다. S3 Entry `no-cache`·Asset immutable metadata 6/6과 CloudFront 정적 curl 6/6 HTTP 200도 확인했다. ACM·Route 53·Custom Domain과 ALB API Origin은 이번 Apply에 넣지 않았다.
 
 ### 적용된 Private App 송신 확장
 
@@ -543,7 +542,7 @@ Application, Data, Kafka, SSH Port는 Internet에서 직접 접근할 수 없다
 2. 완료: Runtime Secret 6개 초기화, Application Foundation OFF와 Cloud Map custom health 교정 Apply, ECS/ASG 0·RDS 정지·`No changes` 검증
 3. 완료: Runtime ON과 서비스 계약 교정 Apply, RDS/Valkey/ECS/ALB, Health·Digest·Cloud Map 8/8, curl 6/6와 `No changes` 검증
 4. 완료: Runtime OFF Saved Plan Apply, ECS/ASG 0·ALB/Valkey 삭제·RDS 정지와 `No changes` 검증
-5. 진행 중: Frontend S3 6개·CloudFront 2개 Foundation Apply와 AWS 계약·`No changes` 검증 완료, GitHub 변수·첫 배포·curl Smoke 대기
+5. 완료: Frontend S3 6개·CloudFront 2개 Apply, GitHub 변수, 첫 전체 배포 6/6과 정적 curl 6/6·`No changes` 검증
 6. Route 53/ACM/TLS와 API·OAuth·WebSocket ALB Origin 연결
 7. 관측성·Alarm·Runtime 자동화와 최초 관리자 Bootstrap
 8. Backup Restore와 전체 Smoke Test
