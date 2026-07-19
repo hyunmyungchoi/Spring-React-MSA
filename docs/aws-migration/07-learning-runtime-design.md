@@ -1,12 +1,12 @@
 # AWS Learning Runtime 결정
 
-> 문서 상태: Learning 목표 설계 승인, Public Domain Runtime ON HTTPS·OAuth·Session 검증과 Runtime OFF 완료, WebSocket Gateway Route 로컬 교정·검증 완료, Image 재배포·공개 경로 재검증 대기
+> 문서 상태: Learning 목표 설계 승인, Public Domain Runtime ON HTTPS·OAuth·Session 검증과 Runtime OFF 완료, WebSocket Gateway 교정 Image Build Once·ECR Promote·Kubernetes Digest 고정 완료, ECS 적용·공개 경로 재검증 대기
 >
 > 기준일: 2026-07-19
 >
 > 저장소 상태: Foundation·ECR/OIDC·Private App 송신·RDS/Secrets·ECS Compute·DB Bootstrap/Flyway·Application Runtime·Frontend Hosting·Public Domain/TLS 코드 적용, Terraform 계약 테스트 23/23 완료
 >
-> AWS 적용 상태: Public Domain Runtime ON에서 ECS·Rollout 8/8, ASG `1/1/2`, ALB Target 2/2, HTTPS 정적·Health·OIDC·BFF 12개, Root 308, Member OAuth·BFF Session·CSRF·Logout과 일반 회원의 Admin 역할 차단을 검증했다. WebSocket은 Upgrade 뒤 1002로 실패했고 Member Gateway 전용 `ws://` Route 누락을 원인으로 진단했다. Route와 AWS·Docker·Kubernetes 환경 변수 계약 및 자동 테스트는 로컬에서 교정했다. 후속 Runtime OFF 적용과 RDS 정지를 완료해 현재 ECS/ASG/EC2 0, ALB·Valkey·`origin` 삭제, RDS `stopped`다. 교정 Image와 Task Definition은 아직 AWS에 배포하지 않았다.
+> AWS 적용 상태: Public Domain Runtime ON에서 ECS·Rollout 8/8, ASG `1/1/2`, ALB Target 2/2, HTTPS 정적·Health·OIDC·BFF 12개, Root 308, Member OAuth·BFF Session·CSRF·Logout과 일반 회원의 Admin 역할 차단을 검증했다. WebSocket은 Upgrade 뒤 1002로 실패했고 Member Gateway 전용 `ws://` Route 누락을 원인으로 진단했다. Route와 AWS·Docker·Kubernetes 환경 변수 계약 및 자동 테스트를 교정한 Source SHA `5fc26bdc355d0417d29bbc1941a0d9c0996e4200`의 Gateway Image는 GHCR Build Once와 ECR 무재빌드 Promote를 완료했고 OCI Digest 일치를 검증했다. 후속 Runtime OFF 적용과 RDS 정지를 완료해 현재 ECS/ASG/EC2 0, ALB·Valkey·`origin` 삭제, RDS `stopped`다. 교정 ECS Task Definition 적용과 공개 `wss://` 재검증은 아직 수행하지 않았다.
 
 이 문서는 AWS Foundation 이후 Learning 환경에 추가할 Runtime의 승인된 결정을 기록한다. 현재 적용된 리소스와 운영 절차는 [Terraform 운영 Runbook](../../infra/aws/terraform/README.md), 이미 적용된 네트워크 기준선은 [AWS Foundation 설계](04-aws-foundation-design.md)를 따른다.
 
@@ -275,6 +275,8 @@ Terraform이 관리할 Application Record는 다음과 같다.
 
 현재 `.github/workflows/ghcr-build-push.yml`은 서비스·Source SHA당 최초 한 번만 Build하고 최상위 OCI Digest를 검증한다. `.github/workflows/ecr-build-push.yml`은 Docker Build 없이 `crane copy`로 GHCR Digest를 ECR에 Promote하고 두 Registry의 Digest가 같을 때만 성공한다. Source SHA `a7b3e0387c6817fd5a781ccf3ac532e04f38c9e1`의 Backend 8개를 GHCR Run `29648349144`에서 Build Once하고 ECR Run `29648492164`에서 Promote해 8/8 Digest 일치를 실제 검증했다.
 
+WebSocket Gateway 교정 Source SHA `5fc26bdc355d0417d29bbc1941a0d9c0996e4200`은 [GHCR Run 29685219294](https://github.com/hyunmyungchoi/Spring-React-MSA/actions/runs/29685219294)에서 `spring-member-gateway` 하나만 테스트·Build했고, Kubernetes Bot Commit `522a0013f2daea87748c7ce16057128e4528b8fa`가 새 GHCR Digest를 매니페스트에 고정했다. [ECR Run 29685323647](https://github.com/hyunmyungchoi/Spring-React-MSA/actions/runs/29685323647)은 같은 Source SHA를 재빌드 없이 승격했으며 GHCR·ECR·Kubernetes OCI Digest가 모두 `sha256:7396a5ce119ced79f994c9d5e2908e4e98e3dc89c74afaf8f4f2a729006f44fa`로 일치했다.
+
 ## 12. DR 범위
 
 Kubernetes↔AWS 복제, RTO/RPO 보장, DNS Failover, Writer Fencing과 Failback은 Learning 구현 범위에서 제외한다. 기존 DR 문서는 운영 환경 참고 설계로만 유지하며 현재 실행 가능한 기능이나 승인된 운영 Runbook으로 표시하지 않는다.
@@ -298,7 +300,7 @@ Learning에서 적용할 복구 기준은 다음으로 제한한다.
 7. 완료: Runtime OFF Saved Plan 적용, ECS/ASG 0·Valkey/ALB 삭제·RDS 정지와 재계획 `No changes` 검증
 8. 완료: Frontend S3 6개·CloudFront 2개 Apply, GitHub 변수, 첫 전체 배포 6/6과 정적 curl 6/6·`No changes` 검증
 9. 완료: State Role·기존 Hosted Zone Import·ACM, Root·Member·Admin A/AAAA와 CloudFront HTTPS/API Origin, 정적 curl 6/6·Root 308·`No changes`
-10. 부분 완료: Runtime ON HTTPS·OAuth·Session 검증과 Runtime OFF·RDS 정지 완료. WebSocket 전용 Gateway Route와 환경 변수 계약의 로컬 교정·검증 완료, Image 재배포·공개 경로 재검증 필요
+10. 부분 완료: Runtime ON HTTPS·OAuth·Session 검증과 Runtime OFF·RDS 정지 완료. WebSocket 전용 Gateway Route 교정, Gateway 단독 Build Once·ECR Promote·Kubernetes Digest 고정 완료, ECS Task Definition 적용·공개 경로 재검증 필요
 11. CloudWatch Logs, Metrics, Alarms와 Learning ON/OFF 운영 절차
 12. Backup Restore와 전체 Smoke Test
 

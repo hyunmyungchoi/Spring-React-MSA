@@ -155,7 +155,7 @@ Runtime OFF Saved Plan `tfplan-runtime-off-after-application-smoke`의 승인된
 
 Public Domain Runtime ON Full Smoke용 Saved Plan `tfplan-runtime-on-public-domain-smoke`, 189,515 bytes, SHA-256 `93ae37575bac8f8cacd6b29661df26d483d1a3c4852c4eab51e08621c6e55f2c`를 승인된 그대로 Apply해 `11 added, 9 changed, 0 destroyed`로 완료했다. Public ALB·HTTPS 443 Listener·Host Rule 2개·`origin` A Alias·Valkey 계열 6개를 만들고 ECS Service 8개와 ASG `1/1/2`를 기동했다. HTTP Listener와 RDS·CloudFront·Network·Task Definition/Image 변경은 없었고 Redis Password는 Ephemeral 입력 뒤 제거했다. 실제 AWS에서 ECS·Rollout 8/8, Container Instance 1, Valkey·RDS `available`, ALB `active`, Target 2/2 `healthy`와 재계획 `No changes`를 확인했다. 적용 Plan은 재사용하지 않고 삭제했다.
 
-HTTPS 정적·Health·OIDC·BFF 12개는 모두 HTTP 200이고 Root 308·Path/Query 보존·TLS를 확인했다. 무작위 `ROLE_USER`로 Member Password Login·OAuth Authorization Code·BFF Session·CSRF Heartbeat·Logout을 검증했고, 같은 사용자의 Admin OAuth는 `admin_role_required`로 차단되며 Admin Session이 제거됐다. 실제 `ROLE_ADMIN` 성공 Login은 최초 관리자 Bootstrap 전이라 미검증이다. WebSocket은 인증 Cookie와 Origin을 포함해 Upgrade됐지만 `CONNECTED` 전 1002로 종료됐다. Member Gateway 전용 `ws://` Route와 ECS·Docker·Kubernetes 환경 변수 계약은 로컬에서 교정하고 Gradle·Terraform·Compose 검증을 통과했으며, 새 Gateway Image와 Task Definition 배포 뒤 공개 경로를 재검증해야 한다. 진단용 Smoke 계정 4개는 비밀번호가 폐기된 감사 데이터로 남아 있다.
+HTTPS 정적·Health·OIDC·BFF 12개는 모두 HTTP 200이고 Root 308·Path/Query 보존·TLS를 확인했다. 무작위 `ROLE_USER`로 Member Password Login·OAuth Authorization Code·BFF Session·CSRF Heartbeat·Logout을 검증했고, 같은 사용자의 Admin OAuth는 `admin_role_required`로 차단되며 Admin Session이 제거됐다. 실제 `ROLE_ADMIN` 성공 Login은 최초 관리자 Bootstrap 전이라 미검증이다. WebSocket은 인증 Cookie와 Origin을 포함해 Upgrade됐지만 `CONNECTED` 전 1002로 종료됐다. Member Gateway 전용 `ws://` Route와 ECS·Docker·Kubernetes 환경 변수 계약을 교정한 Source SHA `5fc26bdc355d0417d29bbc1941a0d9c0996e4200`은 Gateway 단독 GHCR Build Once·ECR 무재빌드 Promote와 OCI Digest 일치를 검증했다. 새 Task Definition 적용 뒤 공개 경로를 재검증해야 한다. 진단용 Smoke 계정 4개는 비밀번호가 폐기된 감사 데이터로 남아 있다.
 
 Runtime OFF Plan `tfplan-runtime-off-after-public-domain-smoke`, 195,052 bytes, SHA-256 `94aae90a5306d6b1c9aa8f597ca938213cbd39e9c872b0cc92212277608e53f3`를 승인된 그대로 Apply해 `0 added, 9 changed, 11 destroyed`로 완료했다. ECS Service·ASG 실행 용량과 ALB/HTTPS/`origin`/Valkey만 내렸고 RDS·CloudFront·Network·Task Definition/Image·IAM·Secret 변경은 0개였다. 사후 ECS/Container Instance/ASG Instance 0, ASG `0/0/0`, Public ALB·Valkey·`origin` 0과 RDS `stopped`를 확인했다. RDS Backup 7일·삭제 보호를 유지하며 자동 재시작 예정은 2026-07-26 19:44:07 KST다. OFF 재계획은 `No changes`, 정적 curl 6/6 HTTP 200, Root 308, Runtime OFF API 502와 TLS를 확인했고 적용 Plan은 삭제했다.
 
@@ -552,7 +552,7 @@ Application, Data, Kafka, SSH Port는 Internet에서 직접 접근할 수 없다
 4. 완료: Runtime OFF Saved Plan Apply, ECS/ASG 0·ALB/Valkey 삭제·RDS 정지와 `No changes` 검증
 5. 완료: Frontend S3 6개·CloudFront 2개 Apply, GitHub 변수, 첫 전체 배포 6/6과 정적 curl 6/6·`No changes` 검증
 6. 완료: Global DNS State 권한·Hosted Zone Import·ACM·Route 53/CloudFront/TLS와 API·OAuth·WebSocket Origin, 정적 curl 6/6와 `No changes`
-7. 부분 완료: Runtime ON HTTPS·OAuth·Session 검증과 Runtime OFF·RDS 정지 완료. WebSocket 1002 Gateway Route 로컬 교정·검증 완료, Image 재배포·재검증 필요
+7. 부분 완료: Runtime ON HTTPS·OAuth·Session 검증과 Runtime OFF·RDS 정지 완료. WebSocket 1002 Gateway Route 교정, Gateway 단독 Build Once·ECR Promote 완료, ECS 적용·재검증 필요
 8. 관측성·Alarm·Runtime 자동화와 최초 관리자 Bootstrap
 9. Backup Restore와 전체 Smoke Test
 

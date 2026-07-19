@@ -25,7 +25,7 @@
 | Data | PostgreSQL 16, Redis 7 |
 | Messaging | Kafka 3.7.0 |
 | Platform | Docker Compose, Kubernetes, ingress-nginx, GHCR, Argo CD |
-| AWS migration | Runtime OFF·RDS 정지; WebSocket Gateway Route 로컬 교정·검증 완료, Image 재배포·공개 경로 재검증 대기 |
+| AWS migration | Runtime OFF·RDS 정지; WebSocket Gateway Image Build Once·ECR Promote·Kubernetes Digest 고정 완료, ECS 적용·공개 경로 재검증 대기 |
 | Observability | Prometheus, Grafana, Loki, Promtail, Kafka exporters |
 
 ## 문서 상태 표현
@@ -116,6 +116,6 @@
 | [AWS Foundation](aws-migration/04-aws-foundation-design.md) | VPC/subnet/SG 설계 | Foundation 유지, Runtime ON 검증 후 현재 OFF |
 | [ECR/OIDC 설계](aws-migration/05-ecr-github-oidc-design.md) | SHA 이미지와 GitHub OIDC | Apply·GitHub 변수·Backend 8개 게시 완료 |
 | [ECR/OIDC 구현 계획](aws-migration/06-ecr-github-oidc-implementation-plan.md) | 구현·승인 gate 실행 기록 | Task 6·단일/중복/전체 게시 검증 완료 |
-| [Learning Runtime 결정](aws-migration/07-learning-runtime-design.md) | NAT, State, ECS, RDS, Frontend, Secret, DNS 결정 | Runtime ON HTTPS·OAuth·Session와 후속 OFF 완료, WebSocket Image 재배포·재검증 대기 |
+| [Learning Runtime 결정](aws-migration/07-learning-runtime-design.md) | NAT, State, ECS, RDS, Frontend, Secret, DNS 결정 | Runtime ON HTTPS·OAuth·Session와 후속 OFF 완료, WebSocket 교정 Image 승격 완료·ECS 적용과 재검증 대기 |
 
 AWS 적용 여부는 Git만으로 확정할 수 없으므로 문서의 `저장소 상태`와 `AWS 적용 상태`를 구분한다. Terraform state, 저장 plan, 계정 식별자와 secret은 문서나 Git에 추가하지 않는다.
