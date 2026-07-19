@@ -24,6 +24,14 @@ spring:
                 allowCredentials: true
 
           routes:
+            - id: member-bff-websocket
+              uri: ${GATEWAY_BFF_WEBSOCKET_URI}
+              order: -1
+              predicates:
+                - Path=/bff/chat/ws
+              filters:
+                - StripPrefix=1
+
             - id: member-bff-service
               uri: ${GATEWAY_BFF_URI}
               predicates:

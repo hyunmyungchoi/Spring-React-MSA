@@ -9,7 +9,7 @@
 - Object Ownership `BucketOwnerEnforced`
 - Block Public Access 4개 설정 전체 활성화
 - HTTP 요청을 거부하는 Bucket Policy
-- `learning/runtime/terraform.tfstate`와 `.tflock`에만 접근하는 IAM Role
+- `learning/runtime/terraform.tfstate`, `global/dns/terraform.tfstate`와 각 `.tflock`에만 접근하는 IAM Role
 - `hyun-terraform-admin`이 해당 Role만 Assume할 수 있는 Inline Policy
 
 DynamoDB Lock Table과 KMS Key는 만들지 않는다. Terraform S3 Native Lockfile인 `use_lockfile = true`를 사용한다.
@@ -17,6 +17,8 @@ DynamoDB Lock Table과 KMS Key는 만들지 않는다. Terraform S3 Native Lockf
 ## 현재 상태
 
 2026-07-18에 검토한 저장 Plan으로 관리 리소스 9개를 AWS에 Apply했다. S3 Versioning, SSE-S3 `AES256`, Public Access 차단, `BucketOwnerEnforced`, HTTPS-only Policy와 전용 IAM Role을 검증했다. 이어 Main State 66개 주소를 S3로 이전하고 Native Lockfile 생성·해제와 Terraform 재계획 `No changes`를 확인했다.
+
+2026-07-19에는 기존 `state_key` 호환성을 유지하면서 `additional_state_keys`에 `global/dns/terraform.tfstate`를 추가하는 코드를 준비했다. 이 변경은 Bucket이나 기존 Runtime State를 바꾸지 않고 State Role Inline Policy의 허용 Object/Lock Key만 확장한다. Saved Plan SHA-256 승인과 Apply가 끝나기 전에는 Global DNS Backend를 초기화하지 않는다.
 
 ## 검증과 Plan
 
@@ -29,6 +31,30 @@ terraform test
 terraform plan '-out=tfplan.backend'
 terraform show -no-color tfplan.backend
 ```
+
+Global DNS State 권한 확장 Plan은 다음처럼 만든다.
+
+```powershell
+terraform plan `
+  -var='additional_state_keys=["global/dns/terraform.tfstate"]' `
+  -out=tfplan-global-dns-state-access
+terraform show -no-color .\tfplan-global-dns-state-access
+Get-FileHash .\tfplan-global-dns-state-access -Algorithm SHA256
+```
+
+기존 Bucket, Role, User Policy는 교체·삭제하지 않고 `aws_iam_role_policy.state_access` 한 개의 In-place Update만 있어야 한다.
+
+2026-07-19 검토한 첫 Gate Saved Plan:
+
+- 파일: `tfplan-global-dns-state-access`
+- 크기: 12,777 bytes
+- SHA-256: `ec3f8c9627d3e863d9b36b91cb69ab97b20ab613d35e21300516260bd09a95f6`
+- 변경: State Role Inline Policy 1개 In-place Update
+- 추가 허용: Global DNS State Object 1개와 Lock Object 1개
+- 생성·삭제·교체: 0개
+- 기존 Runtime State Object 권한: 유지
+
+이 Plan은 승인된 SHA-256을 다시 검증한 뒤 그대로 Apply했다. 결과는 `0 added, 1 changed, 0 destroyed`다. 실제 IAM Policy에서 Runtime/DNS State Object 2개와 Lock Object 2개만 허용하고 Wildcard가 없음을 확인했으며, 같은 입력 재계획은 `No changes`였다. 적용된 Saved Plan은 State 변경으로 무효화됐으므로 기록 후 로컬 파일을 삭제했다.
 
 Plan은 다음 9개 추가만 포함해야 한다.
 

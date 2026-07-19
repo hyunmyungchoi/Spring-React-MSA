@@ -120,6 +120,30 @@ variable "learning_runtime_enabled" {
   default     = false
 }
 
+variable "enable_public_domain_routing" {
+  description = "Whether the disposable ALB uses the persistent origin DNS name and ACM HTTPS listener."
+  type        = bool
+  default     = false
+}
+
+variable "public_hosted_zone_id" {
+  description = "Existing public Route 53 hosted-zone ID used only for the disposable origin alias."
+  type        = string
+  default     = null
+}
+
+variable "origin_domain" {
+  description = "TLS hostname used by CloudFront to reach the disposable public ALB."
+  type        = string
+  default     = "origin.hyuncloudlab.com"
+}
+
+variable "origin_certificate_arn" {
+  description = "Issued regional ACM certificate ARN for origin_domain."
+  type        = string
+  default     = null
+}
+
 variable "member_public_origin" {
   description = "Canonical public member origin and authorization-server issuer."
   type        = string

@@ -18,9 +18,34 @@ mock_provider "aws" {
 run "backend_security_contract" {
   command = plan
 
+  variables {
+    additional_state_keys = ["global/dns/terraform.tfstate"]
+  }
+
   assert {
     condition     = aws_s3_bucket.state.bucket == "spring-react-msa-learning-tfstate-111122223333-ap-northeast-2"
     error_message = "The backend bucket name must be deterministic and account-scoped."
+  }
+
+
+  assert {
+    condition = (
+      toset(jsondecode(aws_iam_role_policy.state_access.policy).Statement[1].Condition.StringEquals["s3:prefix"]) == toset([
+        "global/dns/terraform.tfstate",
+        "global/dns/terraform.tfstate.tflock",
+        "learning/runtime/terraform.tfstate",
+        "learning/runtime/terraform.tfstate.tflock",
+      ]) &&
+      toset(jsondecode(aws_iam_role_policy.state_access.policy).Statement[2].Resource) == toset([
+        "arn:aws:s3:::spring-react-msa-learning-tfstate-111122223333-ap-northeast-2/global/dns/terraform.tfstate",
+        "arn:aws:s3:::spring-react-msa-learning-tfstate-111122223333-ap-northeast-2/learning/runtime/terraform.tfstate",
+      ]) &&
+      toset(jsondecode(aws_iam_role_policy.state_access.policy).Statement[3].Resource) == toset([
+        "arn:aws:s3:::spring-react-msa-learning-tfstate-111122223333-ap-northeast-2/global/dns/terraform.tfstate.tflock",
+        "arn:aws:s3:::spring-react-msa-learning-tfstate-111122223333-ap-northeast-2/learning/runtime/terraform.tfstate.tflock",
+      ])
+    )
+    error_message = "The state role must grant read/write and lock access to only the runtime and global DNS state keys."
   }
 
   assert {

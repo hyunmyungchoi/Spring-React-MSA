@@ -1,12 +1,12 @@
 # AWS Learning Runtime 결정
 
-> 문서 상태: Learning 목표 설계 승인, Runtime ON/OFF와 Frontend Hosting 적용·첫 배포·curl 검증 완료
+> 문서 상태: Learning 목표 설계 승인, Public Domain Runtime ON HTTPS·OAuth·Session 검증과 Runtime OFF 완료, WebSocket Gateway Route 로컬 교정·검증 완료, Image 재배포·공개 경로 재검증 대기
 >
 > 기준일: 2026-07-19
 >
-> 저장소 상태: Foundation·ECR/OIDC·Private App 송신·RDS/Secrets·ECS Compute·DB Bootstrap/Flyway·Application Runtime과 Frontend Hosting 코드 적용, Terraform 계약 테스트 20/20 완료
+> 저장소 상태: Foundation·ECR/OIDC·Private App 송신·RDS/Secrets·ECS Compute·DB Bootstrap/Flyway·Application Runtime·Frontend Hosting·Public Domain/TLS 코드 적용, Terraform 계약 테스트 23/23 완료
 >
-> AWS 적용 상태: Runtime ON에서 RDS·Valkey·Public ALB, ASG `1/1/2`, ECS Service 8개 `1/1/0`, Health·Digest·Cloud Map 8/8, ALB Target 2/2와 curl Smoke 6/6을 검증했다. 후속 Runtime OFF 적용을 완료해 현재 Service/Task/ASG/EC2 0, ALB·Valkey 삭제, RDS `stopped`다. Frontend S3 6개·CloudFront 2개와 배포 IAM도 Apply했고 첫 전체 배포 6/6과 정적 curl 6/6 HTTP 200을 검증했다. Terraform은 `No changes`다.
+> AWS 적용 상태: Public Domain Runtime ON에서 ECS·Rollout 8/8, ASG `1/1/2`, ALB Target 2/2, HTTPS 정적·Health·OIDC·BFF 12개, Root 308, Member OAuth·BFF Session·CSRF·Logout과 일반 회원의 Admin 역할 차단을 검증했다. WebSocket은 Upgrade 뒤 1002로 실패했고 Member Gateway 전용 `ws://` Route 누락을 원인으로 진단했다. Route와 AWS·Docker·Kubernetes 환경 변수 계약 및 자동 테스트는 로컬에서 교정했다. 후속 Runtime OFF 적용과 RDS 정지를 완료해 현재 ECS/ASG/EC2 0, ALB·Valkey·`origin` 삭제, RDS `stopped`다. 교정 Image와 Task Definition은 아직 AWS에 배포하지 않았다.
 
 이 문서는 AWS Foundation 이후 Learning 환경에 추가할 Runtime의 승인된 결정을 기록한다. 현재 적용된 리소스와 운영 절차는 [Terraform 운영 Runbook](../../infra/aws/terraform/README.md), 이미 적용된 네트워크 기준선은 [AWS Foundation 설계](04-aws-foundation-design.md)를 따른다.
 
@@ -24,7 +24,7 @@
 | P1 | 데이터베이스 | PostgreSQL 16 공유 인스턴스·서비스별 Schema·Flyway | DB Secret·Bootstrap·Flyway V1 3개 실제 실행과 사후 검증 완료 |
 | P1 | Frontend | 독립 Private S3 6개와 Member/Admin CloudFront 2개 | Apply·AWS 계약·첫 전체 배포·curl 6/6 검증 완료 |
 | P1 | Secret | Secrets Manager로 통일 | Container 7개·최소 권한 IAM 적용, DB Secret 3개와 Runtime Secret 6개 계약 초기화 완료 |
-| P1 | 도메인 | 기존 Hosted Zone Import와 별도 Global DNS State | 미구현 |
+| P1 | 도메인 | 기존 Hosted Zone Import와 별도 Global DNS State | Global DNS/ACM·Public Alias/TLS 적용 완료, Runtime ON Full Smoke 승인 대기 |
 | P2 | DR | Learning 범위에서 제외하고 후속 학습 과제로 보류 | 보류 |
 
 ## 2. 목표 구조
@@ -79,6 +79,8 @@ Learning 구현값은 다음으로 확정한다.
 - 암호화: 별도 KMS Key 없이 SSE-S3 `AES256`
 - Main State Key: `learning/runtime/terraform.tfstate`
 - Lock Key: `learning/runtime/terraform.tfstate.tflock`
+- Global DNS State Key: `global/dns/terraform.tfstate`
+- Global DNS Lock Key: `global/dns/terraform.tfstate.tflock`
 - 접근: `hyun-terraform-admin`만 Assume할 수 있는 전용 최소 권한 State Role
 - Bootstrap 자체 State: Git에서 제외한 Local State와 암호화된 개인 백업
 
@@ -196,12 +198,14 @@ RDS는 Runtime OFF 때 삭제하지 않고 정지한다. Automated Backup 보존
 - `app.hyuncloudlab.com`은 Member Distribution, `admin.hyuncloudlab.com`은 Admin Distribution을 가리킨다.
 - `/community/*`, `/stock/*`, `/manage/users/*`, `/manage/logs/*`는 경로별 전용 S3 Origin으로 전달한다. Prefix 자체는 Slash 경로로 Redirect하고 CloudFront Function이 해당 SPA Entry와 Asset 경로로 Rewrite한다.
 - 수동 Workflow는 선택한 Frontend의 Workspace Script만 Build하고 전용 Bucket만 동기화한 뒤 해당 경로만 Invalidate한다. 예를 들어 Stock 배포는 Community와 Member 객체를 변경하지 않는다.
-- API, OAuth2, Logout과 WebSocket 경로의 Public ALB Origin은 ACM·Route 53·TLS 단계에서 추가한다. 현재 구현한 Distribution은 정적 S3 Origin만 포함한다.
+- API, OAuth2, Logout과 WebSocket 경로는 Cache를 끄고 전체 Viewer Header·Cookie·Query를 전달하며 SPA Rewrite 없이 HTTPS ALB Origin으로 보낸다. 이 계약과 ACM·Route 53·CloudFront 단계별 Apply를 완료했으며 Runtime OFF API 502까지 경로 연결을 확인했다. 실제 Backend 계약은 Runtime ON Full Smoke에서 검증한다.
 - 기존 Frontend Nginx Image는 Docker/Kubernetes 경로에만 남기고 AWS용 ECR/ECS에는 배치하지 않는다.
 
-CloudFront용 ACM 인증서는 `us-east-1`, ALB용 인증서는 `ap-northeast-2`에서 관리한다. Learning Runtime의 ALB Origin은 Public Subnet에 두되 Security Group과 Origin 검증 수단으로 CloudFront 경로를 제한해야 한다.
+CloudFront용 ACM 인증서는 `us-east-1`, ALB용 인증서는 `ap-northeast-2`에서 관리한다. Learning Runtime의 ALB Origin은 Public Subnet에 두되 80은 열지 않고, AWS 관리형 `com.amazonaws.global.cloudfront.origin-facing` Prefix List에서 오는 443만 Security Group에 허용한다. 별도 Secret Header는 Terraform State에 비밀을 남기므로 이번 단계에서는 사용하지 않는다. 따라서 직접 Internet 접근은 차단되지만 다른 CloudFront Distribution을 암호학적으로 구분하지 못하는 잔여 위험은 Learning 범위에서 명시적으로 수용한다.
 
 현재 Terraform module은 BucketOwnerEnforced, Public Access 전체 차단, SSE-S3, Versioning, 7일 Noncurrent Version 정리, OAC `always` SigV4를 고정한다. `.github/workflows/aws-frontend-deploy.yml`은 Node `24.18.0`, pnpm `10.0.0`, Frozen Lockfile과 GitHub OIDC를 사용한다. 여섯 Frontend Lint·Build, 선택 Matrix 계약 14개와 Terraform `validate`·`test` 20/20을 통과했다. Saved Plan SHA-256 `f49031685f65ff8ed8274316e34e1c195431a3d1912ac279114b14b23f0aa5e8`을 승인된 그대로 Apply해 `49 added, 0 changed, 0 destroyed`로 완료했다. AWS에서 S3 보안 6/6, CloudFront `Deployed` 2/2·Origin 3+3·Function 연결 6개, Function `DEPLOYED` 2/2, OAC와 IAM Trust를 확인했고 재계획은 `No changes`였다. Source SHA `f29249373feae470e2c30758e3245d43d22fef25`의 [Run 29677216377](https://github.com/hyunmyungchoi/Spring-React-MSA/actions/runs/29677216377)에서 6개 배포 Job과 필수 단계 24/24가 성공했고, S3 Cache metadata 6/6과 CloudFront 정적 curl 6/6 HTTP 200을 확인했다. 상세 절차는 [AWS Frontend Runbook](../runbooks/aws-frontend-hosting.md)을 따른다.
+
+Public Domain Flag를 활성화해 Root와 `app`은 Member Distribution, `admin`은 Admin Distribution에 연결했고 Root 요청은 `app`으로 308 Redirect한다. API Behavior는 AWS 관리형 `CachingDisabled`와 `AllViewer` Policy를 사용하며 SPA Function을 연결하지 않는다. State 권한, Global DNS/ACM과 Runtime OFF Public Domain Routing 세 Saved Plan을 승인된 Hash 그대로 적용했고, A/AAAA 3+3·정적 curl 6/6·Root 308·TLS·재계획 `No changes`를 검증했다. 다음 Runtime ON Plan은 HTTPS ALB와 `origin` A Alias를 일시 생성해 OAuth·Session·WebSocket까지 검증하는 별도 승인 Gate다.
 
 ## 8. Secret 관리
 
@@ -239,8 +243,11 @@ Terraform이 관리할 Application Record는 다음과 같다.
 |---|---|---|
 | `app.hyuncloudlab.com` | Member CloudFront | Frontend와 함께 유지 |
 | `admin.hyuncloudlab.com` | Admin CloudFront | Frontend와 함께 유지 |
+| `hyuncloudlab.com` | Member CloudFront의 `app` Redirect | Frontend와 함께 유지 |
 | `origin.hyuncloudlab.com` | Public ALB | Runtime ON일 때만 생성 |
 | ACM 검증 CNAME | ACM 인증서 | 인증서와 함께 유지 |
+
+2026-07-19에 State Role의 Global DNS Key 권한을 적용한 뒤 기존 Public Hosted Zone을 별도 State로 Import했다. CloudFront용 `us-east-1` 인증서와 Origin용 `ap-northeast-2` 인증서가 모두 `ISSUED`이며 DNS 검증 `3+1`을 확인했다. 이어 Runtime OFF Gate에서 Root·Member·Admin A/AAAA `3+3`, CloudFront Custom Domain/TLS/API Origin과 Prefix List HTTPS 제한을 적용했다. 정적 curl 6/6 HTTP 200, Root 308·Path/Query 보존, Runtime OFF API 502와 재계획 `No changes`를 검증했다.
 
 ## 10. Learning 보안 경계
 
@@ -290,9 +297,10 @@ Learning에서 적용할 복구 기준은 다음으로 제한한다.
 6. 완료: Runtime Secret 초기화, Application Foundation, Runtime ON·서비스 계약 교정과 curl Smoke 6/6, 재계획 `No changes` 검증
 7. 완료: Runtime OFF Saved Plan 적용, ECS/ASG 0·Valkey/ALB 삭제·RDS 정지와 재계획 `No changes` 검증
 8. 완료: Frontend S3 6개·CloudFront 2개 Apply, GitHub 변수, 첫 전체 배포 6/6과 정적 curl 6/6·`No changes` 검증
-9. ACM, 기존 Hosted Zone Import와 Route 53 Record
-10. CloudWatch Logs, Metrics, Alarms와 Learning ON/OFF 운영 절차
-11. Backup Restore와 전체 Smoke Test
+9. 완료: State Role·기존 Hosted Zone Import·ACM, Root·Member·Admin A/AAAA와 CloudFront HTTPS/API Origin, 정적 curl 6/6·Root 308·`No changes`
+10. 부분 완료: Runtime ON HTTPS·OAuth·Session 검증과 Runtime OFF·RDS 정지 완료. WebSocket 전용 Gateway Route와 환경 변수 계약의 로컬 교정·검증 완료, Image 재배포·공개 경로 재검증 필요
+11. CloudWatch Logs, Metrics, Alarms와 Learning ON/OFF 운영 절차
+12. Backup Restore와 전체 Smoke Test
 
 각 단계는 `fmt`, `validate`, `test`, 저장 Plan 검토, 비용 확인과 명시적 Apply 승인을 거친다. 뒤 단계 리소스를 앞 단계 Plan에 섞지 않는다.
 
@@ -304,7 +312,7 @@ Learning에서 적용할 복구 기준은 다음으로 제한한다.
 - Redis: Valkey 7.2, `cache.t4g.micro`, Single Node, Runtime OFF 삭제
 - 내부 통신: `awsvpcTrunking` + `awsvpc` + Cloud Map A Record, Service Connect 미사용
 - IAM: Task Role 없음, 서비스별 Execution Role이 자기 ECR/Log와 필요한 Secret/Redis Host Parameter만 읽음
-- ALB: Runtime ON에만 생성, `app`/`admin` Host Rule과 Gateway Readiness Health Check 사용. HTTPS/ACM과 CloudFront Origin 검증은 후속 단계
+- ALB: Runtime ON에만 생성, `app`/`admin` Host Rule과 Gateway Readiness Health Check 사용. HTTPS/ACM·CloudFront Origin과 Runtime OFF Gate C 적용 완료, Runtime ON Full Smoke Plan 승인 대기
 
 Application Foundation 적용 전에 필요했던 다음 항목은 완료했다.
 
@@ -320,4 +328,4 @@ Runtime ON 검증 이후 남은 작업은 다음과 같다.
 - 최초 관리자 Bootstrap의 실행 주체와 감사 방식
 - Learning OFF/ON 명령의 순서, 실패 시 Rollback과 RDS 자동 재시작 감시
 
-CloudWatch Log 보존 기간은 우선 7일로 코드와 계약 테스트에 고정했다. Frontend 코드는 독립 배포 단위까지 검증했으며 AWS Apply는 Saved Plan 승인 대상으로 남아 있다. Alarm, HTTPS/DNS, 관리자 Bootstrap과 자동화는 후속 단계에서 별도 승인한다.
+CloudWatch Log 보존 기간은 우선 7일로 코드와 계약 테스트에 고정했다. Frontend 독립 배포와 HTTPS/DNS는 AWS Apply·검증까지 완료했다. Public Domain Runtime ON Full Smoke 뒤 Alarm, 관리자 Bootstrap과 자동화를 후속 단계에서 별도 승인한다.

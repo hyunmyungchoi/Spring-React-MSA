@@ -51,3 +51,24 @@ variable "state_key" {
     error_message = "state_key must be a relative path ending in .tfstate."
   }
 }
+
+variable "additional_state_keys" {
+  description = "Additional S3 object keys managed by the same least-privilege Terraform state role."
+  type        = set(string)
+  default     = []
+
+  validation {
+    condition = alltrue([
+      for key in var.additional_state_keys :
+      length(trimspace(key)) > 0 &&
+      !startswith(key, "/") &&
+      endswith(key, ".tfstate")
+    ])
+    error_message = "Every additional_state_keys entry must be a relative path ending in .tfstate."
+  }
+
+  validation {
+    condition     = !contains(var.additional_state_keys, var.state_key)
+    error_message = "additional_state_keys must not repeat state_key."
+  }
+}

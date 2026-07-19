@@ -8,5 +8,10 @@
 tfplan
 tfplan.*
 tfplan-*
+backend.s3.hcl
 crash.log
 crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json

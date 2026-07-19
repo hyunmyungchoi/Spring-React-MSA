@@ -58,6 +58,12 @@ variable "enable_nat_gateway" {
   type        = bool
 }
 
+variable "cloudfront_origin_prefix_list_id" {
+  description = "AWS-managed CloudFront origin-facing prefix list used to restrict ALB HTTPS ingress; null preserves the pre-domain public baseline."
+  type        = string
+  default     = null
+}
+
 variable "common_tags" {
   description = "Common tags applied to taggable network resources."
   type        = map(string)

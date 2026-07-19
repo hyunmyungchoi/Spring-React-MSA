@@ -225,7 +225,7 @@ resource "aws_security_group" "data" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "alb_public" {
-  for_each = local.alb_ingress_ports
+  for_each = var.cloudfront_origin_prefix_list_id == null ? local.alb_ingress_ports : {}
 
   security_group_id = aws_security_group.alb.id
   description       = "Allow public ${each.key} traffic to the future ALB"
@@ -311,6 +311,21 @@ resource "aws_vpc_security_group_egress_rule" "ecs_to_data" {
 
   tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-ecs-to-${each.key}"
+  })
+}
+
+resource "aws_vpc_security_group_ingress_rule" "alb_from_cloudfront" {
+  count = var.cloudfront_origin_prefix_list_id == null ? 0 : 1
+
+  security_group_id = aws_security_group.alb.id
+  description       = "Allow HTTPS only from the AWS-managed CloudFront origin-facing network"
+  prefix_list_id    = var.cloudfront_origin_prefix_list_id
+  from_port         = 443
+  to_port           = 443
+  ip_protocol       = "tcp"
+
+  tags = merge(var.common_tags, {
+    Name = "${var.name_prefix}-alb-cloudfront-https-ingress"
   })
 }
 

@@ -74,6 +74,8 @@ run "runtime_off_keeps_foundation_at_zero_tasks" {
     condition = (
       length(aws_lb.public) == 0 &&
       length(aws_lb_listener.http) == 0 &&
+      length(aws_lb_listener.https) == 0 &&
+      length(aws_route53_record.origin) == 0 &&
       length(aws_lb_listener_rule.gateway) == 0 &&
       length(aws_lb_target_group.gateway) == 2
     )
@@ -101,6 +103,14 @@ run "runtime_off_keeps_foundation_at_zero_tasks" {
   }
 
   assert {
+    condition = lookup({
+      for entry in jsondecode(aws_ecs_task_definition.service["member-gateway"].container_definitions)[0].environment :
+      entry.name => entry.value
+    }, "GATEWAY_BFF_WEBSOCKET_URI", null) == "ws://member-bff.learning.spring-react-msa.internal:8079"
+    error_message = "The member gateway must route chat upgrades to the Member BFF with a WebSocket URI."
+  }
+
+  assert {
     condition = (
       aws_service_discovery_private_dns_namespace.this.name == "learning.spring-react-msa.internal" &&
       aws_service_discovery_service.backend["user-service"].dns_config[0].dns_records[0].type == "A" &&
@@ -108,6 +118,45 @@ run "runtime_off_keeps_foundation_at_zero_tasks" {
     )
     error_message = "Cloud Map must provide private A records and ECS-managed custom health checks."
   }
+}
+
+run "runtime_on_uses_cloudfront_origin_tls" {
+  command = plan
+
+  module {
+    source = "./modules/application-runtime"
+  }
+
+  variables {
+    learning_runtime_enabled     = true
+    enable_public_domain_routing = true
+    public_hosted_zone_id        = "Z0123456789EXAMPLE"
+    origin_domain                = "origin.hyuncloudlab.com"
+    origin_certificate_arn       = "arn:aws:acm:ap-northeast-2:123456789012:certificate/00000000-0000-0000-0000-000000000000"
+    toss_api_client_id           = "test-toss-client-id"
+  }
+
+  assert {
+    condition = (
+      length(aws_lb_listener.http) == 0 &&
+      length(aws_lb_listener.https) == 1 &&
+      aws_lb_listener.https["this"].port == 443 &&
+      aws_lb_listener.https["this"].protocol == "HTTPS" &&
+      aws_lb_listener.https["this"].ssl_policy == "ELBSecurityPolicy-TLS13-1-2-2021-06" &&
+      aws_lb.public["this"].idle_timeout == 3600
+    )
+    error_message = "CloudFront origin mode must expose only a modern TLS listener and retain long-lived connections."
+  }
+
+  assert {
+    condition = (
+      length(aws_route53_record.origin) == 1 &&
+      aws_route53_record.origin["this"].name == "origin.hyuncloudlab.com" &&
+      aws_route53_record.origin["this"].type == "A"
+    )
+    error_message = "Runtime ON must create the disposable origin Route 53 alias."
+  }
+
 }
 
 run "runtime_on_creates_one_task_each_and_disposable_alb" {

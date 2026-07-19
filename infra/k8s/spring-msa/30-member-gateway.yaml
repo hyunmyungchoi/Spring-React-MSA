@@ -32,6 +32,8 @@ spec:
               value: http://user.localtest.me
             - name: GATEWAY_BFF_URI
               value: http://spring-member-bff-service:8079
+            - name: GATEWAY_BFF_WEBSOCKET_URI
+              value: ws://spring-member-bff-service:8079
             - name: GATEWAY_USER_SERVICE_URI
               value: http://spring-user-service:8081
             - name: GATEWAY_COMMUNITY_SERVICE_URI

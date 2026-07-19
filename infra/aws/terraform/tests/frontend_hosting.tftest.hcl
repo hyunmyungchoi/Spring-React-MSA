@@ -97,6 +97,7 @@ run "independent_frontend_hosting_contract" {
     condition = (
       strcontains(aws_cloudfront_function.spa_router["member"].code, "'/stock'") &&
       strcontains(aws_cloudfront_function.spa_router["member"].code, "stock.html") &&
+      strcontains(aws_cloudfront_function.spa_router["member"].code, "https://app.hyuncloudlab.com") &&
       strcontains(aws_cloudfront_function.spa_router["admin"].code, "'/manage/users'") &&
       strcontains(aws_cloudfront_function.spa_router["admin"].code, "users.html")
     )
@@ -110,5 +111,86 @@ run "independent_frontend_hosting_contract" {
       contains(local.frontend_object_actions, "s3:PutObject")
     )
     error_message = "The frontend deployment role must trust only master and have scoped S3/invalidation permissions."
+  }
+}
+
+run "public_domains_and_api_origin_contract" {
+  command = plan
+
+  module {
+    source = "./modules/frontend-hosting"
+  }
+
+  variables {
+    enable_public_domain_routing = true
+    public_hosted_zone_id        = "Z0123456789EXAMPLE"
+    cloudfront_certificate_arn   = "arn:aws:acm:us-east-1:123456789012:certificate/00000000-0000-0000-0000-000000000000"
+  }
+
+  assert {
+    condition = (
+      length(aws_cloudfront_function.root_redirect) == 1 &&
+      aws_cloudfront_function.root_redirect[0].runtime == "cloudfront-js-2.0" &&
+      strcontains(aws_cloudfront_function.root_redirect[0].code, "https://app.hyuncloudlab.com") &&
+      strcontains(aws_cloudfront_function.root_redirect[0].code, "querySuffix")
+    )
+    error_message = "Root-domain API and static requests must preserve the path/query and redirect to the canonical Member hostname."
+  }
+
+  assert {
+    condition = (
+      toset(aws_cloudfront_distribution.site["member"].aliases) == toset([
+        "hyuncloudlab.com",
+        "app.hyuncloudlab.com",
+      ]) &&
+      toset(aws_cloudfront_distribution.site["admin"].aliases) == toset(["admin.hyuncloudlab.com"]) &&
+      alltrue([
+        for distribution in values(aws_cloudfront_distribution.site) :
+        distribution.viewer_certificate[0].ssl_support_method == "sni-only" &&
+        distribution.viewer_certificate[0].minimum_protocol_version == "TLSv1.2_2021"
+      ])
+    )
+    error_message = "Member/Admin CloudFront distributions must attach the approved aliases and modern viewer TLS."
+  }
+
+  assert {
+    condition = alltrue([
+      for distribution in values(aws_cloudfront_distribution.site) :
+      one([for origin in distribution.origin : origin if origin.origin_id == "custom-api"]).domain_name == "origin.hyuncloudlab.com" &&
+      one(one([for origin in distribution.origin : origin if origin.origin_id == "custom-api"]).custom_origin_config).origin_protocol_policy == "https-only" &&
+      one(one([for origin in distribution.origin : origin if origin.origin_id == "custom-api"]).custom_origin_config).origin_read_timeout == 60 &&
+      toset(one(one([for origin in distribution.origin : origin if origin.origin_id == "custom-api"]).custom_origin_config).origin_ssl_protocols) == toset(["TLSv1.2"])
+    ])
+    error_message = "Both distributions must reach the shared ALB origin only over TLS 1.2."
+  }
+
+  assert {
+    condition = (
+      toset([for behavior in aws_cloudfront_distribution.site["member"].ordered_cache_behavior : behavior.path_pattern if behavior.target_origin_id == "custom-api"]) == toset(local.api_path_patterns.member) &&
+      toset([for behavior in aws_cloudfront_distribution.site["admin"].ordered_cache_behavior : behavior.path_pattern if behavior.target_origin_id == "custom-api"]) == toset(local.api_path_patterns.admin)
+    )
+    error_message = "Every Member/Admin BFF, API, OAuth, and session path must route to the custom API origin."
+  }
+
+  assert {
+    condition = alltrue(flatten([
+      for distribution_name, distribution in aws_cloudfront_distribution.site : [
+        for behavior in distribution.ordered_cache_behavior :
+        behavior.cache_policy_id == local.caching_disabled_policy_id &&
+        behavior.origin_request_policy_id == local.all_viewer_request_policy_id &&
+        length(behavior.function_association) == (distribution_name == "member" ? 1 : 0) &&
+        toset(behavior.allowed_methods) == toset(["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"])
+        if behavior.target_origin_id == "custom-api"
+      ]
+    ]))
+    error_message = "API behaviors must disable caching, forward the complete viewer request, allow writes, and bypass SPA rewriting."
+  }
+
+  assert {
+    condition = (
+      toset(keys(aws_route53_record.frontend_ipv4)) == toset(["root", "member", "admin"]) &&
+      toset(keys(aws_route53_record.frontend_ipv6)) == toset(["root", "member", "admin"])
+    )
+    error_message = "Root, Member, and Admin must each have persistent Route 53 A and AAAA aliases."
   }
 }

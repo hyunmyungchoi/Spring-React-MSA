@@ -43,6 +43,36 @@ variable "github_branch_ref" {
   }
 }
 
+variable "enable_public_domain_routing" {
+  description = "Whether to attach Route 53 aliases, ACM viewer TLS, and the CloudFront API origin."
+  type        = bool
+  default     = false
+}
+
+variable "root_domain" {
+  description = "Approved root domain; the Member distribution redirects this hostname to app."
+  type        = string
+  default     = "hyuncloudlab.com"
+}
+
+variable "public_hosted_zone_id" {
+  description = "Existing public Route 53 hosted-zone ID."
+  type        = string
+  default     = null
+}
+
+variable "cloudfront_certificate_arn" {
+  description = "Issued us-east-1 ACM certificate ARN for root, app, and admin aliases."
+  type        = string
+  default     = null
+}
+
+variable "origin_domain" {
+  description = "TLS custom origin used for API, OAuth, session, and WebSocket routes."
+  type        = string
+  default     = "origin.hyuncloudlab.com"
+}
+
 variable "common_tags" {
   description = "Tags applied to frontend resources that support tags."
   type        = map(string)

@@ -12,3 +12,8 @@ output "state_key" {
   description = "S3 object key for the learning Terraform state."
   value       = var.state_key
 }
+
+output "state_keys" {
+  description = "All S3 object keys accessible through the dedicated state role."
+  value       = local.state_keys
+}

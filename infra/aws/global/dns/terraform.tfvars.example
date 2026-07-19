@@ -1,0 +1,5 @@
+project_name   = "spring-react-msa"
+environment    = "learning"
+aws_region     = "ap-northeast-2"
+root_domain    = "hyuncloudlab.com"
+hosted_zone_id = "REPLACE_WITH_EXISTING_PUBLIC_ZONE_ID"

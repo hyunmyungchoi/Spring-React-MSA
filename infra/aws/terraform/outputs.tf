@@ -214,6 +214,11 @@ output "frontend_cloudfront_domain_names" {
   value       = try(module.frontend_hosting[0].distribution_domain_names, {})
 }
 
+output "frontend_public_domains" {
+  description = "Root, Member, Admin, and origin hostname contract, or an empty map when frontend hosting is disabled."
+  value       = try(module.frontend_hosting[0].public_domains, {})
+}
+
 output "github_actions_frontend_role_name" {
   description = "GitHub Actions frontend deployment role name, or null when frontend hosting is disabled."
   value       = try(module.frontend_hosting[0].deployment_role_name, null)

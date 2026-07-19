@@ -226,3 +226,34 @@ run "network_contract" {
     error_message = "ECS tasks must be allowed to reach AWS public APIs and external services over HTTPS only."
   }
 }
+
+run "network_cloudfront_origin_contract" {
+  command = plan
+
+  module {
+    source = "./modules/network"
+  }
+
+  variables {
+    name_prefix                      = "spring-react-msa-learning"
+    vpc_cidr                         = "10.20.0.0/16"
+    aws_region                       = "ap-northeast-2"
+    enable_nat_gateway               = false
+    cloudfront_origin_prefix_list_id = "pl-cloudfront-origin"
+    availability_zones               = ["ap-northeast-2a", "ap-northeast-2c"]
+    public_subnet_cidrs              = ["10.20.0.0/24", "10.20.1.0/24"]
+    private_app_subnet_cidrs         = ["10.20.10.0/24", "10.20.11.0/24"]
+    private_data_subnet_cidrs        = ["10.20.20.0/24", "10.20.21.0/24"]
+    common_tags                      = {}
+  }
+
+  assert {
+    condition = (
+      length(aws_vpc_security_group_ingress_rule.alb_public) == 0 &&
+      length(aws_vpc_security_group_ingress_rule.alb_from_cloudfront) == 1 &&
+      aws_vpc_security_group_ingress_rule.alb_from_cloudfront[0].prefix_list_id == "pl-cloudfront-origin" &&
+      aws_vpc_security_group_ingress_rule.alb_from_cloudfront[0].from_port == 443
+    )
+    error_message = "Domain routing must replace public ALB ingress with CloudFront origin-facing HTTPS only."
+  }
+}

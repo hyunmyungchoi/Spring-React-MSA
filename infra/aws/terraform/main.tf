@@ -15,6 +15,38 @@ data "aws_caller_identity" "frontend" {
   count = var.enable_frontend_hosting ? 1 : 0
 }
 
+data "aws_route53_zone" "public" {
+  count = var.enable_public_domain_routing ? 1 : 0
+
+  name         = var.root_domain
+  private_zone = false
+}
+
+data "aws_acm_certificate" "cloudfront" {
+  count    = var.enable_public_domain_routing ? 1 : 0
+  provider = aws.us_east_1
+
+  domain      = var.root_domain
+  statuses    = ["ISSUED"]
+  types       = ["AMAZON_ISSUED"]
+  most_recent = true
+}
+
+data "aws_acm_certificate" "origin" {
+  count = var.enable_public_domain_routing ? 1 : 0
+
+  domain      = "origin.${var.root_domain}"
+  statuses    = ["ISSUED"]
+  types       = ["AMAZON_ISSUED"]
+  most_recent = true
+}
+
+data "aws_ec2_managed_prefix_list" "cloudfront_origin" {
+  count = var.enable_public_domain_routing ? 1 : 0
+
+  name = "com.amazonaws.global.cloudfront.origin-facing"
+}
+
 data "aws_ssm_parameter" "ecs_optimized_al2023_ami" {
   count = var.enable_ecs_compute_foundation ? 1 : 0
 
@@ -24,15 +56,16 @@ data "aws_ssm_parameter" "ecs_optimized_al2023_ami" {
 module "network" {
   source = "./modules/network"
 
-  name_prefix               = local.name_prefix
-  vpc_cidr                  = var.vpc_cidr
-  availability_zones        = local.availability_zones
-  public_subnet_cidrs       = var.public_subnet_cidrs
-  private_app_subnet_cidrs  = var.private_app_subnet_cidrs
-  private_data_subnet_cidrs = var.private_data_subnet_cidrs
-  aws_region                = var.aws_region
-  enable_nat_gateway        = var.enable_nat_gateway
-  common_tags               = local.common_tags
+  name_prefix                      = local.name_prefix
+  vpc_cidr                         = var.vpc_cidr
+  availability_zones               = local.availability_zones
+  public_subnet_cidrs              = var.public_subnet_cidrs
+  private_app_subnet_cidrs         = var.private_app_subnet_cidrs
+  private_data_subnet_cidrs        = var.private_data_subnet_cidrs
+  aws_region                       = var.aws_region
+  enable_nat_gateway               = var.enable_nat_gateway
+  cloudfront_origin_prefix_list_id = try(data.aws_ec2_managed_prefix_list.cloudfront_origin[0].id, null)
+  common_tags                      = local.common_tags
 }
 
 module "data_layer" {
@@ -94,25 +127,29 @@ module "application_runtime" {
   count  = var.enable_application_runtime_foundation ? 1 : 0
   source = "./modules/application-runtime"
 
-  name_prefix              = local.name_prefix
-  aws_region               = var.aws_region
-  vpc_id                   = module.network.vpc_id
-  public_subnet_ids        = module.network.public_subnet_ids
-  private_app_subnet_ids   = module.network.private_app_subnet_ids
-  alb_security_group_id    = module.network.alb_security_group_id
-  ecs_security_group_id    = module.network.ecs_security_group_id
-  ecs_cluster_arn          = module.ecs_compute[0].cluster_arn
-  capacity_provider_name   = module.ecs_compute[0].capacity_provider_name
-  service_images           = var.application_images
-  ecr_repository_arns      = module.ecr.repository_arns
-  application_secret_arns  = module.data_layer.application_secret_arns
-  redis_host_parameter_arn = module.cache.redis_host_parameter_arn
-  db_address               = module.data_layer.db_address
-  db_port                  = module.data_layer.db_port
-  db_name                  = module.data_layer.db_name
-  learning_runtime_enabled = var.learning_runtime_enabled
-  toss_api_client_id       = var.toss_api_client_id
-  common_tags              = local.common_tags
+  name_prefix                  = local.name_prefix
+  aws_region                   = var.aws_region
+  vpc_id                       = module.network.vpc_id
+  public_subnet_ids            = module.network.public_subnet_ids
+  private_app_subnet_ids       = module.network.private_app_subnet_ids
+  alb_security_group_id        = module.network.alb_security_group_id
+  ecs_security_group_id        = module.network.ecs_security_group_id
+  ecs_cluster_arn              = module.ecs_compute[0].cluster_arn
+  capacity_provider_name       = module.ecs_compute[0].capacity_provider_name
+  service_images               = var.application_images
+  ecr_repository_arns          = module.ecr.repository_arns
+  application_secret_arns      = module.data_layer.application_secret_arns
+  redis_host_parameter_arn     = module.cache.redis_host_parameter_arn
+  db_address                   = module.data_layer.db_address
+  db_port                      = module.data_layer.db_port
+  db_name                      = module.data_layer.db_name
+  learning_runtime_enabled     = var.learning_runtime_enabled
+  toss_api_client_id           = var.toss_api_client_id
+  enable_public_domain_routing = var.enable_public_domain_routing
+  public_hosted_zone_id        = try(data.aws_route53_zone.public[0].zone_id, null)
+  origin_domain                = "origin.${var.root_domain}"
+  origin_certificate_arn       = try(data.aws_acm_certificate.origin[0].arn, null)
+  common_tags                  = local.common_tags
 
   depends_on = [module.cache]
 }
@@ -142,12 +179,17 @@ module "frontend_hosting" {
   count  = var.enable_frontend_hosting ? 1 : 0
   source = "./modules/frontend-hosting"
 
-  name_prefix       = local.name_prefix
-  account_id        = data.aws_caller_identity.frontend[0].account_id
-  oidc_provider_arn = data.aws_iam_openid_connect_provider.github.arn
-  github_repository = local.github_repository
-  github_branch_ref = local.github_branch_ref
-  common_tags       = local.common_tags
+  name_prefix                  = local.name_prefix
+  account_id                   = data.aws_caller_identity.frontend[0].account_id
+  oidc_provider_arn            = data.aws_iam_openid_connect_provider.github.arn
+  github_repository            = local.github_repository
+  github_branch_ref            = local.github_branch_ref
+  enable_public_domain_routing = var.enable_public_domain_routing
+  root_domain                  = var.root_domain
+  public_hosted_zone_id        = try(data.aws_route53_zone.public[0].zone_id, null)
+  cloudfront_certificate_arn   = try(data.aws_acm_certificate.cloudfront[0].arn, null)
+  origin_domain                = "origin.${var.root_domain}"
+  common_tags                  = local.common_tags
 }
 
 resource "aws_budgets_budget" "monthly" {

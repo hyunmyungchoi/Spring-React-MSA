@@ -3,3 +3,4 @@ environment        = "learning"
 aws_region         = "ap-northeast-2"
 operator_user_name = "hyun-terraform-admin"
 state_key          = "learning/runtime/terraform.tfstate"
+additional_state_keys = ["global/dns/terraform.tfstate"]

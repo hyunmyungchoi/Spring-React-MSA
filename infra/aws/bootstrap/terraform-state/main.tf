@@ -113,10 +113,7 @@ resource "aws_iam_role_policy" "state_access" {
         Resource = local.bucket_arn
         Condition = {
           StringEquals = {
-            "s3:prefix" = [
-              var.state_key,
-              local.lock_key,
-            ]
+            "s3:prefix" = concat(local.state_keys, local.lock_keys)
           }
         }
       },
@@ -127,7 +124,7 @@ resource "aws_iam_role_policy" "state_access" {
           "s3:GetObject",
           "s3:PutObject",
         ]
-        Resource = "${local.bucket_arn}/${var.state_key}"
+        Resource = [for key in local.state_keys : "${local.bucket_arn}/${key}"]
       },
       {
         Sid    = "ManageStateLock"
@@ -137,7 +134,7 @@ resource "aws_iam_role_policy" "state_access" {
           "s3:PutObject",
           "s3:DeleteObject",
         ]
-        Resource = "${local.bucket_arn}/${local.lock_key}"
+        Resource = [for key in local.lock_keys : "${local.bucket_arn}/${key}"]
       },
     ]
   })

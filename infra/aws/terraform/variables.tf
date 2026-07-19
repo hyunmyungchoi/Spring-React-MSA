@@ -129,6 +129,31 @@ variable "enable_frontend_hosting" {
   default     = false
 }
 
+variable "enable_public_domain_routing" {
+  description = "Whether to attach the approved Route 53 domains, ACM certificates, and CloudFront-to-ALB API routing."
+  type        = bool
+  default     = false
+
+  validation {
+    condition = !var.enable_public_domain_routing || (
+      var.enable_frontend_hosting &&
+      var.enable_application_runtime_foundation
+    )
+    error_message = "enable_public_domain_routing requires both frontend hosting and the application runtime foundation."
+  }
+}
+
+variable "root_domain" {
+  description = "Stable public domain managed by the separate global DNS state."
+  type        = string
+  default     = "hyuncloudlab.com"
+
+  validation {
+    condition     = var.root_domain == "hyuncloudlab.com"
+    error_message = "root_domain must remain hyuncloudlab.com for the approved public contract."
+  }
+}
+
 variable "application_images" {
   description = "Immutable ECR image URIs for all eight backend services, keyed by short runtime name."
   type        = map(string)

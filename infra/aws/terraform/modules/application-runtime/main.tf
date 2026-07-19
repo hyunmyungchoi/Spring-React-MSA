@@ -43,6 +43,7 @@ locals {
       environment = merge(local.common_environment, {
         GATEWAY_CORS_ALLOWED_ORIGIN      = var.member_public_origin
         GATEWAY_BFF_URI                  = "http://${local.service_dns.member_bff}:8079"
+        GATEWAY_BFF_WEBSOCKET_URI        = "ws://${local.service_dns.member_bff}:8079"
         GATEWAY_USER_SERVICE_URI         = "http://${local.service_dns.user_service}:8081"
         GATEWAY_COMMUNITY_SERVICE_URI    = "http://${local.service_dns.community_service}:8083"
         GATEWAY_STOCK_SERVICE_URI        = "http://${local.service_dns.stock_service}:8084"
@@ -512,16 +513,26 @@ resource "aws_lb" "public" {
 
   enable_deletion_protection = false
   drop_invalid_header_fields = true
-  idle_timeout               = 60
+  idle_timeout               = 3600
 
   tags = merge(var.common_tags, {
     Name    = "${var.name_prefix}-alb"
     Runtime = "disposable"
   })
+
+  lifecycle {
+    precondition {
+      condition = !var.enable_public_domain_routing || (
+        var.public_hosted_zone_id != null &&
+        var.origin_certificate_arn != null
+      )
+      error_message = "Public domain routing requires the existing hosted-zone ID and an issued regional origin certificate."
+    }
+  }
 }
 
 resource "aws_lb_listener" "http" {
-  for_each = local.runtime
+  for_each = var.learning_runtime_enabled && !var.enable_public_domain_routing ? local.runtime : {}
 
   load_balancer_arn = aws_lb.public[each.key].arn
   port              = 80
@@ -540,10 +551,32 @@ resource "aws_lb_listener" "http" {
   tags = var.common_tags
 }
 
+resource "aws_lb_listener" "https" {
+  for_each = var.learning_runtime_enabled && var.enable_public_domain_routing ? local.runtime : {}
+
+  load_balancer_arn = aws_lb.public[each.key].arn
+  port              = 443
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+  certificate_arn   = var.origin_certificate_arn
+
+  default_action {
+    type = "fixed-response"
+
+    fixed_response {
+      content_type = "application/json"
+      message_body = "{\"message\":\"not found\"}"
+      status_code  = "404"
+    }
+  }
+
+  tags = var.common_tags
+}
+
 resource "aws_lb_listener_rule" "gateway" {
   for_each = var.learning_runtime_enabled ? local.public_services : {}
 
-  listener_arn = aws_lb_listener.http["this"].arn
+  listener_arn = var.enable_public_domain_routing ? aws_lb_listener.https["this"].arn : aws_lb_listener.http["this"].arn
   priority     = each.key == "member-gateway" ? 100 : 110
 
   action {
@@ -558,6 +591,20 @@ resource "aws_lb_listener_rule" "gateway" {
   }
 
   tags = var.common_tags
+}
+
+resource "aws_route53_record" "origin" {
+  for_each = var.learning_runtime_enabled && var.enable_public_domain_routing ? local.runtime : {}
+
+  zone_id = var.public_hosted_zone_id
+  name    = var.origin_domain
+  type    = "A"
+
+  alias {
+    name                   = aws_lb.public[each.key].dns_name
+    zone_id                = aws_lb.public[each.key].zone_id
+    evaluate_target_health = true
+  }
 }
 
 resource "aws_ecs_service" "backend" {

@@ -148,10 +148,10 @@ curl.exe --fail --silent --show-error --location --head "https://$($domains.admi
 
 > 첫 Smoke 완료: S3 Entry 문서의 `no-cache`와 Hash Asset의 1년 immutable Cache metadata를 6/6 확인했다. Member Root·Community·Stock과 Admin Root·Users·Logs의 curl은 모두 HTTP 200·HTML이었다.
 
-## 6. 현재 단계의 제한
+## 6. Custom Domain과 API Origin 후속 단계
 
-- 현재 Distribution은 정적 S3 Origin만 가진다. API, OAuth2, Logout과 WebSocket의 ALB Origin 동작은 ACM·Route 53·TLS 단계에서 추가한다.
-- `app.hyuncloudlab.com`, `admin.hyuncloudlab.com`, Root Redirect와 `origin.hyuncloudlab.com`은 아직 연결하지 않는다.
+- 현재 AWS에 적용된 Distribution은 정적 S3 Origin만 가진다. 코드에는 API, OAuth2, Logout, Session과 WebSocket의 HTTPS ALB Origin, Custom Domain과 Root Redirect가 구현됐지만 별도 Saved Plan Gate 전에는 적용하지 않는다.
+- 적용 순서는 State 권한 확장, Global DNS Hosted Zone Import·ACM DNS 검증, Runtime State의 CloudFront/Route 53/ALB TLS 변경이다. 상세 절차는 [AWS Domain·TLS Runbook](aws-domain-tls.md)을 따른다.
 - Runtime OFF에서는 정적 화면은 제공할 수 있지만 Backend API는 제공하지 않는다. API 의존 기능은 사용자에게 비활성 상태를 표시해야 한다.
 - 여섯 S3 Bucket과 두 CloudFront Distribution은 사용량 기반 Storage·Request·전송·Invalidation 비용이 발생할 수 있다.
 
