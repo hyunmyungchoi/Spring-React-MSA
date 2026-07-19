@@ -25,7 +25,7 @@
 | Data | PostgreSQL 16, Redis 7 |
 | Messaging | Kafka 3.7.0 |
 | Platform | Docker Compose, Kubernetes, ingress-nginx, GHCR, Argo CD |
-| AWS migration | Runtime OFF·RDS 정지; WebSocket Gateway Image Build Once·ECR Promote·Kubernetes Digest 고정 완료, ECS 적용·공개 경로 재검증 대기 |
+| AWS migration | Runtime OFF·RDS 정지; WebSocket Gateway 교정 Task Definition 적용·No changes 완료, Runtime ON 공개 경로 재검증 대기 |
 | Observability | Prometheus, Grafana, Loki, Promtail, Kafka exporters |
 
 ## 문서 상태 표현
