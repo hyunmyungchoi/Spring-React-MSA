@@ -103,9 +103,10 @@ run "runtime_off_keeps_foundation_at_zero_tasks" {
   assert {
     condition = (
       aws_service_discovery_private_dns_namespace.this.name == "learning.spring-react-msa.internal" &&
-      aws_service_discovery_service.backend["user-service"].dns_config[0].dns_records[0].type == "A"
+      aws_service_discovery_service.backend["user-service"].dns_config[0].dns_records[0].type == "A" &&
+      aws_service_discovery_service.backend["user-service"].health_check_custom_config[0].failure_threshold == 1
     )
-    error_message = "Cloud Map must provide private A records compatible with the existing fixed-port service URLs."
+    error_message = "Cloud Map must provide private A records and ECS-managed custom health checks."
   }
 }
 
@@ -118,6 +119,7 @@ run "runtime_on_creates_one_task_each_and_disposable_alb" {
 
   variables {
     learning_runtime_enabled = true
+    toss_api_client_id       = "test-toss-client-id"
   }
 
   assert {
@@ -138,4 +140,38 @@ run "runtime_on_creates_one_task_each_and_disposable_alb" {
     )
     error_message = "Only the two gateway services may register with the public ALB."
   }
+
+  assert {
+    condition = alltrue([
+      for service_name in ["authorization-server", "stock-service", "member-bff", "admin-bff"] :
+      lookup({
+        for entry in jsondecode(aws_ecs_task_definition.service[service_name].container_definitions)[0].environment :
+        entry.name => entry.value
+      }, "SPRING_DATA_REDIS_USERNAME", null) == "spring-msa"
+    ])
+    error_message = "Every Valkey client task must use the password-authenticated spring-msa RBAC username."
+  }
+
+  assert {
+    condition = lookup({
+      for entry in jsondecode(aws_ecs_task_definition.service["stock-service"].container_definitions)[0].environment :
+      entry.name => entry.value
+    }, "TOSS_API_CLIENT_ID", null) == "test-toss-client-id"
+    error_message = "Runtime ON must inject a non-empty Toss API client ID into the stock service."
+  }
+}
+
+run "runtime_on_rejects_missing_toss_client_id" {
+  command = plan
+
+  module {
+    source = "./modules/application-runtime"
+  }
+
+  variables {
+    learning_runtime_enabled = true
+    toss_api_client_id       = ""
+  }
+
+  expect_failures = [aws_ecs_task_definition.service["stock-service"]]
 }

@@ -15,6 +15,7 @@ enable_ecs_compute_foundation = false
 enable_database_tasks_foundation = false
 enable_application_runtime_foundation = false
 learning_runtime_enabled      = false
+enable_frontend_hosting       = false
 ecs_instance_type             = "m6i.xlarge"
 
 # Example: user-service = "123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/...@sha256:<digest>"

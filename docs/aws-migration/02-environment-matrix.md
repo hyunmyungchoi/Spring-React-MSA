@@ -2,9 +2,9 @@
 
 > 문서 상태: 로컬·Kubernetes·AWS Learning 목표 설정 비교
 >
-> 기준일: 2026-07-18
+> 기준일: 2026-07-19
 >
-> AWS 적용 상태: RDS/Secrets와 ECS Compute 적용·검증 완료, RDS 정지·ECS ASG `0/0/0`; ECS Task Definition·Service와 Valkey Terraform 코드 구현·로컬 검증 완료, AWS 미적용
+> AWS 적용 상태: Runtime ON 환경 계약 교정과 curl Smoke 6/6 검증 완료 후 Runtime OFF 적용; 현재 ECS Service·ASG 0, ALB·Valkey 삭제, RDS 정지, Terraform `No changes`
 
 인증 URI와 쿠키/CSRF 계약의 기준은 [인증 스펙](../specs/authentication.md)이다. 이 표는 `application.yml`과 `application-prod.yml`에서 실제로 요구하는 환경별 주입 값을 관리하며 Secret의 실제 값은 기록하지 않는다. AWS Secret 경계는 [AWS Learning Runtime 결정](07-learning-runtime-design.md)을 따른다.
 
@@ -105,7 +105,7 @@ Client ID는 공개 식별자이므로 Secret이 아니지만 Client Secret과 H
 | `TOSS_API_CLIENT_ID` | `.env.local` | 현재 Kubernetes Secret, 후속 ConfigMap 이동 가능 | ECS 일반 환경 변수 | No |
 | `TOSS_API_CLIENT_SECRET` | `.env.local` | Kubernetes Secret | `/spring-react-msa/learning/stock-service` | Yes |
 
-AWS ECS Application Task Definition 8개, Service 8개, Cloud Map과 ALB/Target Group Terraform 코드는 구현됐고 로컬 계약 테스트를 통과했다. 아직 Git SHA 기준 Backend 8개 Image Promote와 저장 Plan 승인 전이므로 실제 AWS에는 적용하지 않았다. `docker-compose-aws.yml`은 ECS 배포 정의로 만들지 않는다.
+Source SHA `a7b3e0387c6817fd5a781ccf3ac532e04f38c9e1`의 Backend 8개를 Build Once·ECR Promote한 뒤 Digest 고정 ECS Application Task Definition 8개, Service 8개, Cloud Map Service 8개와 Gateway Target Group 2개를 AWS에 적용했다. Runtime OFF에서 Service Desired/Running/Pending `0/0/0`, ASG `0/0/0`, Public ALB·Valkey 미생성과 Terraform `No changes`를 확인했고, 후속 Runtime ON에서는 Service 8개 `1/1/0`, 계약·Health·Digest·Cloud Map 8/8와 curl Smoke 6/6을 검증했다. 최종 Runtime OFF로 다시 수렴해 실행 Workload 0과 RDS 정지를 확인했다. `docker-compose-aws.yml`은 ECS 배포 정의로 만들지 않는다.
 
 비밀이 아닌 값은 ECS 일반 환경 변수 또는 SSM Parameter Store `String`으로 관리한다. SSM SecureString은 사용하지 않는다. Terraform은 Secret Container와 ARN 참조만 관리하고 실제 Secret Value를 `.tf`, `.tfvars`, Output 또는 State에 넣지 않는다.
 

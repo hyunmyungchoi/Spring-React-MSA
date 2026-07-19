@@ -123,6 +123,12 @@ variable "enable_application_runtime_foundation" {
   }
 }
 
+variable "enable_frontend_hosting" {
+  description = "Whether to create six private frontend buckets, two CloudFront distributions, and the GitHub deployment role."
+  type        = bool
+  default     = false
+}
+
 variable "application_images" {
   description = "Immutable ECR image URIs for all eight backend services, keyed by short runtime name."
   type        = map(string)

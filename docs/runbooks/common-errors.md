@@ -110,6 +110,14 @@ kubectl get secret ghcr-secret -n spring-msa
 - 429를 즉시 반복 호출하지 않는다.
 - stale data가 있으면 `dataStatus=STALE`로 반환되는지 확인한다.
 
+## 비활성 또는 존재하지 않는 API가 500을 반환함
+
+AWS Runtime ON Smoke에서 `ADMIN_BFF_REGISTRATION_ENABLED=false`와 조건부 Controller 비등록을 확인했지만, CSRF를 포함한 빈 `POST /admin-bff/registration/admin`은 404 대신 500을 반환했다. 공통 예외 처리기가 Spring의 `NoResourceFoundException`을 일반 `INTERNAL_SERVER_ERROR`로 변환하기 때문이다. 이는 관리자 가입 Controller가 활성화됐다는 의미가 아니며 유효한 가입 데이터는 보내지 않는다.
+
+- 실제 Task Definition의 `ADMIN_BFF_REGISTRATION_ENABLED=false`를 먼저 확인한다.
+- `AdminBffRegistrationControllerConditionTest`로 비활성 환경에서 Bean이 없는지 확인한다.
+- 공통 Web 예외 처리기에 `NoResourceFoundException` 404 매핑을 추가하려면 Backend 테스트·Build Once·Digest Promote·새 Task Definition Plan을 별도 승인 단위로 수행한다.
+
 ## pnpm engine/version 오류
 
 ```powershell

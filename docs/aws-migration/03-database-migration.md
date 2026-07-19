@@ -2,9 +2,9 @@
 
 > 문서 상태: RDS Terraform·DB Bootstrap·Build Once/Promote·Flyway V1 실제 실행 및 검증 완료
 >
-> 기준일: 2026-07-18
+> 기준일: 2026-07-19
 >
-> AWS 적용 상태: DB Secret 3개와 Role·Schema Bootstrap, Digest 고정 Migration Task 3개, 실제 Flyway V1·사후 검증 완료, Runtime OFF·RDS 정지·재계획 `No changes`
+> AWS 적용 상태: DB Secret 3개와 Role·Schema Bootstrap, Digest 고정 Migration Task 3개, 실제 Flyway V1·Runtime ON 사후 검증 완료; 현재 RDS `stopped`, 자동 재시작 예정 2026-07-26 05:15:28 KST, 재계획 `No changes`
 
 테이블 소유권과 현재 제약은 [시스템 개요](../architecture/overview.md), [회원 서비스 스펙](../specs/member-service.md), [주식 서비스 스펙](../specs/stock-service.md), [실시간 채팅 스펙](../specs/realtime-chat.md)을 기준으로 한다.
 
@@ -117,7 +117,7 @@ Docker Compose PostgreSQL was inspected with `psql` after local services started
 
 - Community Service는 아직 메모리 저장 방식이므로 migration 대상 table이 없다.
 - Chat Outbox는 [ADR-003](../decisions/ADR-003-kafka-outbox-chat.md)의 목표이며 현재 schema에는 없다.
-- Flyway V1까지 완료했지만 Backend Application Task Definition·Service와 이후 Schema 변경을 위한 V2 이상 Migration은 아직 없다.
+- Flyway V1과 Backend Application Task Definition·Service 8개의 Runtime ON 검증까지 완료했지만 이후 Schema 변경을 위한 V2 이상 Migration은 아직 없다.
 - Kubernetes↔AWS DR용 PostgreSQL 복제, promotion, write fencing과 failback 절차가 없다.
 
 RDS를 도입할 때 단순 Schema 이관과 재해 복구 복제를 하나의 작업으로 취급하지 않는다. Learning에서는 Flyway와 Backup/Restore까지만 구현하고 Kubernetes↔AWS DR은 후속 학습 과제로 보류한다. 전체 Runtime 경계는 [AWS Learning Runtime 결정](07-learning-runtime-design.md)을 따른다.

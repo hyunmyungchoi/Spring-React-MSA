@@ -29,21 +29,6 @@ resource "aws_elasticache_parameter_group" "this" {
   })
 }
 
-resource "aws_elasticache_user" "default_disabled" {
-  for_each = local.runtime
-
-  user_id              = "${var.name_prefix}-default"
-  user_name            = "default"
-  access_string        = "off ~* -@all"
-  engine               = "valkey"
-  no_password_required = true
-
-  tags = merge(var.common_tags, {
-    Name    = "${var.name_prefix}-valkey-default-disabled"
-    Runtime = "disposable"
-  })
-}
-
 resource "aws_elasticache_user" "application" {
   for_each = local.runtime
 
@@ -73,10 +58,7 @@ resource "aws_elasticache_user_group" "this" {
 
   engine        = "valkey"
   user_group_id = "${var.name_prefix}-valkey"
-  user_ids = [
-    aws_elasticache_user.default_disabled[each.key].user_id,
-    aws_elasticache_user.application[each.key].user_id,
-  ]
+  user_ids      = [aws_elasticache_user.application[each.key].user_id]
 
   tags = merge(var.common_tags, {
     Name    = "${var.name_prefix}-valkey"

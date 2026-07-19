@@ -198,3 +198,28 @@ output "github_actions_ecr_role_arn" {
   description = "ARN registered as the GitHub AWS_ECR_PUSH_ROLE_ARN repository variable."
   value       = module.github_actions_ecr.role_arn
 }
+
+output "frontend_bucket_names" {
+  description = "Six independent private frontend bucket names, or an empty map when frontend hosting is disabled."
+  value       = try(module.frontend_hosting[0].bucket_names, {})
+}
+
+output "frontend_cloudfront_distribution_ids" {
+  description = "Member and Admin CloudFront distribution IDs, or an empty map when frontend hosting is disabled."
+  value       = try(module.frontend_hosting[0].distribution_ids, {})
+}
+
+output "frontend_cloudfront_domain_names" {
+  description = "Member and Admin CloudFront default domain names, or an empty map when frontend hosting is disabled."
+  value       = try(module.frontend_hosting[0].distribution_domain_names, {})
+}
+
+output "github_actions_frontend_role_name" {
+  description = "GitHub Actions frontend deployment role name, or null when frontend hosting is disabled."
+  value       = try(module.frontend_hosting[0].deployment_role_name, null)
+}
+
+output "github_actions_frontend_role_arn" {
+  description = "GitHub Actions frontend deployment role ARN, or null when frontend hosting is disabled."
+  value       = try(module.frontend_hosting[0].deployment_role_arn, null)
+}

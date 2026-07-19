@@ -108,9 +108,9 @@ data corruption 또는 split-brain test가 통과하기 전에는 public traffic
 
 ## 현재 차단 요소
 
-- RDS/Secrets와 ECS Compute Foundation은 적용됐지만 RDS 정지·ECS ASG `0/0/0` 상태이고 DB Bootstrap·ECS Task/Service·ALB·ElastiCache는 미구현
+- RDS/Secrets·DB Bootstrap/Flyway와 ECS Compute/Application Runtime은 실제 기동·검증했지만 교차 환경 복제와 warm standby 전환 통제는 미구현
 - production Kubernetes overlay와 외부 ingress 미구현
-- versioned migration과 cross-site PostgreSQL replication 미구현
+- Flyway V1 이후 Schema 변경 절차와 cross-site PostgreSQL replication 미구현
 - Outbox 미구현
 - 외부 traffic control과 active-site registry 미구현
 

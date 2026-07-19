@@ -1,0 +1,175 @@
+name: Deploy Frontend Units to AWS S3 and CloudFront
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_target:
+        description: Independent frontend unit or group to deploy
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - all-member
+          - all-admin
+          - spring-member-web
+          - spring-community-web
+          - spring-stock-web
+          - spring-admin-web
+          - spring-admin-users-web
+          - spring-admin-logs-web
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: aws-frontend-deploy
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ap-northeast-2
+  NODE_VERSION: 24.18.0
+  PNPM_VERSION: 10.0.0
+  BUCKET_NAME_PREFIX: spring-react-msa-learning
+  DEPLOY_TARGET: ${{ inputs.deploy_target }}
+
+jobs:
+  prepare-deploy-matrix:
+    name: Prepare independent frontend deployment matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+
+    steps:
+      - name: Require master branch
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF}" != "refs/heads/master" ]]; then
+            echo "AWS frontend deployment is allowed only from refs/heads/master."
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Select deployment units
+        id: matrix
+        run: python infra/ci/select-frontend-deploy-matrix.py
+
+  deployment-contract-test:
+    name: Frontend deployment contract tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Test deployment matrix
+        run: >-
+          python -m unittest
+          infra/ci/test_select_frontend_deploy_matrix.py
+          infra/ci/test_aws_frontend_deploy_workflow.py
+
+  deploy:
+    name: Deploy ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    needs:
+      - prepare-deploy-matrix
+      - deployment-contract-test
+
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare-deploy-matrix.outputs.matrix) }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install exact pnpm version
+        shell: bash
+        run: |
+          corepack enable
+          corepack prepare "pnpm@${PNPM_VERSION}" --activate
+          test "$(pnpm --version)" = "${PNPM_VERSION}"
+
+      - name: Install, lint, and build only the selected unit
+        shell: bash
+        run: |
+          cd FrontEnd
+          pnpm install --frozen-lockfile
+          pnpm --filter "${{ matrix.workspace }}" run lint
+          pnpm --filter "${{ matrix.workspace }}" run "${{ matrix.build_script }}"
+
+          artifact="${GITHUB_WORKSPACE}/${{ matrix.output_dir }}"
+          test -d "${artifact}"
+          test -f "${artifact}/${{ matrix.entry_document }}"
+
+      - name: Validate AWS repository variables
+        shell: bash
+        env:
+          AWS_FRONTEND_DEPLOY_ROLE_ARN: ${{ vars.AWS_FRONTEND_DEPLOY_ROLE_ARN }}
+          AWS_MEMBER_CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.AWS_MEMBER_CLOUDFRONT_DISTRIBUTION_ID }}
+          AWS_ADMIN_CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.AWS_ADMIN_CLOUDFRONT_DISTRIBUTION_ID }}
+        run: |
+          test -n "${AWS_FRONTEND_DEPLOY_ROLE_ARN}"
+          test -n "${AWS_MEMBER_CLOUDFRONT_DISTRIBUTION_ID}"
+          test -n "${AWS_ADMIN_CLOUDFRONT_DISTRIBUTION_ID}"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_FRONTEND_DEPLOY_ROLE_ARN }}
+          role-session-name: gha-frontend-${{ matrix.bucket_key }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Sync only the selected private bucket
+        shell: bash
+        run: |
+          account_id="$(aws sts get-caller-identity --query Account --output text)"
+          bucket="${BUCKET_NAME_PREFIX}-${account_id}-frontend-${{ matrix.bucket_key }}"
+          artifact="${GITHUB_WORKSPACE}/${{ matrix.output_dir }}"
+
+          aws s3api head-bucket --bucket "${bucket}"
+          aws s3 sync "${artifact}" "s3://${bucket}" \
+            --delete \
+            --exclude "*.html" \
+            --cache-control "public,max-age=31536000,immutable" \
+            --only-show-errors
+          aws s3 sync "${artifact}" "s3://${bucket}" \
+            --delete \
+            --exclude "*" \
+            --include "*.html" \
+            --cache-control "no-cache,no-store,must-revalidate" \
+            --content-type "text/html; charset=utf-8" \
+            --only-show-errors
+
+      - name: Invalidate only the selected CloudFront paths
+        shell: bash
+        env:
+          INVALIDATION_PATHS_JSON: ${{ toJSON(matrix.invalidation_paths) }}
+          MEMBER_DISTRIBUTION_ID: ${{ vars.AWS_MEMBER_CLOUDFRONT_DISTRIBUTION_ID }}
+          ADMIN_DISTRIBUTION_ID: ${{ vars.AWS_ADMIN_CLOUDFRONT_DISTRIBUTION_ID }}
+        run: |
+          case "${{ matrix.distribution_group }}" in
+            member) distribution_id="${MEMBER_DISTRIBUTION_ID}" ;;
+            admin) distribution_id="${ADMIN_DISTRIBUTION_ID}" ;;
+            *) echo "Unsupported distribution group"; exit 1 ;;
+          esac
+
+          mapfile -t paths < <(
+            python -c 'import json, os; print("\n".join(json.loads(os.environ["INVALIDATION_PATHS_JSON"])))'
+          )
+          invalidation_id="$(aws cloudfront create-invalidation \
+            --distribution-id "${distribution_id}" \
+            --paths "${paths[@]}" \
+            --query 'Invalidation.Id' \
+            --output text)"
+          aws cloudfront wait invalidation-completed \
+            --distribution-id "${distribution_id}" \
+            --id "${invalidation_id}"

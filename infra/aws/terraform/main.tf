@@ -11,6 +11,10 @@ data "aws_iam_openid_connect_provider" "github" {
   url = "https://token.actions.githubusercontent.com"
 }
 
+data "aws_caller_identity" "frontend" {
+  count = var.enable_frontend_hosting ? 1 : 0
+}
+
 data "aws_ssm_parameter" "ecs_optimized_al2023_ami" {
   count = var.enable_ecs_compute_foundation ? 1 : 0
 
@@ -132,6 +136,18 @@ module "github_actions_ecr" {
   github_branch_ref   = local.github_branch_ref
   ecr_repository_arns = toset(values(module.ecr.repository_arns))
   common_tags         = local.common_tags
+}
+
+module "frontend_hosting" {
+  count  = var.enable_frontend_hosting ? 1 : 0
+  source = "./modules/frontend-hosting"
+
+  name_prefix       = local.name_prefix
+  account_id        = data.aws_caller_identity.frontend[0].account_id
+  oidc_provider_arn = data.aws_iam_openid_connect_provider.github.arn
+  github_repository = local.github_repository
+  github_branch_ref = local.github_branch_ref
+  common_tags       = local.common_tags
 }
 
 resource "aws_budgets_budget" "monthly" {

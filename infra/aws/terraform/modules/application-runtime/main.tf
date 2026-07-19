@@ -77,6 +77,7 @@ locals {
       public_host        = null
       environment = merge(local.common_environment, {
         SPRING_DATA_REDIS_PORT                   = "6379"
+        SPRING_DATA_REDIS_USERNAME               = "spring-msa"
         SPRING_DATA_REDIS_SSL_ENABLED            = "true"
         AUTH_SERVER_ISSUER                       = var.member_public_origin
         USER_FRONTEND_LOGIN_URI                  = "${var.member_public_origin}/auth"
@@ -159,6 +160,7 @@ locals {
         SPRING_FLYWAY_DEFAULT_SCHEMA                   = "stock_service"
         SPRING_FLYWAY_SCHEMAS                          = "stock_service"
         SPRING_DATA_REDIS_PORT                         = "6379"
+        SPRING_DATA_REDIS_USERNAME                     = "spring-msa"
         SPRING_DATA_REDIS_SSL_ENABLED                  = "true"
         TOSS_API_BASE_URL                              = "https://openapi.tossinvest.com"
         TOSS_API_CLIENT_ID                             = var.toss_api_client_id
@@ -192,6 +194,7 @@ locals {
         SPRING_FLYWAY_DEFAULT_SCHEMA                   = "member_bff"
         SPRING_FLYWAY_SCHEMAS                          = "member_bff"
         SPRING_DATA_REDIS_PORT                         = "6379"
+        SPRING_DATA_REDIS_USERNAME                     = "spring-msa"
         SPRING_DATA_REDIS_SSL_ENABLED                  = "true"
         APP_KAFKA_ENABLED                              = "false"
         SPRING_KAFKA_BOOTSTRAP_SERVERS                 = ""
@@ -234,6 +237,7 @@ locals {
       public_host        = null
       environment = merge(local.common_environment, {
         SPRING_DATA_REDIS_PORT                   = "6379"
+        SPRING_DATA_REDIS_USERNAME               = "spring-msa"
         SPRING_DATA_REDIS_SSL_ENABLED            = "true"
         ADMIN_BFF_REGISTRATION_ENABLED           = "false"
         ADMIN_BFF_CLIENT_ID                      = var.admin_bff_client_id
@@ -298,11 +302,14 @@ resource "aws_service_discovery_service" "backend" {
     }
   }
 
-  health_check_custom_config {}
+  health_check_custom_config {
+    failure_threshold = 1
+  }
 
   tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-${each.key}"
   })
+
 }
 
 resource "aws_cloudwatch_log_group" "service" {
@@ -457,6 +464,13 @@ resource "aws_ecs_task_definition" "service" {
   tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-${each.key}"
   })
+
+  lifecycle {
+    precondition {
+      condition     = each.key != "stock-service" || !var.learning_runtime_enabled || length(trimspace(var.toss_api_client_id)) > 0
+      error_message = "Runtime ON requires a non-empty toss_api_client_id for the stock service."
+    }
+  }
 }
 
 resource "aws_lb_target_group" "gateway" {

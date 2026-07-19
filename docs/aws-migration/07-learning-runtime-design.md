@@ -1,12 +1,12 @@
 # AWS Learning Runtime 결정
 
-> 문서 상태: Learning 목표 설계 승인, Data Layer·ECS Compute·DB Migration 적용·검증 완료
+> 문서 상태: Learning 목표 설계 승인, Runtime ON/OFF와 Frontend Hosting Foundation 적용·검증 완료
 >
-> 기준일: 2026-07-18
+> 기준일: 2026-07-19
 >
-> 저장소 상태: Foundation·ECR/OIDC·Private App 송신·RDS/Secrets·ECS Compute·DB Bootstrap/Flyway Task 적용, Application Task/Service·Cloud Map·ALB·Valkey 코드 구현 및 로컬 검증 완료
+> 저장소 상태: Foundation·ECR/OIDC·Private App 송신·RDS/Secrets·ECS Compute·DB Bootstrap/Flyway·Application Runtime과 Frontend Hosting 코드 적용, Terraform 계약 테스트 20/20 완료
 >
-> AWS 적용 상태: Foundation·ECR/OIDC·S3 Remote Backend·Private App 송신·RDS/Secrets·ECS Compute 적용, Build Once·ECR Promote와 실제 RDS Flyway V1 검증 완료, RDS 정지·ECS ASG `0/0/0`
+> AWS 적용 상태: Runtime ON에서 RDS·Valkey·Public ALB, ASG `1/1/2`, ECS Service 8개 `1/1/0`, Health·Digest·Cloud Map 8/8, ALB Target 2/2와 curl Smoke 6/6을 검증했다. 후속 Runtime OFF 적용을 완료해 현재 Service/Task/ASG/EC2 0, ALB·Valkey 삭제, RDS `stopped`다. Frontend S3 6개·CloudFront 2개와 배포 IAM도 Apply·검증했으며 Bucket은 비어 있고 첫 배포 대기 상태다. Terraform은 `No changes`다.
 
 이 문서는 AWS Foundation 이후 Learning 환경에 추가할 Runtime의 승인된 결정을 기록한다. 현재 적용된 리소스와 운영 절차는 [Terraform 운영 Runbook](../../infra/aws/terraform/README.md), 이미 적용된 네트워크 기준선은 [AWS Foundation 설계](04-aws-foundation-design.md)를 따른다.
 
@@ -18,12 +18,12 @@
 |---|---|---|---|
 | P0 | Private Subnet 송신 | 단일 Zonal NAT Gateway와 S3 Gateway Endpoint | 적용·검증 완료 |
 | P0 | Terraform State | S3 Remote Backend와 S3 Native Lockfile | 적용·이전·검증 완료 |
-| P0 | Learning 보안 경계 | 관리자 공개 가입 차단, 4자 비밀번호 위험 수용, 원본 Session ID 미노출 | 코드 구현·로컬 테스트 완료, AWS 배포 전 |
+| P0 | Learning 보안 경계 | 관리자 공개 가입 차단, 4자 비밀번호 위험 수용, 원본 Session ID 미노출 | 코드·Task Definition 적용, AWS Runtime ON 검증 완료 |
 | P0 | 이미지 무결성 | GHCR Build Once, OCI Digest 기준 ECR Promote | Backend 8개 Build Once·Promote·8/8 Digest 검증 완료 |
-| P1 | ECS 구조 | ECS on EC2, ASG Capacity Provider, Learning ON/OFF | Compute 적용·AWS 검증 완료, ASG `0/0/0`; Task/Service 코드 구현·로컬 검증 완료 |
+| P1 | ECS 구조 | ECS on EC2, ASG Capacity Provider, Learning ON/OFF | Runtime ON에서 ASG `1/1/2`, Service 8개 `1/1/0` 배치 검증 완료 |
 | P1 | 데이터베이스 | PostgreSQL 16 공유 인스턴스·서비스별 Schema·Flyway | DB Secret·Bootstrap·Flyway V1 3개 실제 실행과 사후 검증 완료 |
-| P1 | Frontend | Private S3와 CloudFront | 미구현 |
-| P1 | Secret | Secrets Manager로 통일 | Container 7개·DB Task 최소 권한 IAM 적용, DB Secret 3개 초기화 완료 |
+| P1 | Frontend | 독립 Private S3 6개와 Member/Admin CloudFront 2개 | Foundation Apply·AWS 계약·`No changes` 검증 완료, 첫 배포 대기 |
+| P1 | Secret | Secrets Manager로 통일 | Container 7개·최소 권한 IAM 적용, DB Secret 3개와 Runtime Secret 6개 계약 초기화 완료 |
 | P1 | 도메인 | 기존 Hosted Zone Import와 별도 Global DNS State | 미구현 |
 | P2 | DR | Learning 범위에서 제외하고 후속 학습 과제로 보류 | 보류 |
 
@@ -35,7 +35,11 @@ flowchart TB
     R53 --> CF1["Member CloudFront"]
     R53 --> CF2["Admin CloudFront"]
     CF1 --> S31["Private Member S3"]
-    CF2 --> S32["Private Admin S3"]
+    CF1 --> S32["Private Community S3"]
+    CF1 --> S33["Private Stock S3"]
+    CF2 --> S34["Private Admin S3"]
+    CF2 --> S35["Private Admin Users S3"]
+    CF2 --> S36["Private Admin Logs S3"]
     CF1 --> ALB["Public ALB"]
     CF2 --> ALB
 
@@ -119,7 +123,7 @@ State에는 리소스 식별자와 민감한 속성이 기록될 수 있다. 실
 
 Backend 8개는 각각 독립된 Task Definition과 ECS Service를 가진다. Runtime ON에서는 Service별 `desired_count=1`, OFF에서는 `0`을 사용한다. 서비스별 CPU/Memory 시작값은 [ECS Resource Baseline](01-resource-baseline.md)을 따른다.
 
-현재 Terraform은 `enable_ecs_compute_foundation`, `enable_application_runtime_foundation`, `learning_runtime_enabled`를 분리한다. Compute Foundation은 적용됐고 Application Foundation 코드는 Task Definition/Service/Cloud Map/Target Group/IAM/Log Group을 유지하는 구조로 구현했다. `learning_runtime_enabled=false`에서는 8개 Service가 `desired_count=0`이고 유료 ALB와 Valkey가 없으며, `true`에서만 ASG `1/1/2`, Service별 Task 1개, Public ALB와 단일 Valkey를 만든다. Application Image 8개 Promote는 완료했지만 저장 Plan 승인 전이므로 이 부분은 실제 AWS에 적용하지 않았다.
+현재 Terraform은 `enable_ecs_compute_foundation`, `enable_application_runtime_foundation`, `learning_runtime_enabled`를 분리한다. Compute와 Application Foundation을 적용해 Digest 고정 Task Definition·Service·Cloud Map 8개, Target Group 2개와 서비스별 IAM/Log Group을 유지한다. `learning_runtime_enabled=false`에서는 8개 Service가 `desired_count=0`이고 유료 Public ALB와 Valkey가 없으며, `true`에서만 ASG `1/1/2`, Service별 Task 1개, Public ALB와 단일 Valkey를 만든다. Runtime OFF에서 ECS Service 8개 `0/0/0`, ASG `0/0/0`과 `No changes`를 검증했고, 후속 Runtime ON에서 Service·Container Health·Digest·Cloud Map 8/8, curl 6/6, ASG 자동 확장 2대 후 1대 축소와 재계획 `No changes`까지 확인했다. 최종 Runtime OFF 적용 뒤 실행 Workload 0, ALB·Valkey 삭제와 RDS 정지 상태로 다시 수렴했다.
 
 Container Instance는 두 Private App Subnet을 사용하고 Public IP와 SSH Ingress를 갖지 않는다. ECS 최적화 Amazon Linux 2023 AMI, `m6i.xlarge`, 암호화한 30 GiB `gp3`, IMDSv2 필수와 SSM Session Manager 접근을 사용한다. Container Insights는 Learning 비용을 줄이기 위해 Compute 단계에서 비활성화하고, Task Log와 최소 Alarm은 Service/관측성 단계에서 별도 확정한다.
 
@@ -127,7 +131,7 @@ ECS Capacity Provider가 ASG에 자동으로 추가하는 필수 `AmazonECSManag
 
 정상 상태 Instance가 1개이므로 두 AZ에 Subnet을 만들었더라도 ECS Compute는 Multi-AZ 고가용성이 아니다. Instance 또는 해당 AZ 장애 시 ASG가 대체 Instance를 시작하는 동안 8개 Backend가 함께 중단될 수 있으며 Learning 환경에서는 이 위험을 수용한다.
 
-Application Task는 `awsvpc`를 사용하고 Cloud Map Private DNS Namespace `learning.spring-react-msa.internal`에 서비스별 A Record를 등록한다. 기존 코드가 사용하는 `http://서비스:고정포트` 형태를 그대로 유지하고 Service Connect Sidecar는 사용하지 않는다. 한 `m6i.xlarge`에 Task ENI 8개를 배치할 수 있도록 Account `awsvpcTrunking=enabled`도 Terraform 관리 대상에 추가했다. 적용 전 실제 계정값은 `disabled`였으며 ASG가 0대인 상태에서 먼저 바꿔 다음 ON Instance부터 적용한다.
+Application Task는 `awsvpc`를 사용하고 Cloud Map Private DNS Namespace `learning.spring-react-msa.internal`에 서비스별 A Record를 등록한다. 기존 코드가 사용하는 `http://서비스:고정포트` 형태를 그대로 유지하고 Service Connect Sidecar는 사용하지 않는다. Cloud Map Service 8개에는 ECS 관리형 custom health와 `failure_threshold=1`을 명시해 실제 AWS와 Terraform 상태가 수렴하도록 했다. 한 `m6i.xlarge`에 Task ENI 8개를 배치할 수 있도록 Account `awsvpcTrunking=enabled`도 ASG가 0대인 상태에서 적용했으며 다음 Runtime ON Instance부터 사용한다.
 
 Redis 호환 Runtime은 ElastiCache Redis OSS가 아니라 Valkey `7.2`, `cache.t4g.micro`, 단일 Node, Replica·Multi-AZ·Snapshot 없음으로 확정한다. Private Data Subnet과 Data Security Group만 사용하고 저장·전송 암호화와 RBAC를 강제한다. 기본 사용자는 비활성화하고 Application Password는 Terraform Ephemeral Variable과 Provider의 `passwords_wo`에만 전달해 Plan과 State에 저장하지 않는다. Endpoint는 Runtime ON 동안에만 SSM Parameter Store `String`으로 게시하고 Password는 기존 Secrets Manager JSON Key를 사용한다.
 
@@ -186,15 +190,18 @@ RDS는 Runtime OFF 때 삭제하지 않고 정지한다. Automated Backup 보존
 
 ## 7. Frontend
 
-- Member와 Admin에 Private S3 Bucket을 각각 1개 사용한다.
-- CloudFront Distribution도 Member와 Admin에 각각 1개 사용한다.
+- 배포 단위는 `member`, `community`, `stock`, `admin`, `admin-users`, `admin-logs`이며 각각 Private S3 Bucket 한 개를 사용한다.
+- 공개 진입점은 Member와 Admin CloudFront Distribution 두 개만 사용한다. Member는 Member·Community·Stock Origin을, Admin은 Admin·Users·Logs Origin을 가진다.
 - S3 Website Endpoint와 Public Bucket은 사용하지 않고 Origin Access Control로 CloudFront만 S3에 접근시킨다.
 - `app.hyuncloudlab.com`은 Member Distribution, `admin.hyuncloudlab.com`은 Admin Distribution을 가리킨다.
-- 정적 SPA Route는 403/404 응답을 `index.html`로 변환한다.
-- API, OAuth2, Logout과 WebSocket 경로는 Public ALB Origin으로 전달한다.
+- `/community/*`, `/stock/*`, `/manage/users/*`, `/manage/logs/*`는 경로별 전용 S3 Origin으로 전달한다. Prefix 자체는 Slash 경로로 Redirect하고 CloudFront Function이 해당 SPA Entry와 Asset 경로로 Rewrite한다.
+- 수동 Workflow는 선택한 Frontend의 Workspace Script만 Build하고 전용 Bucket만 동기화한 뒤 해당 경로만 Invalidate한다. 예를 들어 Stock 배포는 Community와 Member 객체를 변경하지 않는다.
+- API, OAuth2, Logout과 WebSocket 경로의 Public ALB Origin은 ACM·Route 53·TLS 단계에서 추가한다. 현재 구현한 Distribution은 정적 S3 Origin만 포함한다.
 - 기존 Frontend Nginx Image는 Docker/Kubernetes 경로에만 남기고 AWS용 ECR/ECS에는 배치하지 않는다.
 
 CloudFront용 ACM 인증서는 `us-east-1`, ALB용 인증서는 `ap-northeast-2`에서 관리한다. Learning Runtime의 ALB Origin은 Public Subnet에 두되 Security Group과 Origin 검증 수단으로 CloudFront 경로를 제한해야 한다.
+
+현재 Terraform module은 BucketOwnerEnforced, Public Access 전체 차단, SSE-S3, Versioning, 7일 Noncurrent Version 정리, OAC `always` SigV4를 고정한다. `.github/workflows/aws-frontend-deploy.yml`은 Node `24.18.0`, pnpm `10.0.0`, Frozen Lockfile과 GitHub OIDC를 사용한다. 여섯 Frontend Lint·Build, 선택 Matrix 계약 14개와 Terraform `validate`·`test` 20/20을 통과했다. Saved Plan SHA-256 `f49031685f65ff8ed8274316e34e1c195431a3d1912ac279114b14b23f0aa5e8`을 승인된 그대로 Apply해 `49 added, 0 changed, 0 destroyed`로 완료했다. AWS에서 S3 보안 6/6, CloudFront `Deployed` 2/2·Origin 3+3·Function 연결 6개, Function `DEPLOYED` 2/2, OAC와 IAM Trust를 확인했고 재계획은 `No changes`였다. GitHub Repository Variable 연결, 첫 Upload와 CloudFront curl Smoke는 다음 실행 단계다. 상세 절차는 [AWS Frontend Runbook](../runbooks/aws-frontend-hosting.md)을 따른다.
 
 ## 8. Secret 관리
 
@@ -280,15 +287,16 @@ Learning에서 적용할 복구 기준은 다음으로 제한한다.
 3. 완료: Secrets Manager Container 7개와 DB Bootstrap 최소 권한 IAM 적용, DB Secret 3개 초기화
 4. 완료: RDS·Secret·Bootstrap, GHCR Build Once·ECR Promote, Flyway V1 3개 실제 실행과 사후 검증
 5. 완료: ECS Cluster, Launch Template, ASG와 Capacity Provider 적용·AWS 검증·재계획 `No changes`
-6. 진행 중: Task Definition, ECS Service, Cloud Map, ALB/Target Group, Valkey와 P0 공개 보안 코드를 구현하고 로컬 테스트와 Image 8개 Promote 완료; 저장 Plan·Apply·Smoke Test 미완료
-7. Frontend S3, CloudFront와 배포 Workflow
-8. ACM, 기존 Hosted Zone Import와 Route 53 Record
-9. CloudWatch Logs, Metrics, Alarms와 Learning ON/OFF 운영 절차
-10. Backup Restore와 전체 Smoke Test
+6. 완료: Runtime Secret 초기화, Application Foundation, Runtime ON·서비스 계약 교정과 curl Smoke 6/6, 재계획 `No changes` 검증
+7. 완료: Runtime OFF Saved Plan 적용, ECS/ASG 0·Valkey/ALB 삭제·RDS 정지와 재계획 `No changes` 검증
+8. 진행 중: Frontend S3 6개·CloudFront 2개 Foundation Apply와 AWS 계약·`No changes` 검증 완료; GitHub 변수·첫 배포·curl Smoke 대기
+9. ACM, 기존 Hosted Zone Import와 Route 53 Record
+10. CloudWatch Logs, Metrics, Alarms와 Learning ON/OFF 운영 절차
+11. Backup Restore와 전체 Smoke Test
 
 각 단계는 `fmt`, `validate`, `test`, 저장 Plan 검토, 비용 확인과 명시적 Apply 승인을 거친다. 뒤 단계 리소스를 앞 단계 Plan에 섞지 않는다.
 
-## 14. Runtime Apply 전에 남은 작업
+## 14. Application Foundation 이후 남은 작업
 
 상위 아키텍처와 Application Runtime 세부 구현값은 다음과 같이 확정했다.
 
@@ -298,14 +306,19 @@ Learning에서 적용할 복구 기준은 다음으로 제한한다.
 - IAM: Task Role 없음, 서비스별 Execution Role이 자기 ECR/Log와 필요한 Secret/Redis Host Parameter만 읽음
 - ALB: Runtime ON에만 생성, `app`/`admin` Host Rule과 Gateway Readiness Health Check 사용. HTTPS/ACM과 CloudFront Origin 검증은 후속 단계
 
-첫 Runtime Apply 전에 남은 작업은 다음과 같다.
+Application Foundation 적용 전에 필요했던 다음 항목은 완료했다.
 
-- Runtime Secret 6개를 `Initialize-LearningRuntimeSecrets.ps1`로 초기화하고 Key 존재만 검증
-- Git에서 제외된 `terraform.tfvars`에 Digest 8개와 비밀이 아닌 Toss Client ID 반영
-- Runtime OFF Application Foundation 저장 Plan을 먼저 검토·Apply한 뒤, 별도 Runtime ON Plan으로 유료 리소스를 검토
+- Runtime Secret 6개를 `Initialize-LearningRuntimeSecrets.ps1`로 초기화하고 `AWSCURRENT`와 JSON Key 계약만 검증
+- Source SHA 기준 ECR Digest 8개를 Git과 문서에 노출하지 않고 Plan 입력으로 고정
+- Runtime OFF Application Foundation 저장 Plan을 검토·Apply하고 ECS/ASG 0, RDS 정지와 재계획 `No changes` 검증
+
+Application Foundation 최초 Apply는 56개 리소스를 추가했다. 빈 Cloud Map custom health block을 AWS가 상태에 남기지 않는 수렴 문제를 발견해 `failure_threshold=1`과 회귀 테스트를 추가했고, Cloud Map Service 8개를 교체한 뒤 실제 AWS custom health 8/8과 Remote State 165개 주소를 확인했다.
+
+Runtime ON 검증 이후 남은 작업은 다음과 같다.
+
 - CloudWatch Log 보존 기간, Alarm 임계값과 Budget 예상 비용
-- Frontend S3 Upload·CloudFront Invalidation Workflow
+- Frontend AWS Apply, GitHub OIDC 변수 연결과 CloudFront curl Smoke
 - 최초 관리자 Bootstrap의 실행 주체와 감사 방식
 - Learning OFF/ON 명령의 순서, 실패 시 Rollback과 RDS 자동 재시작 감시
 
-CloudWatch Log 보존 기간은 우선 7일로 코드와 계약 테스트에 고정했다. Alarm, Frontend, HTTPS/DNS, 관리자 Bootstrap과 자동화는 후속 단계에서 별도 승인한다.
+CloudWatch Log 보존 기간은 우선 7일로 코드와 계약 테스트에 고정했다. Frontend 코드는 독립 배포 단위까지 검증했으며 AWS Apply는 Saved Plan 승인 대상으로 남아 있다. Alarm, HTTPS/DNS, 관리자 Bootstrap과 자동화는 후속 단계에서 별도 승인한다.

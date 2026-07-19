@@ -67,11 +67,12 @@ run "runtime_on_creates_single_node_encrypted_valkey" {
 
   assert {
     condition = (
-      aws_elasticache_user.default_disabled["this"].access_string == "off ~* -@all" &&
       aws_elasticache_user.application["this"].access_string == "on ~* +@all" &&
-      aws_elasticache_user.application["this"].passwords_wo_version == 1
+      aws_elasticache_user.application["this"].passwords_wo_version == 1 &&
+      length(aws_elasticache_user_group.this["this"].user_ids) == 1 &&
+      contains(aws_elasticache_user_group.this["this"].user_ids, aws_elasticache_user.application["this"].user_id)
     )
-    error_message = "The default user must be disabled and the application password must use a versioned write-only argument."
+    error_message = "The Valkey user group must contain only the password-authenticated application user using a versioned write-only password."
   }
 
   assert {

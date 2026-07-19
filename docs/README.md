@@ -1,6 +1,6 @@
 # Spring React MSA 문서
 
-이 디렉터리는 `C:\Portfolio` 저장소의 코드와 인프라를 기준으로 작성한 설계·운영 문서의 시작점이다. 문서의 기준일은 2026-07-18이며, 구현과 문서가 충돌하면 실행 가능한 코드와 배포 매니페스트를 우선 확인한다.
+이 디렉터리는 `C:\Portfolio` 저장소의 코드와 인프라를 기준으로 작성한 설계·운영 문서의 시작점이다. 문서의 기준일은 2026-07-19이며, 구현과 문서가 충돌하면 실행 가능한 코드와 배포 매니페스트를 우선 확인한다.
 
 ## 문서 읽는 순서
 
@@ -25,7 +25,7 @@
 | Data | PostgreSQL 16, Redis 7 |
 | Messaging | Kafka 3.7.0 |
 | Platform | Docker Compose, Kubernetes, ingress-nginx, GHCR, Argo CD |
-| AWS migration | Foundation·ECR/OIDC·Private App 송신·RDS/Secrets·ECS Compute 적용, 실제 Flyway V1 검증 완료, Application Runtime Terraform 구현·로컬 검증 완료, AWS Runtime은 OFF |
+| AWS migration | Runtime ON curl 6/6 검증 후 Runtime OFF 적용; Frontend S3 6개·CloudFront 2개 Foundation Apply·검증 완료, 첫 배포 대기 |
 | Observability | Prometheus, Grafana, Loki, Promtail, Kafka exporters |
 
 ## 문서 상태 표현
@@ -92,6 +92,7 @@
 - [AWS Learning RDS 운영·복구](runbooks/aws-rds-learning.md)
 - [AWS DB Bootstrap·Flyway 실행](runbooks/aws-database-bootstrap-and-flyway.md)
 - [AWS Image Build Once·ECR Promote](runbooks/aws-image-build-once-promote.md)
+- [AWS Frontend S3·CloudFront 배포](runbooks/aws-frontend-hosting.md)
 - [Kubernetes에서 AWS로 장애 전환](runbooks/k8s-to-aws-failover.md)
 - [AWS에서 Kubernetes로 원복](runbooks/aws-to-k8s-failback.md)
 
@@ -108,12 +109,12 @@
 | 문서 | 역할 | 현재 상태 |
 | --- | --- | --- |
 | [서비스 인벤토리](aws-migration/00-service-inventory.md) | ECS 대상 서비스와 환경 변수 | 저장소 기준 확인됨 |
-| [리소스 기준선](aws-migration/01-resource-baseline.md) | ECS on EC2 초기 용량 가정 | 추정치, 부하 검증 필요 |
-| [환경 매트릭스](aws-migration/02-environment-matrix.md) | 로컬·K8s·AWS 설정 차이 | ECS Task Definition 코드 구현·로컬 계약 검증, AWS 미적용 |
+| [리소스 기준선](aws-migration/01-resource-baseline.md) | ECS on EC2 초기 용량 가정 | EC2 1대 배치 검증 완료, 부하 검증 필요 |
+| [환경 매트릭스](aws-migration/02-environment-matrix.md) | 로컬·K8s·AWS 설정 차이 | Runtime ON 실상태 검증 후 ECS/ASG 0·RDS 정지 완료 |
 | [DB 전환 준비](aws-migration/03-database-migration.md) | RDS schema와 migration gap | Build Once·ECR Promote와 실제 RDS Flyway V1 3개 실행·검증 완료 |
-| [AWS Foundation](aws-migration/04-aws-foundation-design.md) | VPC/subnet/SG 설계 | Foundation 적용, workload 미구현 |
+| [AWS Foundation](aws-migration/04-aws-foundation-design.md) | VPC/subnet/SG 설계 | Foundation 유지, Runtime ON 검증 후 현재 OFF |
 | [ECR/OIDC 설계](aws-migration/05-ecr-github-oidc-design.md) | SHA 이미지와 GitHub OIDC | Apply·GitHub 변수·Backend 8개 게시 완료 |
 | [ECR/OIDC 구현 계획](aws-migration/06-ecr-github-oidc-implementation-plan.md) | 구현·승인 gate 실행 기록 | Task 6·단일/중복/전체 게시 검증 완료 |
-| [Learning Runtime 결정](aws-migration/07-learning-runtime-design.md) | NAT, State, ECS, RDS, Frontend, Secret, DNS 결정 | Data Layer·DB Migration 적용·검증, Application Runtime 코드 준비, AWS Runtime OFF |
+| [Learning Runtime 결정](aws-migration/07-learning-runtime-design.md) | NAT, State, ECS, RDS, Frontend, Secret, DNS 결정 | Runtime OFF 완료, Frontend Hosting Foundation Apply·검증 완료/첫 배포 대기 |
 
 AWS 적용 여부는 Git만으로 확정할 수 없으므로 문서의 `저장소 상태`와 `AWS 적용 상태`를 구분한다. Terraform state, 저장 plan, 계정 식별자와 secret은 문서나 Git에 추가하지 않는다.

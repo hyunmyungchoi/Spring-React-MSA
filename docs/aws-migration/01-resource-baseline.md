@@ -1,10 +1,10 @@
 # AWS ECS Resource Baseline
 
-> 문서 상태: 목표 환경의 초기 용량 가정, ECS Compute Foundation 적용·검증 완료
+> 문서 상태: 목표 환경의 초기 용량 가정, ECS Compute와 Runtime ON 단일 Instance 배치 검증 완료
 >
-> 기준일: 2026-07-18
+> 기준일: 2026-07-19
 >
-> AWS 적용 상태: ECS Cluster/ASG/Capacity Provider 적용, ASG `0/0/0`, Task/Service 미구현
+> AWS 적용 상태: ECS Cluster/ASG/Capacity Provider와 Digest 고정 Task Definition·Service 8개 적용, Runtime ON에서 EC2 1대 배치·Container Health 8/8 검증 후 현재 ASG `0/0/0`, EC2·Task 0
 
 상위 배치와 ON/OFF 결정은 [AWS Learning Runtime 결정](07-learning-runtime-design.md)을 따른다.
 
@@ -57,9 +57,9 @@ JAVA_TOOL_OPTIONS=-XX:+UseContainerSupport -XX:MaxRAMPercentage=70 -XX:InitialRA
 
 위 값은 부하 측정 결과가 아니라 Learning 시작값이다. 8개 Service를 동시에 Rolling Deployment하면 두 번째 Instance가 필요할 수 있으며, Capacity Provider 동작과 배포 시간은 실제 Task 배치 테스트로 검증해야 한다.
 
-Compute Foundation Terraform은 적용·검증했다. 첫 실제 Remote State Plan은 `m5a.xlarge`가 현재 두 번째 App AZ인 `ap-northeast-2b`에 제공되지 않아 폐기했고, 두 App AZ 모두에서 제공되는 `m6i.xlarge`로 보완했다. Application Runtime은 `awsvpc` Task 8개를 한 Instance에 배치할 수 있도록 Account `awsvpcTrunking=enabled`를 Terraform으로 관리한다. 현재 계정의 적용 전 설정은 `disabled`였으므로 새 설정은 다음 저장 Plan과 승인 Gate를 거쳐야 하며, ASG가 `0/0/0`인 지금 적용하면 기존 Container Instance 교체 없이 다음 ON Instance부터 사용된다.
+Compute Foundation Terraform은 적용·검증했다. 첫 실제 Remote State Plan은 `m5a.xlarge`가 현재 두 번째 App AZ인 `ap-northeast-2b`에 제공되지 않아 폐기했고, 두 App AZ 모두에서 제공되는 `m6i.xlarge`로 보완했다. Application Foundation 적용과 함께 `awsvpc` Task 8개를 한 Instance에 배치할 수 있도록 Account `awsvpcTrunking=enabled`도 적용했다. Runtime ON에서 배포 순간 Managed Scaling이 EC2 2대로 확장된 뒤 서비스 안정화 후 자동으로 1대로 축소됐으며, 최종적으로 한 Container Instance에 Task 8개가 모두 `HEALTHY`임을 확인했다.
 
-서울 리전 2026-07-18 AWS Price List 기준 `m6i.xlarge` Linux On-Demand는 USD 0.236/시간이고 30 GiB `gp3`는 월 USD 2.736이다. Runtime OFF의 Compute 추가 시간당 비용은 없고, 1대를 730시간 유지하면 약 USD 175.02/월, Managed Scaling으로 2대를 유지하면 약 USD 350.03/월이 추가된다. 이는 기존 NAT/EIP, RDS, Secrets Manager와 Data Transfer 비용을 포함하지 않는다. 가격은 [Amazon ECS 요금](https://aws.amazon.com/ecs/pricing/), [EC2 On-Demand 요금](https://aws.amazon.com/ec2/pricing/on-demand/)과 [EBS 요금](https://aws.amazon.com/ebs/pricing/)에서 Apply 전 다시 확인한다.
+서울 리전 2026-07-19 AWS Price List 기준 `m6i.xlarge` Linux On-Demand는 USD 0.236/시간이고 30 GiB `gp3`는 월 USD 2.736이다. Runtime OFF의 Compute 추가 시간당 비용은 없고, 1대를 730시간 유지하면 약 USD 175.02/월, Managed Scaling으로 2대를 유지하면 약 USD 350.03/월이 추가된다. 이는 기존 NAT/EIP, RDS, Secrets Manager와 Data Transfer 비용을 포함하지 않는다. 가격은 [Amazon ECS 요금](https://aws.amazon.com/ecs/pricing/), [EC2 On-Demand 요금](https://aws.amazon.com/ec2/pricing/on-demand/)과 [EBS 요금](https://aws.amazon.com/ebs/pricing/)에서 Apply 전 다시 확인한다.
 
 ## Local Kubernetes Mapping
 

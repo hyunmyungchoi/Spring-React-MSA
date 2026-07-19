@@ -17,6 +17,16 @@ flowchart LR
     A --> K["수동 Sync 후 rollout"]
 ```
 
+AWS 정적 Frontend는 Container Image 게시와 별도의 수동 Lane을 사용한다.
+
+```mermaid
+flowchart LR
+    O["운영자 workflow_dispatch"] --> X["Frontend 배포 단위 선택"]
+    X --> B["선택 Workspace·Script만 Build"]
+    B --> S["전용 Private S3만 Sync"]
+    S --> I["선택 CloudFront 경로만 Invalidate"]
+```
+
 ## 변경 범위 선택
 
 `infra/ci/select-build-matrix.py`가 Git diff를 다음 원칙으로 매핑한다.
@@ -28,13 +38,26 @@ flowchart LR
 - 특정 feature 소스/Dockerfile: 해당 feature image
 - 수동 실행: `deploy_target` 하나, Backend 8개만 선택하는 `all-backend`, 또는 전체를 선택하는 `all`
 
-매핑 자체는 `infra/ci/test_select_build_matrix.py`로 검증한다.
+Container Image 매핑은 `infra/ci/test_select_build_matrix.py`, AWS 정적 Frontend 선택은 `infra/ci/test_select_frontend_deploy_matrix.py`로 검증한다.
 
 ## 검증 단계
 
 Backend job은 Java 17로 각 서비스의 `./gradlew test`를 실행한다. Wrapper 9.3.0, dependency lock, verification metadata가 저장소에 있으므로 잠기지 않거나 검증되지 않은 artifact는 실패해야 한다.
 
 Frontend job은 Node 24.18.0과 Corepack을 사용해 pnpm 10.0.0을 설치하고 루트에서 `pnpm install --frozen-lockfile`, workspace별 lint와 `build:all`을 실행한다. 이후 모든 선택 이미지에 대해 Docker build를 수행한다.
+
+## AWS Frontend 선택 배포
+
+`.github/workflows/aws-frontend-deploy.yml`은 `master`에서만 수동 실행한다. 배포 대상은 `member`, `community`, `stock`, `admin`, `admin-users`, `admin-logs` 여섯 개이며 `all-member`, `all-admin`, `all` 그룹도 제공한다.
+
+- 각 단위는 자기 Build Script와 산출물 디렉터리를 가진다.
+- 각 단위는 전용 Private S3 Bucket 하나만 동기화한다.
+- Member CloudFront는 기본 Member, `/community/*`, `/stock/*` 세 Origin을 사용한다.
+- Admin CloudFront는 기본 Admin, `/manage/users/*`, `/manage/logs/*` 세 Origin을 사용한다.
+- Invalidation은 선택한 Entry·경로로 제한하며 동시 Frontend 배포를 직렬화한다.
+- GitHub OIDC Role은 `master` Subject만 신뢰하고 여섯 Bucket 객체 작업과 두 Distribution Invalidation만 허용한다.
+
+따라서 Stock 개발자가 `spring-stock-web`을 선택하면 Community나 Member를 Build·Upload하지 않는다. 자세한 Apply·GitHub Variable·curl 절차는 [AWS Frontend Runbook](../runbooks/aws-frontend-hosting.md)을 따른다. Custom Domain, ACM, Route 53과 API/OAuth/WebSocket ALB Origin은 다음 단계다.
 
 ## 이미지 게시
 
@@ -81,7 +104,7 @@ flowchart LR
 - 최초 Terraform module, 저장 Plan Apply, GitHub 변수 연결과 Backend 8개 재빌드 게시 검증은 완료했다.
 - ECR 전체 게시 기준은 SHA `3564959efa1637e60fe72f009d4fa1a5809de01b`, GitHub Actions run `29561837114`다.
 - 새 Workflow는 `source_sha`의 GHCR Image를 `crane copy`하고, 기존 ECR Tag가 같은 Digest면 Skip하며 다르면 실패한다. Source SHA `a7b3e0387c6817fd5a781ccf3ac532e04f38c9e1`의 GHCR Run `29648349144`와 ECR Run `29648492164`에서 Backend 8개 모두의 Digest 일치를 실제 검증했다.
-- RDS/Secrets Terraform, DB Secret 초기화와 실제 RDS Role·Schema Bootstrap, Digest 고정 ECS Flyway Migration Task 3개와 실제 V1 실행을 완료했다. ECS Application Service, Cloud Map, ALB와 Valkey 코드는 로컬 구현·검증 단계이며 AWS Apply와 자동 배포는 아직 없다.
+- RDS/Secrets Terraform, DB Secret 초기화, 실제 RDS Role·Schema Bootstrap과 Flyway V1을 완료했다. Digest 고정 ECS Application Service 8개, Cloud Map, ALB와 Valkey도 Runtime ON에서 검증한 뒤 현재 Runtime OFF로 전환했다. AWS 정적 Frontend S3·CloudFront Foundation과 배포 IAM은 Apply·검증했으며 GitHub Variable 연결과 첫 배포는 아직 하지 않았다.
 - 실제 적용 상태와 승인 gate는 [`infra/aws/terraform/README.md`](../../infra/aws/terraform/README.md)를 기준으로 한다.
 
 GHCR→Kubernetes가 현재 delivery 기준이고 ECR→AWS는 migration lane이다. 한쪽 장애가 다른 쪽 image publication을 막지 않도록 workflow와 registry 권한을 독립적으로 유지한다.

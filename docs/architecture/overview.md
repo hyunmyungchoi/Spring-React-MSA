@@ -74,6 +74,6 @@ flowchart LR
 
 ## 배포 환경과 재해 복구 경계
 
-현재 동작이 저장소에서 검증되는 배포 경로는 GHCR 이미지와 로컬 Kubernetes/Argo CD다. AWS에는 Terraform Foundation·ECR/OIDC·RDS/Secrets·ECS Compute가 적용됐고 Database Migration Image 3개의 Build Once·Digest Promote와 실제 RDS Flyway V1을 검증했다. RDS는 비용 통제를 위해 현재 정지 상태이고 ECS ASG는 `0/0/0`이다. Backend 8개의 ECS Task/Service·Cloud Map·ALB·Valkey Terraform 코드는 구현·로컬 테스트를 마쳤지만 새 Source SHA Image Promote와 저장 Plan 승인 전이므로 Application Workload는 아직 AWS에 없다.
+현재 동작이 저장소에서 검증되는 배포 경로는 GHCR 이미지와 로컬 Kubernetes/Argo CD이며 AWS Learning Runtime도 실제 기동 검증을 완료했다. AWS에는 Terraform Foundation·ECR/OIDC·RDS/Secrets·ECS Compute와 Application Foundation이 적용됐고 Database Migration Image 3개의 실제 RDS Flyway V1, Backend 8개의 Build Once·Digest Promote와 Cloud Map custom health를 검증했다. Runtime ON에서 ASG `1/1/2`와 EC2 1대, Digest 고정 ECS Service 8개 `1/1/0`, RDS·단일 Valkey·Public ALB를 실행하고 Container Health·OCI Digest·Cloud Map 등록 8/8, ALB Target 2/2와 HTTP curl Smoke 6/6을 확인했다. 검증 뒤 Runtime OFF를 적용해 현재 ECS Service·Task·ASG·EC2는 0, Public ALB·Valkey는 삭제, RDS는 정지 상태이며 Application Foundation은 유지한다.
 
 AWS 전환 자료는 [`docs/aws-migration`](../aws-migration/00-service-inventory.md)에 두고 현재 서비스 계약과 중복 작성하지 않는다. AWS Learning Runtime의 승인된 목표는 [AWS Learning Runtime 결정](../aws-migration/07-learning-runtime-design.md)을 따른다. Kubernetes를 선호 Site, AWS를 Warm Standby로 사용하는 Active-Passive DR은 Learning 적용 범위에서 제외했으며 [재해 복구 아키텍처](disaster-recovery.md)에 운영 환경 참고 제안으로만 보존한다.
