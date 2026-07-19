@@ -1,12 +1,12 @@
 # AWS Learning Runtime 결정
 
-> 문서 상태: Learning 목표 설계 승인, Public Domain Runtime ON HTTPS·OAuth·Session 검증과 Runtime OFF 완료, WebSocket Gateway 교정 Image 승격·ECS Task Definition 적용·No changes 완료, Runtime ON 공개 경로 재검증 대기
+> 문서 상태: Learning 목표 설계 승인, WebSocket Gateway·Member BFF Origin 교정 적용과 Runtime ON 전체 공개 경로 검증 완료
 >
 > 기준일: 2026-07-19
 >
 > 저장소 상태: Foundation·ECR/OIDC·Private App 송신·RDS/Secrets·ECS Compute·DB Bootstrap/Flyway·Application Runtime·Frontend Hosting·Public Domain/TLS 코드 적용, Terraform 계약 테스트 23/23 완료
 >
-> AWS 적용 상태: Public Domain Runtime ON에서 ECS·Rollout 8/8, ASG `1/1/2`, ALB Target 2/2, HTTPS 정적·Health·OIDC·BFF 12개, Root 308, Member OAuth·BFF Session·CSRF·Logout과 일반 회원의 Admin 역할 차단을 검증했다. WebSocket은 Upgrade 뒤 1002로 실패했고 Member Gateway 전용 `ws://` Route 누락을 원인으로 진단했다. Route와 AWS·Docker·Kubernetes 환경 변수 계약 및 자동 테스트를 교정한 Source SHA `5fc26bdc355d0417d29bbc1941a0d9c0996e4200`의 Gateway Image는 GHCR Build Once와 ECR 무재빌드 Promote를 완료했고 OCI Digest 일치를 검증했다. 승인된 Runtime OFF Saved Plan으로 교정 Task Definition과 Desired Count 0 Service 참조를 적용했고 AWS 실제 계약과 재계획 `No changes`를 확인했다. 현재 ECS/ASG/EC2 0, ALB·Valkey·`origin` 삭제, RDS `stopped`이며 공개 `wss://` 재검증은 아직 수행하지 않았다.
+> AWS 적용 상태: Gateway 전용 `ws://` Route와 Member BFF Public Origin 계약을 모두 적용했다. 승인된 Origin 교정 Saved Plan은 Member BFF Task Definition과 ECS Service만 `1 added, 1 changed, 1 destroyed`로 갱신했고 Revision 3이 `HEALTHY`·`COMPLETED`로 수렴했다. ECS·Rollout·Container Health 8/8, ASG `1/1/2`, ALB Target 2/2, Valkey·RDS `available`이며 curl 기반 Registration·Password Login·OAuth Authorization Code·BFF Session·CSRF Heartbeat·Logout이 통과했다. 공개 `wss://`는 `CONNECTED`, `HISTORY`, `PONG`, `CHAT_MESSAGE`를 모두 수신했고 전송 메시지의 REST History 재조회도 200으로 확인했다. 동일 Runtime ON 입력 재계획은 `No changes`이며 Runtime은 ON 상태다.
 
 이 문서는 AWS Foundation 이후 Learning 환경에 추가할 Runtime의 승인된 결정을 기록한다. 현재 적용된 리소스와 운영 절차는 [Terraform 운영 Runbook](../../infra/aws/terraform/README.md), 이미 적용된 네트워크 기준선은 [AWS Foundation 설계](04-aws-foundation-design.md)를 따른다.
 
@@ -300,7 +300,7 @@ Learning에서 적용할 복구 기준은 다음으로 제한한다.
 7. 완료: Runtime OFF Saved Plan 적용, ECS/ASG 0·Valkey/ALB 삭제·RDS 정지와 재계획 `No changes` 검증
 8. 완료: Frontend S3 6개·CloudFront 2개 Apply, GitHub 변수, 첫 전체 배포 6/6과 정적 curl 6/6·`No changes` 검증
 9. 완료: State Role·기존 Hosted Zone Import·ACM, Root·Member·Admin A/AAAA와 CloudFront HTTPS/API Origin, 정적 curl 6/6·Root 308·`No changes`
-10. 부분 완료: Runtime ON HTTPS·OAuth·Session 검증과 Runtime OFF·RDS 정지 완료. WebSocket 전용 Gateway Route 교정, Gateway 단독 Build Once·ECR Promote·Kubernetes Digest 고정, Runtime OFF ECS Task Definition 적용·No changes 완료, Runtime ON 공개 경로 재검증 필요
+10. 완료: WebSocket Gateway Route와 Member BFF Public Origin 교정 적용, Runtime ON HTTPS·OAuth·Session·WebSocket 네 프레임·채팅 영속성·Logout·`No changes` 검증
 11. CloudWatch Logs, Metrics, Alarms와 Learning ON/OFF 운영 절차
 12. Backup Restore와 전체 Smoke Test
 

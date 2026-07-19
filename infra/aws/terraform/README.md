@@ -159,6 +159,10 @@ HTTPS 정적·Health·OIDC·BFF 12개는 모두 HTTP 200이고 Root 308·Path/Qu
 
 Gateway 교정 Runtime OFF Saved Plan `tfplan-member-gateway-websocket-off`, 183,948 bytes, SHA-256 `b62a335d71e69ce82c55f0cb169873948303f5a2f3bc095fcf313cc77ef6683c`를 승인된 그대로 Apply해 `1 added, 1 changed, 1 destroyed`로 완료했다. 검증된 ECR Digest와 전용 WebSocket URI를 사용하는 Member Gateway Task Definition만 교체하고 Desired Count 0인 ECS Service 참조를 갱신했다. 새 Task Definition `ACTIVE`, Image·환경 변수와 Service 연결, ECS 전체 `0/0/0`, ASG `0/0/0`, ALB·Valkey·`origin` 0, RDS `stopped`와 OFF 입력 재계획 `No changes`를 확인했다. 다른 7개 서비스, 실행 용량, Data·Network·IAM·Secret 변경은 없었으며 적용한 Saved Plan은 삭제했다.
 
+교정 Gateway 공개 경로 재검증용 Runtime ON Saved Plan `tfplan-runtime-on-websocket-smoke`, 185,315 bytes, SHA-256 `23b137e9b740b26d69c22a6f686c4ccc0db78e52a0e4e7497a8eff0d28383e88`을 승인된 그대로 Apply해 `11 added, 9 changed, 0 destroyed`로 완료했다. Public ALB HTTPS·Host Rule·`origin` 5개와 Valkey 6개를 만들고 ECS 8개와 ASG를 기동했다. ECS·Rollout 8/8, ASG `1/1/2`, Target 2/2, Valkey·RDS `available`, curl 12/12와 Root 308, Password Login·OAuth·BFF Session·CSRF Heartbeat가 통과했다. WebSocket은 Gateway에서 BFF까지 도달했지만 BFF Downstream Handshake 403으로 1002 종료돼 Member Public Origin 누락을 추가 원인으로 확정했다. 적용 Plan은 삭제했다.
+
+Member BFF WebSocket Origin 계약을 AWS·Docker·Kubernetes에 추가하고 Terraform 23/23·Compose·Kubernetes 검증을 통과했다. Runtime ON 교정 Plan `tfplan-member-bff-websocket-origin-fix`, 194,907 bytes, SHA-256 `8bb7f98cf022b9513c73afc7d1ea82567103af9bee5eaef95eb7c51eec7ad758`을 승인된 그대로 Apply했다. 기존 Image Digest를 유지한 Member BFF Task Definition 교체와 Desired 1 ECS Service 갱신만 `1 added, 1 changed, 1 destroyed`로 수행했고 Revision 3이 `HEALTHY`·`COMPLETED`로 수렴했다. curl Registration·Password Login·OAuth·BFF Session·CSRF·Logout이 통과했고 공개 WebSocket `CONNECTED`·`HISTORY`·`PONG`·자체 `CHAT_MESSAGE`와 REST History 영속성도 확인했다. ECS·Rollout·Container Health 8/8, RDS·Valkey `available`, 동일 ON 입력 재계획은 `No changes`다. 진단 계정 2개가 추가돼 비밀번호를 폐기한 전체 정리 대상은 7개이며 적용 Plan은 삭제한다.
+
 Runtime OFF Plan `tfplan-runtime-off-after-public-domain-smoke`, 195,052 bytes, SHA-256 `94aae90a5306d6b1c9aa8f597ca938213cbd39e9c872b0cc92212277608e53f3`를 승인된 그대로 Apply해 `0 added, 9 changed, 11 destroyed`로 완료했다. ECS Service·ASG 실행 용량과 ALB/HTTPS/`origin`/Valkey만 내렸고 RDS·CloudFront·Network·Task Definition/Image·IAM·Secret 변경은 0개였다. 사후 ECS/Container Instance/ASG Instance 0, ASG `0/0/0`, Public ALB·Valkey·`origin` 0과 RDS `stopped`를 확인했다. RDS Backup 7일·삭제 보호를 유지하며 자동 재시작 예정은 2026-07-26 19:44:07 KST다. OFF 재계획은 `No changes`, 정적 curl 6/6 HTTP 200, Root 308, Runtime OFF API 502와 TLS를 확인했고 적용 Plan은 삭제했다.
 
 ### 적용된 Frontend Hosting Foundation
@@ -554,7 +558,7 @@ Application, Data, Kafka, SSH Port는 Internet에서 직접 접근할 수 없다
 4. 완료: Runtime OFF Saved Plan Apply, ECS/ASG 0·ALB/Valkey 삭제·RDS 정지와 `No changes` 검증
 5. 완료: Frontend S3 6개·CloudFront 2개 Apply, GitHub 변수, 첫 전체 배포 6/6과 정적 curl 6/6·`No changes` 검증
 6. 완료: Global DNS State 권한·Hosted Zone Import·ACM·Route 53/CloudFront/TLS와 API·OAuth·WebSocket Origin, 정적 curl 6/6와 `No changes`
-7. 부분 완료: Runtime ON HTTPS·OAuth·Session 검증과 Runtime OFF·RDS 정지 완료. WebSocket 1002 Gateway Route 교정, Gateway 단독 Build Once·ECR Promote, Runtime OFF ECS 적용·No changes 완료, Runtime ON 공개 경로 재검증 필요
+7. 완료: WebSocket Gateway Route·Member BFF Public Origin 교정 적용, Runtime ON HTTPS·OAuth·Session·WebSocket 네 프레임·채팅 영속성·Logout·`No changes` 검증
 8. 관측성·Alarm·Runtime 자동화와 최초 관리자 Bootstrap
 9. Backup Restore와 전체 Smoke Test
 

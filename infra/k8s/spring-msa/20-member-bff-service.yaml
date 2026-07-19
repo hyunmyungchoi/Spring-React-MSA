@@ -86,6 +86,8 @@ spec:
               value: "200"
             - name: BFF_CHAT_RECENT_MESSAGES_CACHE_TTL_SECONDS
               value: "3600"
+            - name: BFF_CHAT_WEBSOCKET_ALLOWED_ORIGIN_PATTERNS
+              value: http://user.localtest.me
             - name: APP_KAFKA_ENABLED
               value: "true"
             - name: SPRING_KAFKA_BOOTSTRAP_SERVERS

@@ -200,6 +200,7 @@ locals {
         APP_KAFKA_ENABLED                              = "false"
         SPRING_KAFKA_BOOTSTRAP_SERVERS                 = ""
         BFF_CLIENT_ID                                  = var.member_bff_client_id
+        BFF_CHAT_WEBSOCKET_ALLOWED_ORIGIN_PATTERNS     = var.member_public_origin
         BFF_FRONTEND_REDIRECT_URI                      = var.member_public_origin
         BFF_OAUTH2_AUTHORIZATION_URI                   = "${var.member_public_origin}/oauth2/authorize"
         BFF_OAUTH2_TOKEN_URI                           = "http://${local.service_dns.member_gateway}:8080/oauth2/token"

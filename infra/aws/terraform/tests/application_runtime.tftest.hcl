@@ -111,6 +111,14 @@ run "runtime_off_keeps_foundation_at_zero_tasks" {
   }
 
   assert {
+    condition = lookup({
+      for entry in jsondecode(aws_ecs_task_definition.service["member-bff"].container_definitions)[0].environment :
+      entry.name => entry.value
+    }, "BFF_CHAT_WEBSOCKET_ALLOWED_ORIGIN_PATTERNS", null) == "https://app.hyuncloudlab.com"
+    error_message = "The Member BFF must allow WebSocket handshakes from the configured member public origin."
+  }
+
+  assert {
     condition = (
       aws_service_discovery_private_dns_namespace.this.name == "learning.spring-react-msa.internal" &&
       aws_service_discovery_service.backend["user-service"].dns_config[0].dns_records[0].type == "A" &&
