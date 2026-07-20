@@ -61,7 +61,7 @@ terraform show -no-color tfplan-observability-foundation-off
 - 추가 대상이 SNS Topic/Policy/Email Subscription, RDS Alarm 3개, RDS Event Subscription으로 한정됨
 - Plan 경로, 크기, SHA-256을 승인 문구와 함께 고정
 
-## 첫 Apply 실패와 현재 복구 Plan
+## 첫 Apply 실패와 복구 결과
 
 2026-07-20에 승인된 첫 Plan `tfplan-observability-foundation-off`, SHA-256 `9d0be211791325fcbf32ac1df2762cc66bab0bb970dc7f62fe094340ad507613`을 적용했다. SNS Operations Topic 1개는 생성됐지만 Topic Policy의 `SNS:*` wildcard가 SNS 리소스 정책 범위를 벗어나 AWS `InvalidParameter`로 거부됐다. Apply는 이 지점에서 중단됐고 나머지 6개는 생성되지 않았다.
 
@@ -73,7 +73,7 @@ terraform show -no-color tfplan-observability-foundation-off
 - 추적 제외 운영 `terraform.tfvars`와 무관하게 전체 테스트가 격리되도록 비관측성 루트 테스트 입력을 보강했다.
 - Terraform 정적 검증과 전체 mock 테스트 `26 passed, 0 failed`를 다시 확인했다.
 
-첫 Plan은 부분 적용 state와 정책 코드가 달라졌으므로 폐기하며 다시 적용하지 않는다. 현재 Runtime OFF 복구 Plan은 다음과 같다.
+첫 Plan은 부분 적용 state와 정책 코드가 달라졌으므로 폐기하며 다시 적용하지 않는다. 검증한 Runtime OFF 복구 Plan은 다음과 같다.
 
 - 경로: `C:\Portfolio\infra\aws\terraform\tfplan-observability-foundation-off-policy-recovery`
 - 크기: 190,225 bytes
@@ -82,14 +82,22 @@ terraform show -no-color tfplan-observability-foundation-off
 - 추가 유형: CloudWatch Metric Alarm 3, RDS Event Subscription 1, SNS Topic Policy 1, Email Subscription 1
 - 정책 Action: `sns:Publish` 2개 문장만 사용
 - Runtime 계약: ECS Service 8개 Desired 0, ASG `0/0/0`, ALB 0, Valkey 0
-- 현재 실상태: Operations Topic 1, Subscription 0, RDS Alarm 0, RDS Event Subscription 0
-- Runtime 실상태: ECS Task·Container Instance 0, ALB·Valkey 0, RDS `stopped`
+- Apply 전 실상태: Operations Topic 1, Subscription 0, RDS Alarm 0, RDS Event Subscription 0
+- Apply 전 Runtime 실상태: ECS Task·Container Instance 0, ALB·Valkey 0, RDS `stopped`
 
-RDS 자동 재시작 예정 시각은 확인 당시 `2026-07-26 22:20:34 KST`다. 복구 Plan은 아직 Apply하지 않았다. 새 승인 문구는 다음과 같다.
+2026-07-21에 승인된 SHA를 다시 대조한 뒤 복구 Plan을 적용했다. 최초 시도는 AWS 로그인 만료로 AWS 변경 전에 중단됐으며, 브라우저 재인증 후 같은 Plan을 적용했다.
 
-`Observability Foundation OFF Policy Recovery Plan fb8beee57f39b463268d11b0341953dc3340216c7c182076067ab21ae5546de8 적용 승인`
+- 적용 결과: `6 added, 0 changed, 0 destroyed`
+- Terraform 관측성 state: 7개
+- Topic Policy: `sns:Publish` 2개 문장, Principal은 CloudWatch와 RDS Event Service로 한정, Source ARN·Account 조건 유지
+- Email Subscription: 1개, `PendingConfirmation`
+- CloudWatch RDS Alarm: 3개, 모두 `OK`
+- RDS Event Subscription: `active`, Event Category 6개
+- Runtime: ECS Service 8개 Desired/Running 0, Task·Container Instance 0, ASG `0/0/0`, ALB·Valkey 0
+- RDS: `stopped`, 자동 재시작 예정 `2026-07-26 22:20:34 KST`
+- 동일 Runtime OFF 입력 재계획: `No changes`
 
-Plan 내용이나 SHA가 달라지면 기존 승인은 폐기하고 새 Plan을 검토한다. 명시적 승인 전에는 `terraform apply`를 실행하지 않는다.
+적용한 Saved Plan은 재사용하지 않는다. Email 확인과 실알림 검증이 끝나기 전까지 관측성 Foundation 단계는 완료로 표시하지 않는다.
 
 ## 적용 직후 확인
 
