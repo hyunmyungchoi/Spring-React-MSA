@@ -107,6 +107,8 @@ Kubernetes 관측성 계획과 별도로 AWS Learning 환경은 비용이 낮고
 
 2A 코드는 `enable_runtime_observability`와 `learning_runtime_enabled`를 분리한다. 기능 Flag를 유지한 채 Runtime Flag만 ON/OFF하면 Container Insights와 29개 Alarm이 같은 Saved Plan 수명주기를 따른다. 실제 AWS 적용 전 Runtime OFF Saved Plan의 변경 범위와 SHA-256을 별도 승인받고, 이후 RDS 시작과 Runtime ON curl Smoke에서 Alarm 생성·상태·SNS 전달을 검증한다. 상세 절차는 [AWS 관측성 Foundation 런북](../runbooks/aws-observability.md)을 따른다.
 
+2A Runtime OFF Saved Plan은 Source SHA `ed33b8323f8706c6dbd322404c55cbe9bfbd8582`에서 현재 적용된 Foundation Flag, ECR digest 8개와 Stock Client ID를 보존해 AWS 리소스 변경 0개로 수렴했다. 승인된 SHA-256 `90a5be1ca3f71e07e689be1b77045c6e2a8bd66995945748053c43c6a13fbba5`를 적용한 결과 `0 added, 0 changed, 0 destroyed`였고, Container Insights `disabled`, Runtime Alarm 0개, ECS·ASG·ALB·Valkey OFF, RDS `stopped`, 재계획 `No changes`를 확인했다. 다음 검증은 RDS 시작과 Runtime ON Plan에서 Container Insights 및 Alarm 29개 생성, curl Smoke, SNS 상태 전환 확인이다.
+
 ### 3단계: 운영 초기화
 
 - 최초 관리자 Bootstrap을 일회성·감사 가능한 절차로 구현한다.

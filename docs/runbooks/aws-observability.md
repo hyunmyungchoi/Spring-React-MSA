@@ -148,14 +148,34 @@ Runtime OFF에서 기능 계약만 고정하는 Plan은 다음처럼 만든다.
 ```powershell
 Set-Location C:\Portfolio\infra\aws\terraform
 
+$env:TF_VAR_application_images = <현재 적용된 Task Definition 8개의 ECR digest JSON>
+$env:TF_VAR_toss_api_client_id = <현재 적용된 Stock Client ID>
+
 terraform plan `
   -var="enable_runtime_observability=true" `
+  -var="enable_application_runtime_foundation=true" `
+  -var="enable_frontend_hosting=true" `
+  -var="enable_public_domain_routing=true" `
   -out=tfplan-observability-runtime-lifecycle-off
 
 terraform show -no-color tfplan-observability-runtime-lifecycle-off
 ```
 
+`terraform.tfvars`는 root mock 테스트 격리를 위해 Application·Frontend·Public Domain Flag와 Application Image Map을 상시 `true` 또는 실제 값으로 저장하지 않는다. 따라서 모든 운영 Plan은 위 네 Flag와 현재 적용된 이미지 8개, Stock Client ID를 명시적으로 보존해야 한다. 하나라도 빠져 Foundation 삭제나 Task Definition 교체가 나타나면 Plan을 적용하지 않고 폐기한다.
+
 이 Plan의 기대 결과는 `learning_runtime_enabled=false`, Container Insights `disabled`, Runtime Alarm 0개이며 기존 Foundation을 삭제하거나 Runtime 유료 리소스를 시작하지 않는 것이다. Runtime ON 검증은 [AWS Application Runtime](aws-application-runtime.md)의 RDS 시작, 승인된 ON Saved Plan, curl Smoke 절차를 그대로 사용한다. ON Plan에는 일반 Container Insights 활성화와 Runtime Alarm 29개가 포함돼야 하고, OFF Plan에는 29개 삭제와 Container Insights 비활성화가 포함돼야 한다.
+
+2026-07-21 적용 기록:
+
+- 첫 사전 Plan은 기존 Application·Frontend·Public Domain Flag 누락으로 `2 add, 100 destroy` 후보가 나타났고 새 변수 검증에서 중단됐다. 적용하지 않았고 임시 파일을 삭제했다.
+- 두 번째 사전 Plan은 Application Image Map 누락으로 중단됐으며, Windows 줄바꿈 때문에 ECS Launch Template `user_data`가 불필요하게 변경되는 문제를 발견했다. `join("\n", ...)`으로 LF를 고정하고 Source SHA `ed33b8323f8706c6dbd322404c55cbe9bfbd8582`에 반영했다.
+- 세 번째 사전 Plan은 적용된 Stock Client ID 누락으로 Stock Task Definition 교체가 잡혀 폐기했다.
+- 최종 Plan은 현재 적용된 ECR digest 8개와 Stock Client ID를 메모리 변수로 보존해 AWS 리소스 변경 0개, 출력 2개 추가로 수렴했다.
+- Saved Plan 크기: `195,925 bytes`
+- Saved Plan SHA-256: `90a5be1ca3f71e07e689be1b77045c6e2a8bd66995945748053c43c6a13fbba5`
+- 적용 결과: `0 added, 0 changed, 0 destroyed`
+- 적용 후 실상태: Container Insights `disabled`, Runtime Alarm 0, ECS Service 8개 Desired/Running/Pending 합계 `0/0/0`, ASG `0/0/0`, Instance·ALB·Valkey 0, RDS `stopped`
+- 동일 Foundation·Image·Stock 입력 재계획: `No changes`
 
 ```powershell
 aws ecs describe-clusters `
