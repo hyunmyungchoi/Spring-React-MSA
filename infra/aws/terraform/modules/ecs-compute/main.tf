@@ -115,17 +115,17 @@ resource "aws_launch_template" "ecs" {
     tags          = local.instance_tags
   }
 
-  user_data = base64encode(<<-EOT
-    #!/bin/bash
-    cat <<'EOF' >> /etc/ecs/ecs.config
-    ECS_CLUSTER=${aws_ecs_cluster.this.name}
-    ECS_ENABLE_TASK_IAM_ROLE=true
-    ECS_ENABLE_TASK_IAM_ROLE_NETWORK_HOST=true
-    ECS_AWSVPC_BLOCK_IMDS=true
-    ECS_LOGLEVEL=info
-    EOF
-  EOT
-  )
+  user_data = base64encode(join("\n", [
+    "#!/bin/bash",
+    "cat <<'EOF' >> /etc/ecs/ecs.config",
+    "ECS_CLUSTER=${aws_ecs_cluster.this.name}",
+    "ECS_ENABLE_TASK_IAM_ROLE=true",
+    "ECS_ENABLE_TASK_IAM_ROLE_NETWORK_HOST=true",
+    "ECS_AWSVPC_BLOCK_IMDS=true",
+    "ECS_LOGLEVEL=info",
+    "EOF",
+    "",
+  ]))
 
   update_default_version = true
 
