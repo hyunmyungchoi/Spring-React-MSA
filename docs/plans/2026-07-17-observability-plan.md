@@ -94,7 +94,7 @@ Kubernetes 관측성 계획과 별도로 AWS Learning 환경은 비용이 낮고
 - RDS availability/backup/failure/low storage/maintenance/notification Event Subscription을 만든다.
 - RDS 정지 중 지표 누락은 정상으로 취급한다.
 
-첫 Runtime OFF Plan Apply는 SNS Topic 1개 생성 뒤 wildcard Topic Policy가 AWS에서 거부돼 부분 실패했다. 정책을 `sns:Publish` 전용으로 교정하고 전체 mock 테스트 `26 passed, 0 failed`와 부분 state 기준 복구 Plan을 검증한 뒤 `6 added, 0 changed, 0 destroyed`로 적용했다. 실상태는 Topic/Policy/Email Subscription/Event Subscription 각 1개, RDS Alarm 3개이며 재계획은 `No changes`다. SNS Email 확인과 실알림 검증은 아직 남아 있다. 상세 절차는 [AWS 관측성 Foundation 런북](../runbooks/aws-observability.md)을 따른다.
+첫 Runtime OFF Plan Apply는 SNS Topic 1개 생성 뒤 wildcard Topic Policy가 AWS에서 거부돼 부분 실패했다. 정책을 `sns:Publish` 전용으로 교정하고 전체 mock 테스트 `26 passed, 0 failed`와 부분 state 기준 복구 Plan을 검증한 뒤 `6 added, 0 changed, 0 destroyed`로 적용했다. 실상태는 Topic/Policy/Email Subscription/Event Subscription 각 1개, RDS Alarm 3개이며 재계획은 `No changes`다. 2026-07-21에 SNS Email Subscription이 `Confirmed`인지 확인하고 Topic 직접 발행, AWS 전달 지표 `Delivered 3`·`Failed 0`, Gmail 실제 수신까지 검증해 1단계를 완료했다. 상세 절차는 [AWS 관측성 Foundation 런북](../runbooks/aws-observability.md)을 따른다.
 
 ### 2단계: Runtime 수명주기 관측
 

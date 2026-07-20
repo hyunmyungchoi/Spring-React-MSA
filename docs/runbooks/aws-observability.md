@@ -90,14 +90,16 @@ terraform show -no-color tfplan-observability-foundation-off
 - 적용 결과: `6 added, 0 changed, 0 destroyed`
 - Terraform 관측성 state: 7개
 - Topic Policy: `sns:Publish` 2개 문장, Principal은 CloudWatch와 RDS Event Service로 한정, Source ARN·Account 조건 유지
-- Email Subscription: 1개, `PendingConfirmation`
+- Email Subscription: 1개, `Confirmed`
 - CloudWatch RDS Alarm: 3개, 모두 `OK`
 - RDS Event Subscription: `active`, Event Category 6개
 - Runtime: ECS Service 8개 Desired/Running 0, Task·Container Instance 0, ASG `0/0/0`, ALB·Valkey 0
 - RDS: `stopped`, 자동 재시작 예정 `2026-07-26 22:20:34 KST`
 - 동일 Runtime OFF 입력 재계획: `No changes`
+- SNS Email 전달 검증: Subscription 1개 `Confirmed`, `PendingConfirmation` 0개
+- SNS 직접 발행 Smoke: AWS 발행 접수와 Gmail 실수신 성공, 최종 전달 지표 `Delivered 3`, `Failed 0`
 
-적용한 Saved Plan은 재사용하지 않는다. Email 확인과 실알림 검증이 끝나기 전까지 관측성 Foundation 단계는 완료로 표시하지 않는다.
+적용한 Saved Plan은 재사용하지 않는다. 2026-07-21에 Email 확인과 직접 발행 실알림 검증까지 완료했으므로 관측성 Foundation 단계는 완료 상태다.
 
 ## 적용 직후 확인
 
@@ -121,6 +123,8 @@ aws rds describe-event-subscriptions `
 ```
 
 확인할 값은 Email Subscription ARN이 `PendingConfirmation`이 아닌지, RDS Alarm 3개의 Action이 활성인지, Event Subscription 상태가 `active`인지다. RDS가 정지 중이면 Alarm은 `INSUFFICIENT_DATA`일 수 있으며 정상이다.
+
+2026-07-21 검증에서는 SNS 확인 메일이 Gmail 스팸함으로 분류됐다. 스팸함에서 구독을 확인한 뒤 AWS 실상태가 Subscription 1개 `Confirmed`, Pending 0개인지 재검사했다. 이어 제목 `[TEST] Spring-React-MSA AWS operations alert`로 Topic에 직접 발행했고 AWS 발행 접수, CloudWatch SNS 전달 3건·실패 0건, Gmail 실제 수신을 모두 확인했다. 확인 메일이 보이지 않으면 재구독을 반복하기 전에 `in:anywhere from:no-reply@sns.amazonaws.com`으로 전체 메일과 스팸함을 먼저 검색한다.
 
 ## 알림 대응
 
