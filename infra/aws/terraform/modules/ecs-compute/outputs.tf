@@ -41,3 +41,8 @@ output "awsvpc_trunking" {
   description = "Account-level ECS task ENI trunking setting required to place all eight awsvpc tasks on one Learning instance."
   value       = aws_ecs_account_setting_default.awsvpc_trunking.value
 }
+
+output "container_insights" {
+  description = "Cluster-level Container Insights setting."
+  value       = one(aws_ecs_cluster.this.setting[*].value)
+}

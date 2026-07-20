@@ -98,10 +98,14 @@ Kubernetes 관측성 계획과 별도로 AWS Learning 환경은 비용이 낮고
 
 ### 2단계: Runtime 수명주기 관측
 
-- Container Insights 비용을 확인한 뒤 활성화 여부를 결정한다.
-- Backend 서비스별 Task Count, CPU, Memory Alarm 범위를 결정한다.
-- Runtime ON 동안에만 존재하는 ALB Alarm의 생성·삭제 수명주기를 Terraform에 고정한다.
-- Runtime ON/OFF 스케줄과 RDS 최대 정지 기간 자동 시작 감시를 연결한다.
+- 2A에서 Enhanced가 아닌 일반 Container Insights를 Runtime ON 동안만 활성화한다.
+- 2A에서 Backend 8개 서비스별 Task Count, CPU, Memory Alarm 24개를 ON 동안만 만든다.
+- 2A에서 ALB 자체 5xx와 두 Gateway Target Group의 5xx·Unhealthy Host Alarm 5개를 ON 동안만 만든다.
+- 2A Runtime OFF 계약은 Container Insights `disabled`, Runtime Alarm 0개이며 전체 Terraform mock 테스트 `28 passed, 0 failed`로 검증했다.
+- 2B에서 Terraform state를 직접 변경하지 않는 Runtime 장시간 ON·RDS 자동 시작 임박 Watchdog을 먼저 연결한다.
+- 자동 Runtime OFF는 승인된 Terraform 실행 경로가 생긴 뒤 별도 결정한다.
+
+2A 코드는 `enable_runtime_observability`와 `learning_runtime_enabled`를 분리한다. 기능 Flag를 유지한 채 Runtime Flag만 ON/OFF하면 Container Insights와 29개 Alarm이 같은 Saved Plan 수명주기를 따른다. 실제 AWS 적용 전 Runtime OFF Saved Plan의 변경 범위와 SHA-256을 별도 승인받고, 이후 RDS 시작과 Runtime ON curl Smoke에서 Alarm 생성·상태·SNS 전달을 검증한다. 상세 절차는 [AWS 관측성 Foundation 런북](../runbooks/aws-observability.md)을 따른다.
 
 ### 3단계: 운영 초기화
 

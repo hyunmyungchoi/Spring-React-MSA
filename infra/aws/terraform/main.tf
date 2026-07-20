@@ -85,25 +85,32 @@ module "observability" {
   count  = var.enable_observability_foundation ? 1 : 0
   source = "./modules/observability"
 
-  name_prefix            = local.name_prefix
-  aws_region             = var.aws_region
-  alert_email            = coalesce(var.budget_alert_email, "disabled@example.invalid")
-  db_instance_identifier = module.data_layer.db_instance_identifier
-  db_instance_arn        = module.data_layer.db_instance_arn
-  common_tags            = local.common_tags
+  name_prefix                   = local.name_prefix
+  aws_region                    = var.aws_region
+  alert_email                   = coalesce(var.budget_alert_email, "disabled@example.invalid")
+  db_instance_identifier        = module.data_layer.db_instance_identifier
+  db_instance_arn               = module.data_layer.db_instance_arn
+  runtime_observability_enabled = var.enable_runtime_observability
+  runtime_enabled               = var.learning_runtime_enabled
+  ecs_cluster_name              = try(module.ecs_compute[0].cluster_name, "")
+  ecs_service_names             = try(module.application_runtime[0].ecs_service_names, {})
+  load_balancer_arn_suffix      = try(module.application_runtime[0].public_alb_arn_suffix, null)
+  target_group_arn_suffixes     = try(module.application_runtime[0].public_target_group_arn_suffixes, {})
+  common_tags                   = local.common_tags
 }
 
 module "ecs_compute" {
   count  = var.enable_ecs_compute_foundation ? 1 : 0
   source = "./modules/ecs-compute"
 
-  name_prefix              = local.name_prefix
-  private_app_subnet_ids   = module.network.private_app_subnet_ids
-  ecs_security_group_id    = module.network.ecs_security_group_id
-  ecs_optimized_ami_id     = data.aws_ssm_parameter.ecs_optimized_al2023_ami[0].value
-  instance_type            = var.ecs_instance_type
-  learning_runtime_enabled = var.learning_runtime_enabled
-  common_tags              = local.common_tags
+  name_prefix               = local.name_prefix
+  private_app_subnet_ids    = module.network.private_app_subnet_ids
+  ecs_security_group_id     = module.network.ecs_security_group_id
+  ecs_optimized_ami_id      = data.aws_ssm_parameter.ecs_optimized_al2023_ami[0].value
+  instance_type             = var.ecs_instance_type
+  learning_runtime_enabled  = var.learning_runtime_enabled
+  enable_container_insights = var.enable_runtime_observability && var.learning_runtime_enabled
+  common_tags               = local.common_tags
 }
 
 module "cache" {

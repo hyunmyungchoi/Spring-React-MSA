@@ -91,13 +91,15 @@ DB Migration 검증 후에는 승인된 OFF Plan으로 ASG `0/0/0`과 RDS 정지
 
 Route 53/ACM/TLS는 Bootstrap State Role 권한과 별도 Global DNS State를 적용해 기존 Hosted Zone Import, ACM 인증서 2개 `ISSUED`, DNS 검증 CNAME 4개를 완료했다. Runtime OFF Custom Domain/A·AAAA/HTTPS API Origin도 적용해 정적 curl 6/6, Root 308, TLS와 재계획 `No changes`를 검증했다.
 
-### 관측성 Foundation 준비 상태
+### 관측성 Foundation과 Runtime 수명주기
 
-기존 CloudWatch Log Group 12개는 7일 보존이고 월 USD 50 Budget 1개에는 실제 비용 USD 10/30/40/50 알림이 있다. 별도 사용자 정의 Alarm과 SNS Topic은 아직 AWS에 적용하지 않았다.
+기존 CloudWatch Log Group 12개는 7일 보존이고 월 USD 50 Budget 1개에는 실제 비용 USD 10/30/40/50 알림이 있다.
 
 `modules/observability`는 Runtime OFF에도 유지되는 SNS Operations Topic·Policy·Email Subscription, RDS CPU/Freeable Memory/Free Storage Alarm 3개와 RDS Event Subscription을 정의한다. RDS 정지 중 지표 누락은 `notBreaching`으로 처리한다. 루트 플래그는 기본 `false`이고 Data Layer와 유효한 추적 제외 알림 Email이 있어야 활성화할 수 있다.
 
-첫 Runtime OFF Plan Apply는 SNS Operations Topic 1개 생성 뒤 Topic Policy의 `SNS:*`가 AWS `InvalidParameter`로 거부돼 중단됐다. wildcard 관리자 문장을 제거하고 RDS Event·CloudWatch Alarm에 `sns:Publish`만 허용했으며, 정책 Action과 운영 tfvars 격리 테스트를 보강해 전체 `26 passed, 0 failed`를 다시 확인했다. 부분 state 기준 복구 Plan `tfplan-observability-foundation-off-policy-recovery`는 190,225 bytes, SHA-256 `fb8beee57f39b463268d11b0341953dc3340216c7c182076067ab21ae5546de8`이고 승인된 그대로 `6 added, 0 changed, 0 destroyed`로 적용했다. 실상태는 관측성 state 7개, `sns:Publish` Policy 2개 문장, Email Subscription 1개 `PendingConfirmation`, RDS Alarm 3개 `OK`, RDS Event Subscription `active`다. ECS/ASG/ALB/Valkey/RDS는 OFF이고 재계획은 `No changes`다. SNS Email 확인과 실알림 검증은 남아 있다. 운영 절차는 [`docs/runbooks/aws-observability.md`](../../../docs/runbooks/aws-observability.md)를 따른다.
+첫 Runtime OFF Plan Apply는 SNS Operations Topic 1개 생성 뒤 Topic Policy의 `SNS:*`가 AWS `InvalidParameter`로 거부돼 중단됐다. wildcard 관리자 문장을 제거하고 RDS Event·CloudWatch Alarm에 `sns:Publish`만 허용했으며, 정책 Action과 운영 tfvars 격리 테스트를 보강했다. 부분 state 기준 복구 Plan `tfplan-observability-foundation-off-policy-recovery`는 190,225 bytes, SHA-256 `fb8beee57f39b463268d11b0341953dc3340216c7c182076067ab21ae5546de8`이고 승인된 그대로 `6 added, 0 changed, 0 destroyed`로 적용했다. 실상태는 관측성 state 7개, `sns:Publish` Policy 2개 문장, Email Subscription 1개 `Confirmed`, RDS Alarm 3개 `OK`, RDS Event Subscription `active`다. SNS 직접 발행은 CloudWatch 전달 3건·실패 0건과 Gmail 실제 수신을 확인했다.
+
+`enable_runtime_observability=true`는 Runtime ON에서만 일반 Container Insights와 ECS·ALB Alarm을 활성화한다. Backend 8개 서비스별 CPU·Memory·Running Task Alarm 24개와 ALB 자체 5xx, 두 Gateway Target Group의 Target 5xx·Unhealthy Host Alarm 5개를 합쳐 29개다. `learning_runtime_enabled=false`이면 Container Insights는 `disabled`이고 Runtime Alarm은 0개이므로 Runtime OFF 비용 기준을 유지한다. Enhanced Container Insights는 사용하지 않는다. 모듈 계약과 전체 mock 테스트는 `28 passed, 0 failed`다. 운영 절차는 [`docs/runbooks/aws-observability.md`](../../../docs/runbooks/aws-observability.md)를 따른다.
 
 ### 적용된 Data Layer
 

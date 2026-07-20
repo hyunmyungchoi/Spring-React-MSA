@@ -12,3 +12,8 @@ output "rds_event_subscription_name" {
   description = "RDS event subscription name."
   value       = aws_db_event_subscription.rds.name
 }
+
+output "runtime_alarm_names" {
+  description = "Lifecycle-scoped ECS and ALB alarm names keyed by contract name."
+  value       = { for key, alarm in aws_cloudwatch_metric_alarm.runtime : key => alarm.alarm_name }
+}

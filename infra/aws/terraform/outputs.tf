@@ -109,6 +109,11 @@ output "rds_event_subscription_name" {
   value       = try(module.observability[0].rds_event_subscription_name, null)
 }
 
+output "runtime_alarm_names" {
+  description = "Lifecycle-scoped ECS and ALB alarm names, or an empty map while Runtime is OFF."
+  value       = try(module.observability[0].runtime_alarm_names, {})
+}
+
 output "ecs_cluster_name" {
   description = "ECS cluster name, or null when the ECS compute foundation is disabled."
   value       = try(module.ecs_compute[0].cluster_name, null)
@@ -137,6 +142,11 @@ output "ecs_runtime_capacity" {
 output "ecs_awsvpc_trunking" {
   description = "Account-level awsvpcTrunking value managed by the ECS compute foundation."
   value       = try(module.ecs_compute[0].awsvpc_trunking, null)
+}
+
+output "ecs_container_insights" {
+  description = "ECS Container Insights setting, or null when the ECS compute foundation is disabled."
+  value       = try(module.ecs_compute[0].container_insights, null)
 }
 
 output "redis_replication_group_id" {

@@ -27,3 +27,13 @@ output "public_alb_zone_id" {
   description = "Disposable public ALB Route 53 zone ID, or null while Runtime is OFF."
   value       = try(aws_lb.public["this"].zone_id, null)
 }
+
+output "public_alb_arn_suffix" {
+  description = "Disposable public ALB ARN suffix used by CloudWatch metrics, or null while Runtime is OFF."
+  value       = try(aws_lb.public["this"].arn_suffix, null)
+}
+
+output "public_target_group_arn_suffixes" {
+  description = "Public gateway target group ARN suffixes keyed by service name."
+  value       = { for key, group in aws_lb_target_group.gateway : key => group.arn_suffix }
+}

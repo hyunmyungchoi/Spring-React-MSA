@@ -10,6 +10,7 @@ private_data_subnet_cidrs = ["10.20.20.0/24", "10.20.21.0/24"]
 enable_nat_gateway = false
 enable_data_layer  = false
 enable_observability_foundation = false
+enable_runtime_observability    = false
 
 # Create the persistent ECS/ASG foundation separately from running hourly EC2 capacity.
 enable_ecs_compute_foundation = false

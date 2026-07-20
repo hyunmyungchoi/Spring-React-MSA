@@ -39,6 +39,43 @@ variable "db_instance_arn" {
   }
 }
 
+variable "runtime_observability_enabled" {
+  description = "Whether lifecycle-scoped ECS and ALB observability should be available."
+  type        = bool
+  default     = false
+}
+
+variable "runtime_enabled" {
+  description = "Whether the disposable Learning runtime is currently ON."
+  type        = bool
+  default     = false
+}
+
+variable "ecs_cluster_name" {
+  description = "ECS cluster name used by Runtime alarm dimensions."
+  type        = string
+  default     = ""
+}
+
+variable "ecs_service_names" {
+  description = "ECS service names keyed by the eight short service names."
+  type        = map(string)
+  default     = {}
+}
+
+variable "load_balancer_arn_suffix" {
+  description = "Runtime public ALB ARN suffix used by ApplicationELB metrics."
+  type        = string
+  default     = null
+  nullable    = true
+}
+
+variable "target_group_arn_suffixes" {
+  description = "Public gateway target group ARN suffixes keyed by service name."
+  type        = map(string)
+  default     = {}
+}
+
 variable "common_tags" {
   description = "Common tags applied to observability resources."
   type        = map(string)

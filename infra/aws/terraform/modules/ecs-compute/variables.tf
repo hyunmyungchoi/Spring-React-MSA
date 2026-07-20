@@ -55,6 +55,12 @@ variable "learning_runtime_enabled" {
   default     = false
 }
 
+variable "enable_container_insights" {
+  description = "Whether standard ECS Container Insights should emit task-count metrics while Runtime is ON."
+  type        = bool
+  default     = false
+}
+
 variable "common_tags" {
   description = "Common tags applied to ECS compute resources."
   type        = map(string)

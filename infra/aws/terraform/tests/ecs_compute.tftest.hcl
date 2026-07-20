@@ -8,12 +8,13 @@ run "runtime_off_contract" {
   }
 
   variables {
-    name_prefix              = "spring-react-msa-learning"
-    private_app_subnet_ids   = ["subnet-private-a", "subnet-private-b"]
-    ecs_security_group_id    = "sg-0123456789abcdef0"
-    ecs_optimized_ami_id     = "ami-0123456789abcdef0"
-    instance_type            = "m6i.xlarge"
-    learning_runtime_enabled = false
+    name_prefix               = "spring-react-msa-learning"
+    private_app_subnet_ids    = ["subnet-private-a", "subnet-private-b"]
+    ecs_security_group_id     = "sg-0123456789abcdef0"
+    ecs_optimized_ami_id      = "ami-0123456789abcdef0"
+    instance_type             = "m6i.xlarge"
+    learning_runtime_enabled  = false
+    enable_container_insights = false
     common_tags = {
       Project     = "spring-react-msa"
       Environment = "learning"
@@ -28,6 +29,12 @@ run "runtime_off_contract" {
       aws_autoscaling_group.ecs.max_size == 0
     )
     error_message = "Runtime OFF must keep ECS ASG min, desired, and max capacity at zero."
+  }
+
+
+  assert {
+    condition     = one(aws_ecs_cluster.this.setting[*].value) == "disabled"
+    error_message = "Runtime OFF must keep Container Insights disabled."
   }
 
   assert {
@@ -93,12 +100,13 @@ run "runtime_on_contract" {
   }
 
   variables {
-    name_prefix              = "spring-react-msa-learning"
-    private_app_subnet_ids   = ["subnet-private-a", "subnet-private-b"]
-    ecs_security_group_id    = "sg-0123456789abcdef0"
-    ecs_optimized_ami_id     = "ami-0123456789abcdef0"
-    instance_type            = "m6i.xlarge"
-    learning_runtime_enabled = true
+    name_prefix               = "spring-react-msa-learning"
+    private_app_subnet_ids    = ["subnet-private-a", "subnet-private-b"]
+    ecs_security_group_id     = "sg-0123456789abcdef0"
+    ecs_optimized_ami_id      = "ami-0123456789abcdef0"
+    instance_type             = "m6i.xlarge"
+    learning_runtime_enabled  = true
+    enable_container_insights = true
     common_tags = {
       Project     = "spring-react-msa"
       Environment = "learning"
@@ -113,5 +121,11 @@ run "runtime_on_contract" {
       aws_autoscaling_group.ecs.max_size == 2
     )
     error_message = "Runtime ON must use the approved ASG capacity of min 1, desired 1, and max 2."
+  }
+
+
+  assert {
+    condition     = one(aws_ecs_cluster.this.setting[*].value) == "enabled"
+    error_message = "Runtime ON observability must enable standard Container Insights."
   }
 }

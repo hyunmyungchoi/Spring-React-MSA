@@ -101,6 +101,21 @@ variable "enable_observability_foundation" {
   }
 }
 
+variable "enable_runtime_observability" {
+  description = "Whether Runtime ON should enable standard ECS Container Insights and create lifecycle-scoped ECS and ALB alarms."
+  type        = bool
+  default     = false
+
+  validation {
+    condition = !var.enable_runtime_observability || (
+      var.enable_observability_foundation &&
+      var.enable_ecs_compute_foundation &&
+      var.enable_application_runtime_foundation
+    )
+    error_message = "enable_runtime_observability requires the observability, ECS compute, and application runtime foundations."
+  }
+}
+
 variable "enable_ecs_compute_foundation" {
   description = "Whether to create the ECS cluster, EC2 launch template, zero-capacity ASG, and capacity provider."
   type        = bool

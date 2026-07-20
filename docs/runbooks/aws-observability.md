@@ -126,6 +126,52 @@ aws rds describe-event-subscriptions `
 
 2026-07-21 검증에서는 SNS 확인 메일이 Gmail 스팸함으로 분류됐다. 스팸함에서 구독을 확인한 뒤 AWS 실상태가 Subscription 1개 `Confirmed`, Pending 0개인지 재검사했다. 이어 제목 `[TEST] Spring-React-MSA AWS operations alert`로 Topic에 직접 발행했고 AWS 발행 접수, CloudWatch SNS 전달 3건·실패 0건, Gmail 실제 수신을 모두 확인했다. 확인 메일이 보이지 않으면 재구독을 반복하기 전에 `in:anywhere from:no-reply@sns.amazonaws.com`으로 전체 메일과 스팸함을 먼저 검색한다.
 
+## Runtime 수명주기 관측 2A
+
+`enable_runtime_observability = true`는 Runtime 관측 계약을 켜지만 `learning_runtime_enabled = false`인 동안에는 Container Insights와 Runtime Alarm을 만들지 않는다. Runtime ON Plan에서만 ECS Cluster의 일반 Container Insights를 `enabled`로 바꾸고 29개 Alarm을 만들며, OFF Plan에서는 Alarm을 삭제하고 Container Insights를 다시 `disabled`로 돌린다. Container Insights Enhanced 모드는 사용하지 않는다.
+
+서비스 CPU·Memory는 기본 `AWS/ECS` 지표를 사용한다. `RunningTaskCount`는 `ECS/ContainerInsights` 지표이므로 일반 Container Insights를 Runtime ON 동안만 사용한다. AWS는 기본 ECS CPU·Memory 지표를 추가 비용 없이 제공하고 Container Insights 지표와 CloudWatch Alarm은 사용 시간에 비례해 과금한다. 실제 서울 리전 비용은 Plan 승인 전 [CloudWatch Pricing](https://aws.amazon.com/cloudwatch/pricing/)에서 다시 확인한다.
+
+| 대상 | Alarm 수 | 조건 | Missing data |
+| --- | ---: | --- | --- |
+| ECS CPU | 서비스별 1개, 총 8개 | 80% 이상, 5분 주기 3/3 | `notBreaching` |
+| ECS Memory | 서비스별 1개, 총 8개 | 85% 이상, 5분 주기 3/3 | `notBreaching` |
+| ECS Running Task | 서비스별 1개, 총 8개 | 1개 미만, 1분 주기 3/5 | `breaching` |
+| ALB 자체 5xx | 1개 | 5건 이상, 5분 주기 2/2 | `notBreaching` |
+| Gateway Target 5xx | Target Group별 1개, 총 2개 | 5건 이상, 5분 주기 2/2 | `notBreaching` |
+| Gateway Unhealthy Host | Target Group별 1개, 총 2개 | 1개 이상, 1분 주기 2/3 | `notBreaching` |
+
+모든 Alarm은 기존 Operations SNS Topic에 `ALARM`과 `OK`를 모두 전달한다. Task Count는 시작 직후 지표가 아직 없을 때 경보가 날 수 있으므로 ECS Service 8개의 배포 안정화 뒤 모두 `OK`인지 확인한다.
+
+Runtime OFF에서 기능 계약만 고정하는 Plan은 다음처럼 만든다.
+
+```powershell
+Set-Location C:\Portfolio\infra\aws\terraform
+
+terraform plan `
+  -var="enable_runtime_observability=true" `
+  -out=tfplan-observability-runtime-lifecycle-off
+
+terraform show -no-color tfplan-observability-runtime-lifecycle-off
+```
+
+이 Plan의 기대 결과는 `learning_runtime_enabled=false`, Container Insights `disabled`, Runtime Alarm 0개이며 기존 Foundation을 삭제하거나 Runtime 유료 리소스를 시작하지 않는 것이다. Runtime ON 검증은 [AWS Application Runtime](aws-application-runtime.md)의 RDS 시작, 승인된 ON Saved Plan, curl Smoke 절차를 그대로 사용한다. ON Plan에는 일반 Container Insights 활성화와 Runtime Alarm 29개가 포함돼야 하고, OFF Plan에는 29개 삭제와 Container Insights 비활성화가 포함돼야 한다.
+
+```powershell
+aws ecs describe-clusters `
+  --region ap-northeast-2 `
+  --clusters (terraform output -raw ecs_cluster_name) `
+  --include SETTINGS
+
+aws cloudwatch describe-alarms `
+  --region ap-northeast-2 `
+  --alarm-name-prefix "spring-react-msa-learning-ecs-"
+
+aws cloudwatch describe-alarms `
+  --region ap-northeast-2 `
+  --alarm-name-prefix "spring-react-msa-learning-alb-"
+```
+
 ## 알림 대응
 
 1. 알림의 Account, Region, Alarm 또는 RDS Event ID를 확인한다.
@@ -136,10 +182,8 @@ aws rds describe-event-subscriptions `
 
 ## 이번 단계에서 보류하는 항목
 
-- ECS Container Insights
-- Backend 8개 서비스별 CPU·메모리·Task Count Alarm
-- Runtime ON일 때만 존재하는 ALB의 5xx·Target Health Alarm
 - 자동 Runtime ON/OFF 스케줄
+- RDS 최대 정지 기간의 자동 시작 전 사전 감시
 - 최초 관리자 Bootstrap
 
-위 항목은 비용과 Runtime 수명주기를 함께 검토하는 다음 하위 단계에서 추가한다. 애플리케이션 HTTPS·OAuth·Session·WebSocket 검증은 [AWS Application Runtime](aws-application-runtime.md)의 curl Smoke 계약을 계속 사용한다.
+자동 스케줄이 Terraform 소유 ECS·ALB·Valkey 상태를 직접 바꾸면 state drift가 생길 수 있다. 2B에서는 먼저 변경 없는 알림 전용 Watchdog으로 Runtime 장시간 ON과 RDS 자동 시작 임박을 감시하고, 자동 OFF는 별도 승인된 Terraform 실행 경로가 생긴 뒤 검토한다. 애플리케이션 HTTPS·OAuth·Session·WebSocket 검증은 [AWS Application Runtime](aws-application-runtime.md)의 curl Smoke 계약을 계속 사용한다.
