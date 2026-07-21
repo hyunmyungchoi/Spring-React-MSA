@@ -177,6 +177,19 @@ terraform show -no-color tfplan-observability-runtime-lifecycle-off
 - 적용 후 실상태: Container Insights `disabled`, Runtime Alarm 0, ECS Service 8개 Desired/Running/Pending 합계 `0/0/0`, ASG `0/0/0`, Instance·ALB·Valkey 0, RDS `stopped`
 - 동일 Foundation·Image·Stock 입력 재계획: `No changes`
 
+2026-07-22 Runtime ON 검증 기록:
+
+- Source SHA `d2dc46b062be1deef7c0c4a55ff8a87a4c914579`에서 Saved Plan `tfplan-observability-runtime-lifecycle-on`, 202,653 bytes, SHA-256 `46c96d2b993afc8afe8c354ad93cf2c949cd0cee5d4973e5659629af3384ba45`를 만들었다.
+- Plan 범위는 `40 create, 10 update, 0 destroy`다. Runtime 리소스 11개와 Alarm 29개를 만들고 ECS Service 8개, ASG와 ECS Cluster를 갱신했다. Task Definition·Image·RDS·Frontend·DNS Foundation 변경은 없었다.
+- 승인된 Plan을 적용한 결과 `40 added, 10 changed, 0 destroyed`였다. RDS·Valkey는 `available`, ASG는 `1/1/2`, ECS Service·Task·Container Health는 8/8, ALB Target은 2/2 `healthy`, 일반 Container Insights는 `enabled`, Runtime Alarm 29개는 모두 `OK`로 수렴했다.
+- 공개 HTTPS 정적·Readiness·OIDC·BFF curl 12/12 HTTP 200과 Root 308 Path·Query 보존을 확인했다. 새 무작위 ROLE_USER 1개로 Registration 201, Password Login·OAuth Authorization Code·인증 Session·CSRF Heartbeat·User API·Logout을 검증했고 응답에 원본 `sessionId`가 없었다.
+- 같은 인증 Cookie로 공개 WebSocket에서 `CONNECTED`, `HISTORY`, `PONG`, 자체 `CHAT_MESSAGE`를 수신하고 REST History 영속성까지 확인했다. 임시 비밀번호와 Cookie 파일은 폐기했으며 이 계정은 후속 관리자 정리 대상에 추가한다.
+- 첫 Alarm `ALARM → OK` 테스트는 SNS Action과 Topic Publish 2건이 성공했지만 Email Subscription 실상태가 Terraform 재계획의 `No changes`와 달리 `Deleted`여서 실제 전달되지 않았다.
+- 강제 교체 Saved Plan `tfplan-observability-email-subscription-recovery`, 223,714 bytes, SHA-256 `383b514ea0cba9eeac4572c5a909b493489e434cb722b5203203aaeff7eb930d`는 `module.observability[0].aws_sns_topic_subscription.email` 한 개만 `delete+create`했다. 승인 적용 결과는 `1 added, 0 changed, 1 destroyed`다.
+- 새 구독 확인 뒤 Email Subscription 1개 `Confirmed`, Runtime Alarm `ALARM → OK`, SNS Action 2회 성공, `Published 2`, `Delivered 2`, `Failed 0`을 확인했다.
+- 동일 Runtime ON·Foundation·Image·Stock·Redis 입력 재계획은 `No changes`이며 Alarm 29개는 모두 `OK`다. 적용된 두 Saved Plan은 Hash 검증 후 삭제했다.
+- 현재는 관측성 검증용 Runtime ON 상태다. 비용 종료는 새 OFF Saved Plan의 별도 Hash 승인을 받아 Alarm 29개 삭제, Container Insights `disabled`, ECS·ASG 0, ALB·Valkey 삭제와 RDS 정지까지 수행한다.
+
 ```powershell
 aws ecs describe-clusters `
   --region ap-northeast-2 `
