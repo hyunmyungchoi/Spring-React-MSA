@@ -111,7 +111,9 @@ Kubernetes 관측성 계획과 별도로 AWS Learning 환경은 비용이 낮고
 
 2026-07-22에는 Source SHA `d2dc46b062be1deef7c0c4a55ff8a87a4c914579`의 Runtime ON Saved Plan SHA-256 `46c96d2b993afc8afe8c354ad93cf2c949cd0cee5d4973e5659629af3384ba45`를 승인 적용해 `40 added, 10 changed, 0 destroyed`로 완료했다. Container Insights `enabled`, Runtime Alarm 29개 `OK`, ECS·Container Health 8/8, ASG `1/1/2`, ALB Target 2/2, RDS·Valkey `available`을 확인했다. HTTPS curl 12/12, Registration·Password Login·OAuth·Session·CSRF·Logout과 공개 WebSocket 네 프레임·REST 영속성이 통과했다.
 
-Alarm Smoke 중 Terraform은 `No changes`였지만 SNS Email Subscription 실상태가 `Deleted`인 불일치를 발견했다. 단일 구독만 교체하는 Recovery Plan SHA-256 `383b514ea0cba9eeac4572c5a909b493489e434cb722b5203203aaeff7eb930d`를 `1 added, 0 changed, 1 destroyed`로 적용하고 다시 확인했다. 최종 구독은 `Confirmed`, Alarm `ALARM → OK`, SNS `Published 2`·`Delivered 2`·`Failed 0`, 동일 ON 입력 재계획은 `No changes`다. 2A의 남은 작업은 별도 승인된 OFF Plan으로 비용 리소스와 Runtime Alarm을 내리는 것이다. 그 뒤 2B Watchdog과 3단계 운영 초기화로 진행한다.
+Alarm Smoke 중 Terraform은 `No changes`였지만 SNS Email Subscription 실상태가 `Deleted`인 불일치를 발견했다. 단일 구독만 교체하는 Recovery Plan SHA-256 `383b514ea0cba9eeac4572c5a909b493489e434cb722b5203203aaeff7eb930d`를 `1 added, 0 changed, 1 destroyed`로 적용하고 다시 확인했다. 최종 구독은 `Confirmed`, Alarm `ALARM → OK`, SNS `Published 2`·`Delivered 2`·`Failed 0`, 동일 ON 입력 재계획은 `No changes`다.
+
+2A 비용 종료는 Source SHA `d4f923bedbf8375ae6ff9badbf7ab24c05c591d4`, Saved Plan SHA-256 `f44f5f7a22be792fdf17a1d0b5e7761ae57bd8ec12168c54a4b1c773698d89fd`를 승인 적용해 `0 added, 10 changed, 40 destroyed`로 완료했다. ECS Service·Task·Container Instance·ASG는 모두 0, Container Insights는 `disabled`, Runtime Alarm·ALB·Valkey·`origin`은 0이며 RDS는 별도 정지해 `stopped`다. 정적 curl 6/6 HTTP 200, Root 308, Runtime OFF API 502와 동일 OFF 입력 `No changes`를 확인했다. SNS Email Subscription `Confirmed`, RDS Alarm 3개, Task Definition·Image digest 8개, Frontend Bucket 6개·CloudFront 2개는 유지했고 적용 Plan은 삭제했다. 2A는 완료됐으며 다음은 2B Watchdog과 3단계 운영 초기화다.
 
 ### 3단계: 운영 초기화
 

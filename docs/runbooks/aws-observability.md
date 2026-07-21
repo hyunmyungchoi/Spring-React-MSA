@@ -188,7 +188,11 @@ terraform show -no-color tfplan-observability-runtime-lifecycle-off
 - 강제 교체 Saved Plan `tfplan-observability-email-subscription-recovery`, 223,714 bytes, SHA-256 `383b514ea0cba9eeac4572c5a909b493489e434cb722b5203203aaeff7eb930d`는 `module.observability[0].aws_sns_topic_subscription.email` 한 개만 `delete+create`했다. 승인 적용 결과는 `1 added, 0 changed, 1 destroyed`다.
 - 새 구독 확인 뒤 Email Subscription 1개 `Confirmed`, Runtime Alarm `ALARM → OK`, SNS Action 2회 성공, `Published 2`, `Delivered 2`, `Failed 0`을 확인했다.
 - 동일 Runtime ON·Foundation·Image·Stock·Redis 입력 재계획은 `No changes`이며 Alarm 29개는 모두 `OK`다. 적용된 두 Saved Plan은 Hash 검증 후 삭제했다.
-- 현재는 관측성 검증용 Runtime ON 상태다. 비용 종료는 새 OFF Saved Plan의 별도 Hash 승인을 받아 Alarm 29개 삭제, Container Insights `disabled`, ECS·ASG 0, ALB·Valkey 삭제와 RDS 정지까지 수행한다.
+- 비용 종료 Saved Plan `tfplan-observability-runtime-lifecycle-off-after-smoke`, 218,898 bytes는 Source SHA `d4f923bedbf8375ae6ff9badbf7ab24c05c591d4`에서 만들었다. 승인된 SHA-256 `f44f5f7a22be792fdf17a1d0b5e7761ae57bd8ec12168c54a4b1c773698d89fd`를 재검증한 뒤 `0 added, 10 changed, 40 destroyed`로 적용했다.
+- 변경 10개는 ECS Service 8개 `desired_count 1 → 0`, ASG `min/max 1/2 → 0/0`, 일반 Container Insights `enabled → disabled`다. 삭제 40개는 Runtime Alarm 29개, Public ALB·HTTPS Listener·Gateway Rule 2개·`origin` A Alias 5개, Valkey·Redis Host Parameter 6개다. 교체와 예상 밖 변경은 없었다.
+- RDS·Task Definition·Image digest 8개·Frontend Bucket 6개·CloudFront 2개·SNS Topic과 확인된 Email Subscription·RDS Alarm 3개는 변경하지 않았다. Apply 뒤 ECS Service Desired/Running/Pending `0/0/0`, Task·Container Instance 0, ASG `0/0/0`, Runtime Alarm·ALB·Valkey·`origin` 0을 확인했다.
+- 애플리케이션 종료 뒤 RDS를 별도로 정지해 `stopped`, Enhanced Monitoring `0`, Performance Insights `false`, Backup Retention 7일, 삭제 보호 `true`를 확인했다. 자동 재시작 예정은 2026-07-29 02:33:31 KST다.
+- 정적 curl은 6/6 HTTP 200, Root는 308, Runtime OFF API는 502였고 동일 OFF 입력 재계획은 `No changes`였다. SNS Email Subscription 1개는 `Confirmed` 상태를 유지하며 적용된 Saved Plan은 Hash 재검증 후 삭제했다. 이로써 2A Runtime 관측성 수명주기 검증은 완료됐고 다음 단계는 2B 알림 전용 Watchdog이다.
 
 ```powershell
 aws ecs describe-clusters `
