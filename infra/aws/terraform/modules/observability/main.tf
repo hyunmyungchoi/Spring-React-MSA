@@ -498,9 +498,8 @@ resource "aws_lambda_function" "watchdog" {
   filename         = data.archive_file.watchdog[each.key].output_path
   source_code_hash = data.archive_file.watchdog[each.key].output_base64sha256
 
-  memory_size                    = 128
-  timeout                        = 30
-  reserved_concurrent_executions = 1
+  memory_size = 128
+  timeout     = 30
 
   environment {
     variables = {

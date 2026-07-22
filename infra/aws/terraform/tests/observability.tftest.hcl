@@ -226,10 +226,11 @@ run "runtime_watchdog_contract" {
       aws_lambda_function.watchdog["this"].function_name == "spring-react-msa-learning-runtime-watchdog" &&
       aws_lambda_function.watchdog["this"].runtime == "python3.12" &&
       aws_lambda_function.watchdog["this"].architectures == tolist(["arm64"]) &&
+      aws_lambda_function.watchdog["this"].reserved_concurrent_executions == null &&
       one(aws_lambda_function.watchdog["this"].environment).variables["RUNTIME_MAX_HOURS"] == "6" &&
       one(aws_lambda_function.watchdog["this"].environment).variables["RDS_RESTART_WARNING_HOURS"] == "24"
     )
-    error_message = "The watchdog Lambda must use the approved runtime, architecture, and lifecycle thresholds."
+    error_message = "The watchdog Lambda must use the approved runtime, architecture, unreserved account concurrency, and lifecycle thresholds."
   }
 
   assert {
