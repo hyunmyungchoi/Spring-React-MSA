@@ -49,6 +49,8 @@ terraform test
 
 `FrontEnd/pnpm-lock.yaml`이 바뀌면 검증을 중단한다. 산출물은 여섯 Entry 문서가 모두 남아 있어야 한다.
 
+AWS Workflow는 Admin Build에 `VITE_ADMIN_REGISTRATION_ENABLED=false`를 고정한다. 이 값은 가입 탭을 표시하지 않게 하지만 실제 보안 경계는 AWS Admin BFF의 조건부 Controller 비등록이다. 최초 관리자 Bootstrap 변경 뒤 `spring-admin-web`을 다시 배포하고 화면 비노출과 Backend 404를 함께 검증한다.
+
 ## 2. Saved Plan Gate
 
 현재 `terraform.tfvars`와 메모리 입력의 기존 Application Digest·Client ID를 그대로 유지한 상태에서 Frontend Flag만 활성화한다.

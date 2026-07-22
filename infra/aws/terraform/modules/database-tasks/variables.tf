@@ -86,6 +86,41 @@ variable "migration_images" {
   }
 }
 
+variable "admin_bootstrap_enabled" {
+  description = "Whether to create the temporary one-off initial administrator bootstrap task and credential secret container."
+  type        = bool
+  default     = false
+}
+
+variable "admin_bootstrap_image" {
+  description = "Immutable User Service ECR image containing AdminBootstrapMain."
+  type        = string
+  default     = null
+  nullable    = true
+
+  validation {
+    condition = !var.admin_bootstrap_enabled || (
+      var.admin_bootstrap_image != null &&
+      can(regex(
+        "^[0-9]{12}\\.dkr\\.ecr\\.[a-z0-9-]+\\.amazonaws\\.com/[a-z0-9][a-z0-9._/-]*@sha256:[0-9a-f]{64}$",
+        var.admin_bootstrap_image,
+      ))
+    )
+    error_message = "admin_bootstrap_enabled requires an immutable User Service ECR URI pinned with @sha256:<64 hex characters>."
+  }
+}
+
+variable "admin_bootstrap_secret_name" {
+  description = "Temporary Secrets Manager container populated outside Terraform with the initial administrator identity."
+  type        = string
+  default     = "/spring-react-msa/learning/admin-bootstrap"
+
+  validation {
+    condition     = startswith(var.admin_bootstrap_secret_name, "/") && endswith(var.admin_bootstrap_secret_name, "/admin-bootstrap")
+    error_message = "admin_bootstrap_secret_name must be an absolute project path ending in /admin-bootstrap."
+  }
+}
+
 variable "bootstrap_image" {
   description = "Immutable public ECR PostgreSQL client image used by the bootstrap task."
   type        = string

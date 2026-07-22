@@ -216,6 +216,14 @@ run "runtime_on_creates_one_task_each_and_disposable_alb" {
     }, "TOSS_API_CLIENT_ID", null) == "test-toss-client-id"
     error_message = "Runtime ON must inject a non-empty Toss API client ID into the stock service."
   }
+
+  assert {
+    condition = lookup({
+      for entry in jsondecode(aws_ecs_task_definition.service["admin-bff"].container_definitions)[0].environment :
+      entry.name => entry.value
+    }, "ADMIN_BFF_REGISTRATION_ENABLED", null) == "false"
+    error_message = "The AWS Admin BFF task must keep public administrator registration disabled."
+  }
 }
 
 run "runtime_on_rejects_missing_toss_client_id" {

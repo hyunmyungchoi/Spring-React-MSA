@@ -33,13 +33,13 @@ Stock workspace는 관심 종목, 종목 정보, 가격을 조합한다. 일부 
 
 ## Admin BFF 책임
 
-- 관리자 가입과 OAuth2 로그인
+- 설정이 허용된 로컬 환경의 관리자 가입과 모든 환경의 OAuth2 로그인
 - 로그인 완료 시 `ROLE_ADMIN` 검사
 - 현재 관리자 및 사용자 목록/상세 조회
 - Redis의 Member BFF 세션 hash 스캔
 - presence TTL key와 Redis Stream 이벤트 조회
 
-현재 관리자 BFF는 회원 세션의 원본 ID를 조회 응답에 포함하므로 아직 목표 보안 계약을 만족하지 않는다. 목표 응답은 마스킹 값 또는 SHA-256 Fingerprint만 노출하며 Presence Event의 기존 Fingerprint 형식과 일관되게 맞춘다.
+관리자 BFF와 Admin Frontend는 회원 세션의 원본 ID를 조회 응답·상태·로그에 포함하지 않고 SHA-256 `sessionFingerprint`만 사용한다. AWS 최초 관리자 생성은 Admin BFF 책임이 아니라 Private ECS 일회성 User Service Bootstrap Task 책임이다.
 
 ## 토큰과 세션 경계
 
@@ -57,7 +57,7 @@ Admin BFF는 Member BFF namespace를 읽기만 하고 회원 세션을 수정하
 
 ## 현재 위험과 후속 작업
 
-1. 완료: `prod`/AWS에서 공개 관리자 가입 Controller를 비활성화했다. 최초 관리자 일회성 Bootstrap은 후속 구현한다.
+1. 진행 중: `prod`/AWS에서 공개 관리자 가입 Controller를 비활성화했고 일회성 Bootstrap 코드·인프라 계약을 구현했다. Image 게시와 AWS 실행·삭제 Smoke는 후속 승인 대상이다.
 2. 완료: Admin BFF와 Frontend에서 원본 회원 Session ID를 제거하고 SHA-256 Fingerprint만 반환한다.
 3. Member BFF에 집중된 채팅 도메인이 커지면 별도 Chat Service 분리를 검토한다.
 4. Redis SCAN 기반 전체 세션 조회에 pagination과 결과 제한을 추가한다.

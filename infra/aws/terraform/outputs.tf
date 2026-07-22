@@ -214,6 +214,21 @@ output "database_migration_task_definition_arns" {
   value       = try(module.database_tasks[0].migration_task_definition_arns, {})
 }
 
+output "admin_bootstrap_task_definition_arn" {
+  description = "Temporary initial administrator bootstrap task definition ARN, or null when disabled."
+  value       = try(module.database_tasks[0].admin_bootstrap_task_definition_arn, null)
+}
+
+output "admin_bootstrap_secret_arn" {
+  description = "Temporary initial administrator input secret ARN, or null when disabled."
+  value       = try(module.database_tasks[0].admin_bootstrap_secret_arn, null)
+}
+
+output "admin_bootstrap_log_group_name" {
+  description = "Persistent audit log group for initial administrator bootstrap runs, or null when database tasks are disabled."
+  value       = try(module.database_tasks[0].admin_bootstrap_log_group_name, null)
+}
+
 output "availability_zones" {
   description = "Availability zones selected for the two-AZ network."
   value       = module.network.availability_zones

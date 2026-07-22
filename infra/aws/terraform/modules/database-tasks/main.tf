@@ -1,4 +1,6 @@
 locals {
+  admin_bootstrap = var.admin_bootstrap_enabled ? { this = true } : {}
+
   db_secret_names = {
     user_service  = "/spring-react-msa/learning/user-service"
     member_bff    = "/spring-react-msa/learning/member-bff"
@@ -252,6 +254,190 @@ resource "aws_ecs_task_definition" "db_bootstrap" {
   tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-db-bootstrap"
   })
+}
+
+resource "aws_cloudwatch_log_group" "admin_bootstrap" {
+  name              = "/ecs/${var.name_prefix}/admin-bootstrap"
+  retention_in_days = var.log_retention_days
+
+  tags = merge(var.common_tags, {
+    Name      = "${var.name_prefix}-admin-bootstrap"
+    Lifecycle = "persistent-audit"
+  })
+}
+
+resource "aws_secretsmanager_secret" "admin_bootstrap" {
+  for_each = local.admin_bootstrap
+
+  name                    = var.admin_bootstrap_secret_name
+  description             = "Temporary initial administrator bootstrap input; populate outside Terraform and remove after successful validation."
+  recovery_window_in_days = 7
+
+  tags = merge(var.common_tags, {
+    Name      = var.admin_bootstrap_secret_name
+    Lifecycle = "temporary-bootstrap"
+  })
+}
+
+resource "aws_iam_role" "admin_bootstrap_execution" {
+  for_each = local.admin_bootstrap
+
+  name = "${var.name_prefix}-admin-bootstrap-exec"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Service = "ecs-tasks.amazonaws.com"
+      }
+      Action = "sts:AssumeRole"
+    }]
+  })
+
+  tags = merge(var.common_tags, {
+    Lifecycle = "temporary-bootstrap"
+  })
+}
+
+resource "aws_iam_role_policy" "admin_bootstrap_execution" {
+  for_each = local.admin_bootstrap
+
+  name = "admin-bootstrap-execution"
+  role = aws_iam_role.admin_bootstrap_execution[each.key].id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid      = "GetEcrAuthorizationToken"
+        Effect   = "Allow"
+        Action   = ["ecr:GetAuthorizationToken"]
+        Resource = "*"
+      },
+      {
+        Sid    = "PullOnlyUserServiceImage"
+        Effect = "Allow"
+        Action = [
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage",
+        ]
+        Resource = var.ecr_repository_arns["spring-user-service"]
+      },
+      {
+        Sid    = "WriteAdminBootstrapLogs"
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+        ]
+        Resource = "${aws_cloudwatch_log_group.admin_bootstrap.arn}:*"
+      },
+      {
+        Sid    = "ReadOnlyAdminBootstrapSecrets"
+        Effect = "Allow"
+        Action = ["secretsmanager:GetSecretValue"]
+        Resource = [
+          var.application_secret_arns[local.db_secret_names.user_service],
+          aws_secretsmanager_secret.admin_bootstrap[each.key].arn,
+        ]
+      },
+    ]
+  })
+}
+
+resource "aws_ecs_task_definition" "admin_bootstrap" {
+  for_each = local.admin_bootstrap
+
+  family                   = "${var.name_prefix}-admin-bootstrap"
+  requires_compatibilities = ["EC2"]
+  network_mode             = "awsvpc"
+  cpu                      = "256"
+  memory                   = "512"
+  execution_role_arn       = aws_iam_role.admin_bootstrap_execution[each.key].arn
+
+  runtime_platform {
+    operating_system_family = "LINUX"
+    cpu_architecture        = "X86_64"
+  }
+
+  container_definitions = jsonencode([{
+    name                   = "admin-bootstrap"
+    image                  = var.admin_bootstrap_image
+    essential              = true
+    readonlyRootFilesystem = true
+    user                   = "65534"
+    workingDirectory       = "/tmp"
+    entryPoint             = ["sh", "-c"]
+    command = [
+      "exec java -Dloader.main=com.springmsa.userservice.bootstrap.AdminBootstrapMain -cp /app/app.jar org.springframework.boot.loader.launch.PropertiesLauncher",
+    ]
+    environment = [
+      {
+        name  = "SPRING_DATASOURCE_URL"
+        value = "jdbc:postgresql://${var.db_address}:${var.db_port}/${var.db_name}?currentSchema=user_service&sslmode=require"
+      },
+      {
+        name  = "HOME"
+        value = "/tmp"
+      },
+    ]
+    secrets = [
+      {
+        name      = "SPRING_DATASOURCE_USERNAME"
+        valueFrom = "${var.application_secret_arns[local.db_secret_names.user_service]}:db_username::"
+      },
+      {
+        name      = "SPRING_DATASOURCE_PASSWORD"
+        valueFrom = "${var.application_secret_arns[local.db_secret_names.user_service]}:db_password::"
+      },
+      {
+        name      = "ADMIN_BOOTSTRAP_LOGIN_ID"
+        valueFrom = "${aws_secretsmanager_secret.admin_bootstrap[each.key].arn}:login_id::"
+      },
+      {
+        name      = "ADMIN_BOOTSTRAP_EMAIL"
+        valueFrom = "${aws_secretsmanager_secret.admin_bootstrap[each.key].arn}:email::"
+      },
+      {
+        name      = "ADMIN_BOOTSTRAP_PASSWORD"
+        valueFrom = "${aws_secretsmanager_secret.admin_bootstrap[each.key].arn}:password::"
+      },
+      {
+        name      = "ADMIN_BOOTSTRAP_USERNAME"
+        valueFrom = "${aws_secretsmanager_secret.admin_bootstrap[each.key].arn}:username::"
+      },
+    ]
+    linuxParameters = {
+      initProcessEnabled = true
+      tmpfs = [{
+        containerPath = "/tmp"
+        size          = 128
+        mountOptions  = ["rw", "nosuid", "nodev", "noexec"]
+      }]
+    }
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        "awslogs-group"         = aws_cloudwatch_log_group.admin_bootstrap.name
+        "awslogs-region"        = var.aws_region
+        "awslogs-stream-prefix" = "bootstrap"
+      }
+    }
+  }])
+
+  tags = merge(var.common_tags, {
+    Name      = "${var.name_prefix}-admin-bootstrap"
+    Lifecycle = "temporary-bootstrap"
+  })
+
+  lifecycle {
+    precondition {
+      condition     = contains(keys(var.ecr_repository_arns), "spring-user-service")
+      error_message = "The admin bootstrap task requires the spring-user-service ECR repository ARN."
+    }
+  }
 }
 
 resource "aws_cloudwatch_log_group" "migration" {

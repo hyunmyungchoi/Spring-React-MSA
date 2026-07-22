@@ -112,11 +112,12 @@ kubectl get secret ghcr-secret -n spring-msa
 
 ## 비활성 또는 존재하지 않는 API가 500을 반환함
 
-AWS Runtime ON Smoke에서 `ADMIN_BFF_REGISTRATION_ENABLED=false`와 조건부 Controller 비등록을 확인했지만, CSRF를 포함한 빈 `POST /admin-bff/registration/admin`은 404 대신 500을 반환했다. 공통 예외 처리기가 Spring의 `NoResourceFoundException`을 일반 `INTERNAL_SERVER_ERROR`로 변환하기 때문이다. 이는 관리자 가입 Controller가 활성화됐다는 의미가 아니며 유효한 가입 데이터는 보내지 않는다.
+기존 AWS Runtime ON Smoke에서는 `ADMIN_BFF_REGISTRATION_ENABLED=false`와 조건부 Controller 비등록을 확인했지만 배포 Image가 Spring의 `NoResourceFoundException`을 일반 `INTERNAL_SERVER_ERROR`로 변환해 빈 `POST /admin-bff/registration/admin`이 500을 반환했다. 저장소의 Admin BFF 처리기는 이를 404 `RESOURCE_NOT_FOUND`로 교정했고 단위 테스트를 추가했다. 새 Admin BFF Image 적용 전 AWS에서는 기존 500이 계속 보일 수 있으며 이는 Controller 활성화를 의미하지 않는다.
 
 - 실제 Task Definition의 `ADMIN_BFF_REGISTRATION_ENABLED=false`를 먼저 확인한다.
 - `AdminBffRegistrationControllerConditionTest`로 비활성 환경에서 Bean이 없는지 확인한다.
-- 공통 Web 예외 처리기에 `NoResourceFoundException` 404 매핑을 추가하려면 Backend 테스트·Build Once·Digest Promote·새 Task Definition Plan을 별도 승인 단위로 수행한다.
+- 새 Admin BFF Source SHA, GHCR↔ECR Digest와 ECS Task Definition Revision이 교정 Image를 가리키는지 확인한다.
+- CSRF Cookie/Header와 빈 JSON을 사용해 공개 경로가 404 `RESOURCE_NOT_FOUND`인지 재검증한다. 유효한 가입 데이터는 보내지 않는다.
 
 ## pnpm engine/version 오류
 

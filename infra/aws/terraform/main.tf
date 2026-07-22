@@ -135,16 +135,19 @@ module "database_tasks" {
   count  = var.enable_database_tasks_foundation ? 1 : 0
   source = "./modules/database-tasks"
 
-  name_prefix             = local.name_prefix
-  aws_region              = var.aws_region
-  db_address              = module.data_layer.db_address
-  db_port                 = module.data_layer.db_port
-  db_name                 = module.data_layer.db_name
-  master_secret_arn       = nonsensitive(module.data_layer.master_user_secret_arn)
-  application_secret_arns = module.data_layer.application_secret_arns
-  ecr_repository_arns     = module.ecr.repository_arns
-  migration_images        = var.database_migration_images
-  common_tags             = local.common_tags
+  name_prefix                 = local.name_prefix
+  aws_region                  = var.aws_region
+  db_address                  = module.data_layer.db_address
+  db_port                     = module.data_layer.db_port
+  db_name                     = module.data_layer.db_name
+  master_secret_arn           = nonsensitive(module.data_layer.master_user_secret_arn)
+  application_secret_arns     = module.data_layer.application_secret_arns
+  ecr_repository_arns         = module.ecr.repository_arns
+  migration_images            = var.database_migration_images
+  admin_bootstrap_enabled     = var.enable_admin_bootstrap_foundation
+  admin_bootstrap_image       = try(var.application_images["user-service"], null)
+  admin_bootstrap_secret_name = "/${var.project_name}/${var.environment}/admin-bootstrap"
+  common_tags                 = local.common_tags
 }
 
 module "application_runtime" {

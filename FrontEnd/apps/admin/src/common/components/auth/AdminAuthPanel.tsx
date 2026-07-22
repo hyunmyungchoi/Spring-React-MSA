@@ -7,6 +7,7 @@ type AdminAuthMode = 'login' | 'signup'
 
 // Coordinates the admin login and signup forms.
 function AdminAuthPanel() {
+  const registrationEnabled = import.meta.env.VITE_ADMIN_REGISTRATION_ENABLED !== 'false'
   const [mode, setMode] = useState<AdminAuthMode>('login')
   const [defaultLoginId, setDefaultLoginId] = useState('admin')
   const [message, setMessage] = useState('')
@@ -36,16 +37,18 @@ function AdminAuthPanel() {
           >
             로그인
           </button>
-          <button
-            type="button"
-            className={mode === 'signup' ? 'active' : ''}
-            onClick={() => setMode('signup')}
-          >
-            회원가입
-          </button>
+          {registrationEnabled && (
+            <button
+              type="button"
+              className={mode === 'signup' ? 'active' : ''}
+              onClick={() => setMode('signup')}
+            >
+              회원가입
+            </button>
+          )}
         </div>
 
-        {mode === 'login' ? (
+        {mode === 'login' || !registrationEnabled ? (
           <AdminLoginForm
             defaultLoginId={defaultLoginId}
             pending={pending}

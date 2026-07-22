@@ -20,6 +20,14 @@ class AdminBffRegistrationControllerConditionTest {
     }
 
     @Test
+    void doesNotRegisterControllerWhenFlagIsFalse() {
+        contextRunner
+                .withPropertyValues("admin-bff.registration.enabled=false")
+                .run(context -> assertThat(context)
+                        .doesNotHaveBean(AdminBffRegistrationController.class));
+    }
+
+    @Test
     void registersControllerOnlyWhenFlagIsTrue() {
         contextRunner
                 .withPropertyValues("admin-bff.registration.enabled=true")

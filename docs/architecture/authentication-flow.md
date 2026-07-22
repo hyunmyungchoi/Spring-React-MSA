@@ -65,7 +65,7 @@ JWT에는 `sub`, `user_id`, `login_id`, `email`, `name`, `username`, `roles` cla
 - `POST /admin-bff/registration/admin`은 Admin BFF가 `ROLE_USER`, `ROLE_ADMIN`으로 같은 내부 API를 호출한다.
 - 내부 호출에는 `X-Internal-Token`을 사용하고 User Service가 constant-time 비교로 검증한다.
 
-관리자 가입 Controller는 설정 Flag로 제어한다. `prod` 기본값과 AWS ECS는 비활성이며 로컬 Kubernetes만 학습을 위해 명시적으로 활성화한다. 최초 관리자 Bootstrap 절차는 아직 별도로 구현해야 한다.
+관리자 가입 Controller는 설정 Flag로 제어한다. `prod` 기본값과 AWS ECS는 비활성이며 로컬 Kubernetes만 학습을 위해 명시적으로 활성화한다. AWS 최초 관리자는 공개 HTTP를 거치지 않고 User Service Image의 일회성 ECS Task가 Transaction 안에서 생성한다. Bootstrap 입력은 임시 Secret, 감사 주체와 Request ID는 실행 Override로 분리하고 같은 계정 재시도만 허용한다.
 
 ## 로그아웃
 

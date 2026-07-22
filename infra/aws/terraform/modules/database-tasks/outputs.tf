@@ -32,3 +32,23 @@ output "migration_log_group_names" {
   description = "Migration CloudWatch log group names keyed by service."
   value       = { for key, log_group in aws_cloudwatch_log_group.migration : key => log_group.name }
 }
+
+output "admin_bootstrap_task_definition_arn" {
+  description = "Temporary initial administrator bootstrap task definition ARN, or null when disabled."
+  value       = try(aws_ecs_task_definition.admin_bootstrap["this"].arn, null)
+}
+
+output "admin_bootstrap_task_family" {
+  description = "Temporary initial administrator bootstrap task family, or null when disabled."
+  value       = try(aws_ecs_task_definition.admin_bootstrap["this"].family, null)
+}
+
+output "admin_bootstrap_secret_arn" {
+  description = "Temporary initial administrator input secret ARN, or null when disabled."
+  value       = try(aws_secretsmanager_secret.admin_bootstrap["this"].arn, null)
+}
+
+output "admin_bootstrap_log_group_name" {
+  description = "Persistent audit log group for initial administrator bootstrap runs."
+  value       = aws_cloudwatch_log_group.admin_bootstrap.name
+}

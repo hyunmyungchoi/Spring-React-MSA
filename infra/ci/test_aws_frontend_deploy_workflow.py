@@ -33,6 +33,7 @@ class AwsFrontendDeployWorkflowTest(unittest.TestCase):
         self.assertNotIn("build:all", self.workflow)
         self.assertIn("PNPM_VERSION: 10.0.0", self.workflow)
         self.assertIn("pnpm install --frozen-lockfile", self.workflow)
+        self.assertIn('VITE_ADMIN_REGISTRATION_ENABLED: "false"', self.workflow)
 
     def test_sync_and_invalidation_are_scoped_to_the_selected_unit(self) -> None:
         self.assertIn('artifact="${GITHUB_WORKSPACE}/${{ matrix.output_dir }}"', self.workflow)

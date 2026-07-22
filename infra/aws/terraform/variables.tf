@@ -288,6 +288,21 @@ variable "enable_database_tasks_foundation" {
   }
 }
 
+variable "enable_admin_bootstrap_foundation" {
+  description = "Whether to create the temporary one-off initial administrator task, least-privilege role, and input secret container."
+  type        = bool
+  default     = false
+
+  validation {
+    condition = !var.enable_admin_bootstrap_foundation || (
+      var.enable_database_tasks_foundation &&
+      var.enable_application_runtime_foundation &&
+      contains(keys(var.application_images), "user-service")
+    )
+    error_message = "enable_admin_bootstrap_foundation requires the database task and application foundations plus the User Service image."
+  }
+}
+
 variable "database_migration_images" {
   description = "Immutable ECR image URIs for database migrations. Keep empty until the current Flyway-enabled images are promoted."
   type        = map(string)

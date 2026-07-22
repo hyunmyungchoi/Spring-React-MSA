@@ -33,8 +33,9 @@ Authorization Server, Member/Admin BFF, User Service, Redis Session, Gateway/Ing
 | A-13 | internal token 누락/오류 | User `/internal/**` 401 |
 | A-14 | JWT 역할 변조/잘못된 issuer | Resource Server 401/403 |
 | A-15 | 익명 관리자 가입 | AWS Learning Public Traffic 정책에서 거부되어야 함 |
+| A-16 | 최초 관리자 Bootstrap 재실행 | 최초 `created`, 동일 입력 `already_present`, 다른 Admin 거부 |
 
-A-15는 현재 코드에서는 허용되는 알려진 실패 항목이다. 운영 준비 gate에서 반드시 차단 상태로 전환한다.
+A-15는 AWS Admin BFF Task의 `ADMIN_BFF_REGISTRATION_ENABLED=false`, 조건부 Controller Bean 부재, 정적 가입 UI 비노출과 공개 `POST` 404를 함께 검증한다. Backend가 실제 보안 경계다. 저장소 자동 테스트는 고정했지만 새 Image를 적용한 Public Domain Smoke는 아직 남아 있다.
 
 ## 브라우저 수동 확인
 
@@ -71,6 +72,7 @@ Admin도 `ADMINSESSIONID`, `ADMIN-XSRF-TOKEN`으로 반복한다. cookie 값을 
 - `/api/user/admin/**` ROLE_ADMIN 정책
 - login ID/email unique와 정규화
 - password가 평문으로 저장되지 않음
+- Bootstrap의 단일 Admin, Transaction Rollback, BCrypt와 동일 입력 멱등성
 
 ### E2E
 

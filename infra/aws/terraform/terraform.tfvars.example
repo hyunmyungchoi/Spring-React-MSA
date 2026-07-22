@@ -21,6 +21,7 @@ runtime_watchdog_rds_restart_warning_hours   = 24
 # Create the persistent ECS/ASG foundation separately from running hourly EC2 capacity.
 enable_ecs_compute_foundation = false
 enable_database_tasks_foundation = false
+enable_admin_bootstrap_foundation = false
 enable_application_runtime_foundation = false
 learning_runtime_enabled      = false
 enable_frontend_hosting       = false

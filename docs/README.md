@@ -1,6 +1,6 @@
 # Spring React MSA 문서
 
-이 디렉터리는 `C:\Portfolio` 저장소의 코드와 인프라를 기준으로 작성한 설계·운영 문서의 시작점이다. 문서의 기준일은 2026-07-22이며, 구현과 문서가 충돌하면 실행 가능한 코드와 배포 매니페스트를 우선 확인한다.
+이 디렉터리는 `C:\Portfolio` 저장소의 코드와 인프라를 기준으로 작성한 설계·운영 문서의 시작점이다. 문서의 기준일은 2026-07-23이며, 구현과 문서가 충돌하면 실행 가능한 코드와 배포 매니페스트를 우선 확인한다.
 
 ## 문서 읽는 순서
 
@@ -39,7 +39,7 @@
 - 채팅 이벤트는 트랜잭션 커밋 후 Kafka로 전송하지만 영속 Outbox 테이블과 relay는 아직 없다.
 - 커뮤니티 게시물은 프로세스 메모리에 저장되어 재시작 시 사라진다.
 - Argo CD Application에 자동 동기화가 설정되어 있지 않아 Git 변경 후 수동 Sync가 필요하다.
-- Admin BFF의 관리자 가입 Controller는 설정 Flag로 제어하며 `prod` 기본값은 비활성이다. 로컬 Kubernetes만 명시적으로 활성화하고 AWS ECS는 비활성으로 고정한다. 최초 관리자 Bootstrap 절차는 아직 남아 있다.
+- Admin BFF의 관리자 가입 Controller는 설정 Flag로 제어하며 `prod` 기본값은 비활성이다. 로컬 Kubernetes만 명시적으로 활성화하고 AWS ECS는 비활성으로 고정한다. 최초 관리자 일회성 Bootstrap 코드·Terraform 계약·AWS 가입 UI 비노출은 구현했지만 Image 게시와 AWS 적용·Smoke는 아직 남아 있다.
 - Admin Session 조회 응답과 Frontend 타입에서 원본 `sessionId`를 제거하고 SHA-256 `sessionFingerprint`만 사용한다.
 - GHCR Build Once와 ECR Digest Promote Workflow는 구현됐고, Database Migration 대상 3개 Image에서 재빌드 없는 Promote와 Digest 일치를 실제 검증했다.
 - Kubernetes↔AWS DR은 Learning 적용 범위에서 제외하고 후속 학습 과제로 보류했다.
@@ -91,6 +91,7 @@
 - [AWS Application Runtime](runbooks/aws-application-runtime.md)
 - [AWS Learning RDS 운영·복구](runbooks/aws-rds-learning.md)
 - [AWS DB Bootstrap·Flyway 실행](runbooks/aws-database-bootstrap-and-flyway.md)
+- [AWS 최초 관리자 Bootstrap](runbooks/aws-admin-bootstrap.md)
 - [AWS Image Build Once·ECR Promote](runbooks/aws-image-build-once-promote.md)
 - [AWS Frontend S3·CloudFront 배포](runbooks/aws-frontend-hosting.md)
 - [AWS Route 53·ACM·TLS·API Origin](runbooks/aws-domain-tls.md)

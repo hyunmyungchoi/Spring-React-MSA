@@ -100,6 +100,8 @@ jobs:
 
       - name: Install, lint, and build only the selected unit
         shell: bash
+        env:
+          VITE_ADMIN_REGISTRATION_ENABLED: "false"
         run: |
           cd FrontEnd
           pnpm install --frozen-lockfile

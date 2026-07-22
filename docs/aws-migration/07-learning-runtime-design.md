@@ -258,7 +258,7 @@ Terraform이 관리할 Application Record는 다음과 같다.
 - Admin Session 조회 응답에는 원본 Session ID를 반환하지 않고 SHA-256 Fingerprint 또는 Masked ID만 반환한다.
 - 원본 Session ID가 필요한 강제 Logout은 별도 인증된 Endpoint 내부에서만 처리하고 감사 로그를 남긴다.
 
-이 결정의 공개 가입 차단과 Session ID 제거는 코드에 적용했다. Admin Registration Controller는 `prod` 기본값과 AWS Task 환경 변수에서 비활성이며, 로컬 Kubernetes만 명시적으로 활성화한다. Admin Session API와 Frontend는 원본 ID 대신 SHA-256 Fingerprint를 사용한다. 4~100자 비밀번호 규칙은 요청대로 유지했다. 최초 관리자 Bootstrap과 감사 방식은 아직 남아 있으므로 실제 외부 기능 검증 전에 별도 구현한다.
+이 결정의 공개 가입 차단과 Session ID 제거는 코드에 적용했다. Admin Registration Controller는 `prod` 기본값과 AWS Task 환경 변수에서 비활성이며, 로컬 Kubernetes만 명시적으로 활성화한다. Admin Session API와 Frontend는 원본 ID 대신 SHA-256 Fingerprint를 사용한다. AWS Frontend 가입 UI 비노출, User Service의 멱등 일회성 Bootstrap, 임시 Secret·최소 권한 Task·감사 Log 계약도 구현했다. 4~100자 공개 요청 규칙은 Learning 환경에 남지만 AWS 공개 Route는 등록하지 않으며 Bootstrap 비밀번호는 별도 20~72 UTF-8 byte 기준을 사용한다. Image 게시와 AWS 실행·삭제 Smoke는 아직 남아 있다.
 
 ## 11. Image Build Once와 Promote
 
@@ -301,8 +301,9 @@ Learning에서 적용할 복구 기준은 다음으로 제한한다.
 8. 완료: Frontend S3 6개·CloudFront 2개 Apply, GitHub 변수, 첫 전체 배포 6/6과 정적 curl 6/6·`No changes` 검증
 9. 완료: State Role·기존 Hosted Zone Import·ACM, Root·Member·Admin A/AAAA와 CloudFront HTTPS/API Origin, 정적 curl 6/6·Root 308·`No changes`
 10. 완료: WebSocket Gateway Route와 Member BFF Public Origin 교정 적용, Runtime ON HTTPS·OAuth·Session·WebSocket 네 프레임·채팅 영속성·Logout·`No changes` 검증
-11. CloudWatch Logs, Metrics, Alarms와 Learning ON/OFF 운영 절차
-12. Backup Restore와 전체 Smoke Test
+11. 완료: CloudWatch Logs·Metrics·Alarms, SNS 실알림, Learning ON/OFF와 알림 전용 Watchdog
+12. 진행 중: 최초 관리자 Bootstrap과 공개 관리자 가입 차단
+13. 예정: Backup Restore와 전체 Smoke Test
 
 각 단계는 `fmt`, `validate`, `test`, 저장 Plan 검토, 비용 확인과 명시적 Apply 승인을 거친다. 뒤 단계 리소스를 앞 단계 Plan에 섞지 않는다.
 
@@ -326,8 +327,7 @@ Application Foundation 최초 Apply는 56개 리소스를 추가했다. 빈 Clou
 
 Runtime ON 검증 이후 남은 작업은 다음과 같다.
 
-- CloudWatch Log 보존 기간, Alarm 임계값과 Budget 예상 비용
-- 최초 관리자 Bootstrap의 실행 주체와 감사 방식
-- Learning OFF/ON 명령의 순서, 실패 시 Rollback과 RDS 자동 재시작 감시
+- 최초 관리자 Bootstrap Image 게시, AWS 일회성 실행·멱등 재시도·공개 404·Cleanup 검증
+- Backup Restore와 전체 Smoke Test
 
-CloudWatch Log 보존 기간은 우선 7일로 코드와 계약 테스트에 고정했다. Frontend 독립 배포와 HTTPS/DNS는 AWS Apply·검증까지 완료했다. Public Domain Runtime ON Full Smoke 뒤 Alarm, 관리자 Bootstrap과 자동화를 후속 단계에서 별도 승인한다.
+CloudWatch Log 보존 기간은 7일로 코드와 계약 테스트에 고정했고 Frontend 독립 배포, HTTPS/DNS, Public Domain Runtime ON Full Smoke, Alarm과 Watchdog을 AWS에 적용·검증했다. 관리자 Bootstrap은 저장소 구현과 로컬 계약 검증까지 완료했으며 AWS Build Once·Promote와 Saved Plan부터 별도 승인한다.
