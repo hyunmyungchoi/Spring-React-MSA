@@ -221,7 +221,7 @@ aws cloudwatch describe-alarms `
 
 2B는 Terraform 소유 Runtime 리소스를 직접 변경하지 않는다. `enable_runtime_watchdog=true`일 때 다음 영속 감시 리소스만 만든다.
 
-- Python 3.12 ARM64 Lambda 1개와 7일 CloudWatch Log Group
+- Python 3.12 ARM64 Lambda 1개와 7일 CloudWatch Log Group. 계정 동시성 한도 10에서 AWS가 최소 미예약 동시성 10을 요구하므로 예약 동시성을 따로 설정하지 않고 계정 미예약 풀을 사용한다.
 - `rate(15 minutes)` EventBridge Rule·Target·Lambda Permission
 - 중복 알림 방지 상태 3개만 저장하는 DynamoDB `PAY_PER_REQUEST` Table 1개. 삭제 보호와 서버 측 암호화를 사용한다.
 - `Heartbeat` Custom Metric과 Watchdog Heartbeat 누락·Lambda Error·EventBridge Failed Invocation Alarm 3개
@@ -256,6 +256,14 @@ terraform plan `
 현재 적용된 Application Image digest 8개와 Stock Client ID도 기존 Runtime Plan과 동일하게 환경 변수로 전달한다. Plan에 ECS Desired·ASG Capacity·ALB·Valkey·RDS·Task Definition·Image·Frontend·DNS·SNS Subscription 변경이 포함되면 적용하지 않는다.
 
 Apply 뒤 Lambda를 한 번 직접 호출해 정상 OFF 상태에서 DynamoDB 상태 3개 `inactive`, Heartbeat 수신, Function Error 0과 SNS Email Subscription `Confirmed`를 확인한다. Watchdog Alarm은 평가가 수렴한 뒤 3개 모두 `OK`여야 한다. ALERT/RECOVERY 판정과 SNS 실패 재시도는 실제 Runtime을 켜지 않고 단위 테스트로 검증한다.
+
+### 2026-07-23 적용·Smoke 기록
+
+Source SHA `71616fea6647e3faa98b6af7a5d1a3837e6c273d`의 최초 Runtime OFF Plan SHA-256 `b1c71772b203ae9fd671af58940dc9a0ace49c978a60ca33856225ad51121d9b`는 `11 create, 0 update, 0 destroy`였으나 Lambda 생성 뒤 `reserved concurrency=1` 설정에서 중단됐다. 계정 동시성 한도가 10이고 AWS가 미예약 동시성 최소 10을 요구해 예약 1을 둘 수 없었던 것이 원인이다. Runtime·RDS 변경은 없었으며 Lambda는 정상 `Active`로 생성되고 Terraform state에 추적됐다.
+
+예약 동시성을 제거하고 mock 계약에서 `null`을 확인하도록 교정한 Source SHA는 `2f9566bfee08504153a2775b11ac554ceffe53cc`다. `terraform validate`와 전체 mock 테스트 `30 passed, 0 failed`를 통과했고, 실패 흔적으로 남은 Lambda taint는 실제 AWS 구성 일치 확인 뒤 해제했다. Recovery Saved Plan은 213,517 bytes, SHA-256 `1ae5c62eced0fe89b718a8a005f555d3c2287c5fd792959abb5b6394d8dfcf35`이며 EventBridge Target과 Lambda Permission만 `2 create, 0 update, 0 destroy`로 포함했다. 승인 적용 결과도 `2 added, 0 changed, 0 destroyed`였고 두 Saved Plan은 재사용 방지를 위해 삭제했다.
+
+Baseline Invoke는 HTTP 상태 200, Function Error 없음, Runtime inactive, ASG·ECS Desired·EC2 Instance 모두 0, RDS `stopped`, 세 이슈 false, 상태 전환 0이었다. DynamoDB Item 3개는 모두 inactive이고 Heartbeat `1.0`을 수신했다. 생성 직후 첫 30분 평가창 누락으로 Heartbeat Alarm이 ALARM이었던 상태는 검증된 Heartbeat를 근거로 승인된 합성 `OK` 복구를 수행했으며 CloudWatch의 SNS Action 성공, SNS `Delivered 1`을 확인했다. 최종 Watchdog Alarm 3개는 모두 `OK`, EventBridge는 `rate(15 minutes)`·Target 1개, SNS Email Subscription은 `Confirmed` 1개다. 동일 OFF 입력 재계획은 `No changes`이고 ASG `0/0/0`, ECS 8개 Desired/Running 합계 `0/0`, RDS `stopped`를 유지한다.
 
 ## 이번 단계에서 보류하는 항목
 

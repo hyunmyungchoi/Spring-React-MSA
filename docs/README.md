@@ -25,8 +25,8 @@
 | Data | PostgreSQL 16, Redis 7 |
 | Messaging | Kafka 3.7.0 |
 | Platform | Docker Compose, Kubernetes, ingress-nginx, GHCR, Argo CD |
-| AWS migration | Runtime OFF·RDS `stopped`; ECS·ASG·ALB·Valkey·Runtime Alarm 0, 정적 curl 6/6와 Terraform `No changes` |
-| Observability | Kubernetes Prometheus·Grafana·Loki; AWS SNS 실알림·Runtime 수명주기 검증 완료, 2B 알림 전용 Watchdog 코드 검증·Apply 대기 |
+| AWS migration | Runtime OFF·RDS `stopped`; ECS·ASG·ALB·Valkey·Runtime Alarm 0, Watchdog 적용·정적 curl 6/6·Terraform `No changes` |
+| Observability | Kubernetes Prometheus·Grafana·Loki; AWS SNS·Runtime 수명주기·2B 알림 전용 Watchdog 적용과 실알림 검증 완료 |
 
 ## 문서 상태 표현
 
@@ -117,6 +117,6 @@
 | [AWS Foundation](aws-migration/04-aws-foundation-design.md) | VPC/subnet/SG 설계 | Foundation 유지, Runtime ON 검증 후 현재 OFF |
 | [ECR/OIDC 설계](aws-migration/05-ecr-github-oidc-design.md) | SHA 이미지와 GitHub OIDC | Apply·GitHub 변수·Backend 8개 게시 완료 |
 | [ECR/OIDC 구현 계획](aws-migration/06-ecr-github-oidc-implementation-plan.md) | 구현·승인 gate 실행 기록 | Task 6·단일/중복/전체 게시 검증 완료 |
-| [Learning Runtime 결정](aws-migration/07-learning-runtime-design.md) | NAT, State, ECS, RDS, Frontend, Secret, DNS 결정 | Runtime ON HTTPS·OAuth·Session·WebSocket 검증과 후속 OFF 완료; 관측성 Apply 완료·Email 확인 대기 |
+| [Learning Runtime 결정](aws-migration/07-learning-runtime-design.md) | NAT, State, ECS, RDS, Frontend, Secret, DNS 결정 | Runtime ON 검증·후속 OFF·관측성 수명주기·알림 전용 Watchdog 완료 |
 
 AWS 적용 여부는 Git만으로 확정할 수 없으므로 문서의 `저장소 상태`와 `AWS 적용 상태`를 구분한다. Terraform state, 저장 plan, 계정 식별자와 secret은 문서나 Git에 추가하지 않는다.

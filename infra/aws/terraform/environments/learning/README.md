@@ -11,7 +11,7 @@
 - ECS Compute: Cluster·Launch Template·ASG·Capacity Provider 적용·Runtime ON 배치 검증 완료, `m6i.xlarge`, 현재 ASG `0/0/0`, EC2·Container Instance 0, `awsvpcTrunking=enabled`, Container Insights `disabled`
 - Application Runtime: Digest 고정 Task Definition·ECS Service·Cloud Map 8개, Gateway Target Group 2개와 최소 권한 IAM/Log 유지; 현재 Service·Task 0, Public ALB·Valkey·`origin`·Runtime Alarm 0이며 동일 OFF 입력 `No changes`
 - Frontend Hosting: 독립 Private S3 6개, Member/Admin CloudFront 2개와 배포 IAM Apply·AWS 계약·`No changes` 검증 완료; 첫 전체 배포 6/6과 정적 curl 6/6 HTTP 200
-- Runtime Watchdog: 15분 주기 Lambda·DynamoDB 상태 전환·Heartbeat/오류 Alarm 코드와 테스트 완료, Runtime OFF Saved Plan 승인 대기
+- Runtime Watchdog: 15분 주기 Lambda·DynamoDB 상태 전환·Heartbeat/오류 Alarm 적용 완료, Baseline·Alarm→SNS·`No changes` 검증 완료
 - Budget: 실제 알림 이메일을 입력한 경우에만 활성화
 
 `dev`, `staging`, `prod` 환경은 이번 Foundation 범위에 포함하지 않는다.
