@@ -258,7 +258,7 @@ Terraform이 관리할 Application Record는 다음과 같다.
 - Admin Session 조회 응답에는 원본 Session ID를 반환하지 않고 SHA-256 Fingerprint 또는 Masked ID만 반환한다.
 - 원본 Session ID가 필요한 강제 Logout은 별도 인증된 Endpoint 내부에서만 처리하고 감사 로그를 남긴다.
 
-이 결정의 공개 가입 차단과 Session ID 제거는 코드에 적용했다. Admin Registration Controller는 `prod` 기본값과 AWS Task 환경 변수에서 비활성이며, 로컬 Kubernetes만 명시적으로 활성화한다. Admin Session API와 Frontend는 원본 ID 대신 SHA-256 Fingerprint를 사용한다. AWS Frontend 가입 UI 비노출, User Service의 멱등 일회성 Bootstrap, 임시 Secret·최소 권한 Task·감사 Log 계약도 구현했다. 4~100자 공개 요청 규칙은 Learning 환경에 남지만 AWS 공개 Route는 등록하지 않으며 Bootstrap 비밀번호는 별도 20~72 UTF-8 byte 기준을 사용한다. Image 게시와 AWS 실행·삭제 Smoke는 아직 남아 있다.
+이 결정의 공개 가입 차단과 Session ID 제거는 코드에 적용했다. Admin Registration Controller는 `prod` 기본값과 AWS Task 환경 변수에서 비활성이며, 로컬 Kubernetes만 명시적으로 활성화한다. Admin Session API와 Frontend는 원본 ID 대신 SHA-256 Fingerprint를 사용한다. AWS Frontend 가입 UI 비노출, User Service의 멱등 일회성 Bootstrap, 임시 Secret·최소 권한 Task·감사 Log 계약도 구현했다. 4~100자 공개 요청 규칙은 Learning 환경에 남지만 AWS 공개 Route는 등록하지 않으며 Bootstrap 비밀번호는 별도 20~72 UTF-8 byte 기준을 사용한다. Source SHA `8e5aaa06540541e365e5cfaf7cc559c8b777ae63`의 User Service·Admin BFF Build Once·ECR Promote와 Admin 기본 화면 선택 배포까지 완료했고, AWS Bootstrap 실행·삭제 Smoke는 아직 남아 있다.
 
 ## 11. Image Build Once와 Promote
 
@@ -327,7 +327,7 @@ Application Foundation 최초 Apply는 56개 리소스를 추가했다. 빈 Clou
 
 Runtime ON 검증 이후 남은 작업은 다음과 같다.
 
-- 최초 관리자 Bootstrap Image 게시, AWS 일회성 실행·멱등 재시도·공개 404·Cleanup 검증
+- 최초 관리자 Bootstrap AWS Foundation Apply, 일회성 실행·멱등 재시도·공개 404·Cleanup 검증
 - Backup Restore와 전체 Smoke Test
 
 CloudWatch Log 보존 기간은 7일로 코드와 계약 테스트에 고정했고 Frontend 독립 배포, HTTPS/DNS, Public Domain Runtime ON Full Smoke, Alarm과 Watchdog을 AWS에 적용·검증했다. 관리자 Bootstrap은 저장소 구현과 로컬 계약 검증까지 완료했으며 AWS Build Once·Promote와 Saved Plan부터 별도 승인한다.

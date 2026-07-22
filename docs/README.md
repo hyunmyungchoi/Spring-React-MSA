@@ -39,7 +39,7 @@
 - 채팅 이벤트는 트랜잭션 커밋 후 Kafka로 전송하지만 영속 Outbox 테이블과 relay는 아직 없다.
 - 커뮤니티 게시물은 프로세스 메모리에 저장되어 재시작 시 사라진다.
 - Argo CD Application에 자동 동기화가 설정되어 있지 않아 Git 변경 후 수동 Sync가 필요하다.
-- Admin BFF의 관리자 가입 Controller는 설정 Flag로 제어하며 `prod` 기본값은 비활성이다. 로컬 Kubernetes만 명시적으로 활성화하고 AWS ECS는 비활성으로 고정한다. 최초 관리자 일회성 Bootstrap 코드·Terraform 계약·AWS 가입 UI 비노출은 구현했지만 Image 게시와 AWS 적용·Smoke는 아직 남아 있다.
+- Admin BFF의 관리자 가입 Controller는 설정 Flag로 제어하며 `prod` 기본값은 비활성이다. 로컬 Kubernetes만 명시적으로 활성화하고 AWS ECS는 비활성으로 고정한다. 최초 관리자 일회성 Bootstrap 코드·Terraform 계약을 구현하고 User Service·Admin BFF Image Promote와 AWS Admin 기본 화면 선택 배포까지 완료했다. AWS Bootstrap Foundation Apply, 관리자 생성·로그인·공개 404와 Cleanup Smoke는 아직 남아 있다.
 - Admin Session 조회 응답과 Frontend 타입에서 원본 `sessionId`를 제거하고 SHA-256 `sessionFingerprint`만 사용한다.
 - GHCR Build Once와 ECR Digest Promote Workflow는 구현됐고, Database Migration 대상 3개 Image에서 재빌드 없는 Promote와 Digest 일치를 실제 검증했다.
 - Kubernetes↔AWS DR은 Learning 적용 범위에서 제외하고 후속 학습 과제로 보류했다.

@@ -571,7 +571,7 @@ Application, Data, Kafka, SSH Port는 Internet에서 직접 접근할 수 없다
 
 ## 다음 단계
 
-> 2026-07-23 갱신: SNS 실알림·Runtime OFF 비용 종료·알림 전용 Watchdog 적용과 Smoke까지 완료했다. 현재 실행 Workload·ALB·Valkey·Runtime Alarm은 0, RDS는 `stopped`, Watchdog Alarm 3개는 `OK`, Terraform은 `No changes`다. 최초 관리자 Bootstrap은 코드·Terraform·Frontend 계약과 로컬 테스트를 완료했고 Image 게시와 AWS 적용·Smoke는 아직 수행하지 않았다.
+> 2026-07-23 갱신: SNS 실알림·Runtime OFF 비용 종료·알림 전용 Watchdog 적용과 Smoke까지 완료했다. 현재 실행 Workload·ALB·Valkey·Runtime Alarm은 0, RDS는 `stopped`, Watchdog Alarm 3개는 `OK`, Terraform은 `No changes`다. 최초 관리자 Bootstrap은 코드·Terraform 계약, Source SHA `8e5aaa06540541e365e5cfaf7cc559c8b777ae63`의 User Service·Admin BFF Build Once·ECR Promote와 Admin 기본 화면 선택 배포를 완료했다. AWS Foundation Apply와 관리자 생성·Smoke는 아직 수행하지 않았다.
 
 1. 완료: Source SHA `a7b3e0387c6817fd5a781ccf3ac532e04f38c9e1`의 Backend 8개 GHCR Build Once → ECR Digest Promote와 8/8 Digest 일치 검증
 2. 완료: Runtime Secret 6개 초기화, Application Foundation OFF와 Cloud Map custom health 교정 Apply, ECS/ASG 0·RDS 정지·`No changes` 검증
@@ -583,7 +583,7 @@ Application, Data, Kafka, SSH Port는 Internet에서 직접 접근할 수 없다
 8. 완료: 관측성 Foundation·Topic Policy와 Runtime ON Apply, HTTPS·OAuth·Session·WebSocket Smoke, SNS Email 구독 복구·확인 및 실알림 `Published 2`·`Delivered 2`·`Failed 0`, `No changes` 검증
 9. 완료: 승인된 관측성 Runtime OFF Saved Plan `0/10/40` 적용, ECS·ASG·ALB·Valkey·Runtime Alarm 종료, RDS 정지, 정적 curl 6/6와 `No changes` 검증
 10. 완료: Runtime OFF 알림 전용 Watchdog·Recovery Plan 적용, Baseline·Heartbeat·Alarm→SNS·`No changes` 검증
-11. 진행 중: 최초 관리자 Bootstrap과 관리자 등록 차단 — 로컬 구현·계약 검증 완료, Build Once·ECR Promote·AWS Saved Plan·실행·Cleanup 대기
+11. 진행 중: 최초 관리자 Bootstrap과 관리자 등록 차단 — 구현·Build Once·ECR Promote·Admin 기본 화면 배포 완료, AWS Foundation Saved Plan·실행·Cleanup 대기
 12. 예정: Backup Restore와 전체 Smoke Test
 
 Kubernetes↔AWS DR은 Learning 적용 범위에서 제외하고 후속 학습 과제로 보류한다.

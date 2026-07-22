@@ -2,7 +2,7 @@
 
 이 Runbook은 AWS Learning 환경에 최초 `ROLE_ADMIN` 계정을 한 번만 만들고 공개 관리자 가입 경로를 계속 닫아 두는 절차를 정의한다. 관리자 식별자, 비밀번호, Secret Value, Account ID, ECR Digest와 Saved Plan 파일은 문서나 Git에 기록하지 않는다.
 
-> 저장소 상태(2026-07-23): User Service의 일회성 `AdminBootstrapMain`, 임시 ECS Task Definition·Execution Role·Secrets Manager Container, 7일 감사 Log Group, AWS Admin 가입 UI 비노출과 비등록 경로 404 처리를 구현했다. User Service PostgreSQL 통합 테스트, Admin BFF 테스트, Admin Frontend lint/build, Workflow 단위 테스트, Terraform `fmt`와 전체 mock 테스트 32/32를 통과했다. 아직 Commit/Push, Image Build Once·ECR Promote, AWS Apply, 관리자 생성과 공개 Domain Smoke는 수행하지 않았다.
+> 실행 상태(2026-07-23): Source SHA `8e5aaa06540541e365e5cfaf7cc559c8b777ae63`에 User Service의 일회성 `AdminBootstrapMain`, 임시 ECS Task Definition·Execution Role·Secrets Manager Container, 7일 감사 Log Group, AWS Admin 가입 UI 비노출과 비등록 경로 404 처리를 반영했다. [GHCR Run 29943128766](https://github.com/hyunmyungchoi/Spring-React-MSA/actions/runs/29943128766)에서 User Service·Admin BFF 테스트와 Build Once를 완료했고, [User Service ECR Run 29943405775](https://github.com/hyunmyungchoi/Spring-React-MSA/actions/runs/29943405775)와 [Admin BFF ECR Run 29943469707](https://github.com/hyunmyungchoi/Spring-React-MSA/actions/runs/29943469707)에서 재빌드 없이 Promote·Digest 검증을 완료했다. Kubernetes Digest는 Bot Commit `9e78f84034e17bb9f4884dca4c7475919c0a0386`에 고정됐다. [Admin Frontend Run 29943536376](https://github.com/hyunmyungchoi/Spring-React-MSA/actions/runs/29943536376)은 `spring-admin-web`만 S3에 동기화하고 CloudFront를 무효화했으며 HTTPS curl은 200이었다. 아직 AWS Bootstrap Foundation Apply, 관리자 생성과 Runtime Public Domain Smoke·Cleanup은 수행하지 않았다.
 
 ## 보안 계약
 
