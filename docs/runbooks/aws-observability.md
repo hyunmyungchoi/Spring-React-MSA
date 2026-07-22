@@ -217,10 +217,49 @@ aws cloudwatch describe-alarms `
 4. Storage Alarm은 급하게 축소하거나 삭제하지 말고 증가 원인과 백업 상태를 확인한 뒤 증설 Plan을 별도 승인받는다.
 5. 조치 뒤 Alarm이 `OK`로 돌아오고 Email 복구 알림이 도착하는지 확인한다.
 
+## 2B 알림 전용 Runtime Watchdog
+
+2B는 Terraform 소유 Runtime 리소스를 직접 변경하지 않는다. `enable_runtime_watchdog=true`일 때 다음 영속 감시 리소스만 만든다.
+
+- Python 3.12 ARM64 Lambda 1개와 7일 CloudWatch Log Group
+- `rate(15 minutes)` EventBridge Rule·Target·Lambda Permission
+- 중복 알림 방지 상태 3개만 저장하는 DynamoDB `PAY_PER_REQUEST` Table 1개. 삭제 보호와 서버 측 암호화를 사용한다.
+- `Heartbeat` Custom Metric과 Watchdog Heartbeat 누락·Lambda Error·EventBridge Failed Invocation Alarm 3개
+
+Lambda가 판정하는 상태는 다음과 같다.
+
+| 상태 | 기본 임계값 | 알림 |
+| --- | --- | --- |
+| Runtime 장시간 ON | 가장 오래 실행 중인 ECS EC2가 6시간 이상 | `runtime-on-too-long` |
+| RDS 자동 재시작 임박 | `AutomaticRestartTime`까지 24시간 이하 | `rds-auto-restart-imminent` |
+| Runtime OFF 중 RDS 실행 | ASG·ECS Desired가 0인데 RDS가 `stopped/stopping` 외 상태 | `rds-running-while-runtime-off` |
+
+최초 정상 상태는 DynamoDB에만 기록하고 Email을 보내지 않는다. 이후 `inactive → active`는 ALERT, `active → inactive`는 RECOVERY를 한 번만 발행한다. SNS 발행이 실패하면 상태를 확정하지 않아 다음 실행에서 재시도한다. Heartbeat는 모든 점검과 상태 동기화가 성공한 뒤에만 기록한다.
+
+Watchdog IAM의 Runtime 조회 권한은 `autoscaling:DescribeAutoScalingGroups`, `ec2:DescribeInstances`, `ecs:DescribeServices`, `rds:DescribeDBInstances`뿐이다. 별도로 자기 DynamoDB Item 읽기·쓰기, 기존 SNS Topic 발행, 지정 Custom Metric 기록, 지정 Log Group 쓰기만 허용한다. `rds:StartDBInstance`, `rds:StopDBInstance`, `ecs:UpdateService`, ASG 용량 변경과 ElastiCache 변경 권한은 없다.
+
+코드 검증 기준은 Python 단위 테스트 `7 passed`, Terraform 전체 mock 테스트 `30 passed, 0 failed`, `terraform validate`다. Lambda Archive는 HashiCorp Archive Provider `2.8.0`으로 만들며 생성 ZIP은 Git에서 제외한다. Lambda·DynamoDB 요청량은 작지만 CloudWatch Custom Metric·Alarm·Log 등 상시 소액 과금 가능성이 있으므로 AWS 적용은 Saved Plan Hash를 별도 승인받는다.
+
+적용 Plan은 Runtime OFF 상태에서 다음 입력을 모두 보존해 만든다.
+
+```powershell
+terraform plan `
+  -var="enable_runtime_observability=true" `
+  -var="enable_runtime_watchdog=true" `
+  -var="enable_application_runtime_foundation=true" `
+  -var="enable_frontend_hosting=true" `
+  -var="enable_public_domain_routing=true" `
+  -var="learning_runtime_enabled=false" `
+  -out=tfplan-runtime-watchdog-off
+```
+
+현재 적용된 Application Image digest 8개와 Stock Client ID도 기존 Runtime Plan과 동일하게 환경 변수로 전달한다. Plan에 ECS Desired·ASG Capacity·ALB·Valkey·RDS·Task Definition·Image·Frontend·DNS·SNS Subscription 변경이 포함되면 적용하지 않는다.
+
+Apply 뒤 Lambda를 한 번 직접 호출해 정상 OFF 상태에서 DynamoDB 상태 3개 `inactive`, Heartbeat 수신, Function Error 0과 SNS Email Subscription `Confirmed`를 확인한다. Watchdog Alarm은 평가가 수렴한 뒤 3개 모두 `OK`여야 한다. ALERT/RECOVERY 판정과 SNS 실패 재시도는 실제 Runtime을 켜지 않고 단위 테스트로 검증한다.
+
 ## 이번 단계에서 보류하는 항목
 
 - 자동 Runtime ON/OFF 스케줄
-- RDS 최대 정지 기간의 자동 시작 전 사전 감시
 - 최초 관리자 Bootstrap
 
-자동 스케줄이 Terraform 소유 ECS·ALB·Valkey 상태를 직접 바꾸면 state drift가 생길 수 있다. 2B에서는 먼저 변경 없는 알림 전용 Watchdog으로 Runtime 장시간 ON과 RDS 자동 시작 임박을 감시하고, 자동 OFF는 별도 승인된 Terraform 실행 경로가 생긴 뒤 검토한다. 애플리케이션 HTTPS·OAuth·Session·WebSocket 검증은 [AWS Application Runtime](aws-application-runtime.md)의 curl Smoke 계약을 계속 사용한다.
+자동 스케줄이 Terraform 소유 ECS·ALB·Valkey 상태를 직접 바꾸면 state drift가 생길 수 있다. 2B는 변경 없는 알림 전용 Watchdog으로 제한하고, 자동 OFF는 별도 승인된 Terraform 실행 경로가 생긴 뒤 검토한다. 애플리케이션 HTTPS·OAuth·Session·WebSocket 검증은 [AWS Application Runtime](aws-application-runtime.md)의 curl Smoke 계약을 계속 사용한다.

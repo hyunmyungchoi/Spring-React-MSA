@@ -1,6 +1,6 @@
 # Spring React MSA 문서
 
-이 디렉터리는 `C:\Portfolio` 저장소의 코드와 인프라를 기준으로 작성한 설계·운영 문서의 시작점이다. 문서의 기준일은 2026-07-19이며, 구현과 문서가 충돌하면 실행 가능한 코드와 배포 매니페스트를 우선 확인한다.
+이 디렉터리는 `C:\Portfolio` 저장소의 코드와 인프라를 기준으로 작성한 설계·운영 문서의 시작점이다. 문서의 기준일은 2026-07-22이며, 구현과 문서가 충돌하면 실행 가능한 코드와 배포 매니페스트를 우선 확인한다.
 
 ## 문서 읽는 순서
 
@@ -25,8 +25,8 @@
 | Data | PostgreSQL 16, Redis 7 |
 | Messaging | Kafka 3.7.0 |
 | Platform | Docker Compose, Kubernetes, ingress-nginx, GHCR, Argo CD |
-| AWS migration | Runtime OFF·RDS 정지 유지; 관측성 Policy 복구 Apply `6/0/0`·재계획 `No changes`, Email 확인 대기 |
-| Observability | Kubernetes Prometheus·Grafana·Loki와 AWS CloudWatch Log·Budget·RDS Alarm/SNS 계약 |
+| AWS migration | Runtime OFF·RDS `stopped`; ECS·ASG·ALB·Valkey·Runtime Alarm 0, 정적 curl 6/6와 Terraform `No changes` |
+| Observability | Kubernetes Prometheus·Grafana·Loki; AWS SNS 실알림·Runtime 수명주기 검증 완료, 2B 알림 전용 Watchdog 코드 검증·Apply 대기 |
 
 ## 문서 상태 표현
 

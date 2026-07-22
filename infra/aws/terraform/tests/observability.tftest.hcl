@@ -185,3 +185,81 @@ run "runtime_observability_contract" {
     error_message = "Every Runtime alarm must enable exactly one alarm action and one recovery action."
   }
 }
+
+run "runtime_watchdog_contract" {
+  command = plan
+
+  module {
+    source = "./modules/observability"
+  }
+
+  variables {
+    name_prefix                   = "spring-react-msa-learning"
+    aws_region                    = "ap-northeast-2"
+    alert_email                   = "terraform-test@example.com"
+    db_instance_identifier        = "spring-react-msa-learning-postgres"
+    db_instance_arn               = "arn:aws:rds:ap-northeast-2:111122223333:db:spring-react-msa-learning-postgres"
+    runtime_observability_enabled = true
+    runtime_enabled               = false
+    watchdog_enabled              = true
+    ecs_cluster_name              = "spring-react-msa-learning-cluster"
+    ecs_autoscaling_group_name    = "spring-react-msa-learning-ecs"
+    ecs_service_names = {
+      "member-gateway"       = "spring-react-msa-learning-member-gateway"
+      "admin-gateway"        = "spring-react-msa-learning-admin-gateway"
+      "authorization-server" = "spring-react-msa-learning-authorization-server"
+      "user-service"         = "spring-react-msa-learning-user-service"
+      "community-service"    = "spring-react-msa-learning-community-service"
+      "stock-service"        = "spring-react-msa-learning-stock-service"
+      "member-bff"           = "spring-react-msa-learning-member-bff"
+      "admin-bff"            = "spring-react-msa-learning-admin-bff"
+    }
+    common_tags = {
+      Environment = "learning"
+      ManagedBy   = "Terraform"
+      Project     = "spring-react-msa"
+    }
+  }
+
+  assert {
+    condition = (
+      aws_lambda_function.watchdog["this"].function_name == "spring-react-msa-learning-runtime-watchdog" &&
+      aws_lambda_function.watchdog["this"].runtime == "python3.12" &&
+      aws_lambda_function.watchdog["this"].architectures == tolist(["arm64"]) &&
+      one(aws_lambda_function.watchdog["this"].environment).variables["RUNTIME_MAX_HOURS"] == "6" &&
+      one(aws_lambda_function.watchdog["this"].environment).variables["RDS_RESTART_WARNING_HOURS"] == "24"
+    )
+    error_message = "The watchdog Lambda must use the approved runtime, architecture, and lifecycle thresholds."
+  }
+
+  assert {
+    condition = (
+      aws_cloudwatch_event_rule.watchdog["this"].schedule_expression == "rate(15 minutes)" &&
+      aws_cloudwatch_event_target.watchdog["this"].target_id == "RuntimeWatchdog"
+    )
+    error_message = "The alert-only watchdog must run every 15 minutes through EventBridge."
+  }
+
+  assert {
+    condition = (
+      aws_dynamodb_table.watchdog_state["this"].billing_mode == "PAY_PER_REQUEST" &&
+      aws_dynamodb_table.watchdog_state["this"].deletion_protection_enabled
+    )
+    error_message = "The notification state table must use on-demand billing and deletion protection."
+  }
+
+  assert {
+    condition     = length(aws_cloudwatch_metric_alarm.watchdog) == 3
+    error_message = "The watchdog must monitor heartbeat, Lambda errors, and EventBridge failed invocations."
+  }
+
+  assert {
+    condition = toset(local.watchdog_runtime_read_actions) == toset([
+      "autoscaling:DescribeAutoScalingGroups",
+      "ec2:DescribeInstances",
+      "ecs:DescribeServices",
+      "rds:DescribeDBInstances",
+    ])
+    error_message = "The alert-only watchdog role must not receive Runtime mutation permissions."
+  }
+}

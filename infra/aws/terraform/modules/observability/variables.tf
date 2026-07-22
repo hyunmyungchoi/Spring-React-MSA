@@ -51,8 +51,53 @@ variable "runtime_enabled" {
   default     = false
 }
 
+variable "watchdog_enabled" {
+  description = "Whether to run the alert-only Runtime and RDS lifecycle watchdog."
+  type        = bool
+  default     = false
+}
+
+variable "watchdog_schedule_expression" {
+  description = "EventBridge schedule for the alert-only watchdog."
+  type        = string
+  default     = "rate(15 minutes)"
+
+  validation {
+    condition     = can(regex("^rate\\([1-9][0-9]* (minute|minutes|hour|hours)\\)$", var.watchdog_schedule_expression))
+    error_message = "watchdog_schedule_expression must be a simple EventBridge rate expression."
+  }
+}
+
+variable "watchdog_max_runtime_hours" {
+  description = "Maximum continuous Runtime EC2 age before alerting."
+  type        = number
+  default     = 6
+
+  validation {
+    condition     = var.watchdog_max_runtime_hours >= 1 && var.watchdog_max_runtime_hours <= 168 && floor(var.watchdog_max_runtime_hours) == var.watchdog_max_runtime_hours
+    error_message = "watchdog_max_runtime_hours must be a whole number from 1 through 168."
+  }
+}
+
+variable "watchdog_rds_warning_hours" {
+  description = "Hours before RDS automatic restart when the watchdog alerts."
+  type        = number
+  default     = 24
+
+  validation {
+    condition     = var.watchdog_rds_warning_hours >= 1 && var.watchdog_rds_warning_hours <= 168 && floor(var.watchdog_rds_warning_hours) == var.watchdog_rds_warning_hours
+    error_message = "watchdog_rds_warning_hours must be a whole number from 1 through 168."
+  }
+}
+
 variable "ecs_cluster_name" {
   description = "ECS cluster name used by Runtime alarm dimensions."
+  type        = string
+  default     = ""
+}
+
+variable "ecs_autoscaling_group_name" {
+  description = "ECS container instance Auto Scaling Group inspected by the watchdog."
   type        = string
   default     = ""
 }

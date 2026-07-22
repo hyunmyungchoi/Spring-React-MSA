@@ -8,6 +8,7 @@
 tfplan
 tfplan.*
 tfplan-*
+modules/observability/watchdog.zip
 backend.s3.hcl
 crash.log
 crash.*.log

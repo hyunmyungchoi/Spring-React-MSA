@@ -115,6 +115,8 @@ Alarm Smoke 중 Terraform은 `No changes`였지만 SNS Email Subscription 실상
 
 2A 비용 종료는 Source SHA `d4f923bedbf8375ae6ff9badbf7ab24c05c591d4`, Saved Plan SHA-256 `f44f5f7a22be792fdf17a1d0b5e7761ae57bd8ec12168c54a4b1c773698d89fd`를 승인 적용해 `0 added, 10 changed, 40 destroyed`로 완료했다. ECS Service·Task·Container Instance·ASG는 모두 0, Container Insights는 `disabled`, Runtime Alarm·ALB·Valkey·`origin`은 0이며 RDS는 별도 정지해 `stopped`다. 정적 curl 6/6 HTTP 200, Root 308, Runtime OFF API 502와 동일 OFF 입력 `No changes`를 확인했다. SNS Email Subscription `Confirmed`, RDS Alarm 3개, Task Definition·Image digest 8개, Frontend Bucket 6개·CloudFront 2개는 유지했고 적용 Plan은 삭제했다. 2A는 완료됐으며 다음은 2B Watchdog과 3단계 운영 초기화다.
 
+2B 코드는 15분마다 실행되는 Python 3.12/ARM64 Lambda, EventBridge Schedule, 중복 알림 방지용 DynamoDB On-Demand Table, Heartbeat Custom Metric과 Watchdog 자체 Alarm 3개로 구현했다. Runtime 6시간 초과, RDS 자동 재시작 24시간 이내, Runtime OFF 중 RDS 실행을 감지하고 상태가 바뀔 때만 기존 SNS Topic으로 ALERT/RECOVERY를 발행한다. IAM은 RDS·ASG·EC2·ECS Describe만 허용하며 Runtime 시작·정지·용량 변경 권한은 없다. Python 단위 테스트 `7 passed`, 전체 Terraform mock 테스트 `30 passed, 0 failed`, `validate`를 통과했다. AWS 적용은 Runtime OFF와 현재 Foundation·Image digest 8개·Stock Client ID를 보존하는 별도 Saved Plan의 SHA-256 승인 뒤 진행한다.
+
 ### 3단계: 운영 초기화
 
 - 최초 관리자 Bootstrap을 일회성·감사 가능한 절차로 구현한다.

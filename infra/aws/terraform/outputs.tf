@@ -114,6 +114,21 @@ output "runtime_alarm_names" {
   value       = try(module.observability[0].runtime_alarm_names, {})
 }
 
+output "runtime_watchdog_function_name" {
+  description = "Alert-only Runtime watchdog Lambda function name, or null when disabled."
+  value       = try(module.observability[0].runtime_watchdog_function_name, null)
+}
+
+output "runtime_watchdog_alarm_names" {
+  description = "Watchdog self-monitoring alarm names, or an empty map when disabled."
+  value       = try(module.observability[0].runtime_watchdog_alarm_names, {})
+}
+
+output "runtime_watchdog_schedule_rule_name" {
+  description = "EventBridge schedule rule name for the Runtime watchdog, or null when disabled."
+  value       = try(module.observability[0].runtime_watchdog_schedule_rule_name, null)
+}
+
 output "ecs_cluster_name" {
   description = "ECS cluster name, or null when the ECS compute foundation is disabled."
   value       = try(module.ecs_compute[0].cluster_name, null)

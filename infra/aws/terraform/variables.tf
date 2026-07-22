@@ -116,6 +116,56 @@ variable "enable_runtime_observability" {
   }
 }
 
+variable "enable_runtime_watchdog" {
+  description = "Whether to run the alert-only Learning Runtime and RDS lifecycle watchdog without mutating Runtime resources."
+  type        = bool
+  default     = false
+
+  validation {
+    condition = !var.enable_runtime_watchdog || (
+      var.enable_runtime_observability &&
+      var.enable_observability_foundation &&
+      var.enable_data_layer &&
+      var.enable_ecs_compute_foundation &&
+      var.enable_application_runtime_foundation
+    )
+    error_message = "enable_runtime_watchdog requires the Runtime observability, data, ECS compute, and application foundations."
+  }
+}
+
+variable "runtime_watchdog_schedule_expression" {
+  description = "EventBridge schedule used by the alert-only Runtime watchdog."
+  type        = string
+  default     = "rate(15 minutes)"
+
+  validation {
+    condition     = can(regex("^rate\\([1-9][0-9]* (minute|minutes|hour|hours)\\)$", var.runtime_watchdog_schedule_expression))
+    error_message = "runtime_watchdog_schedule_expression must be a simple EventBridge rate expression."
+  }
+}
+
+variable "runtime_watchdog_max_runtime_hours" {
+  description = "Maximum continuous Learning Runtime EC2 age before the Watchdog alerts."
+  type        = number
+  default     = 6
+
+  validation {
+    condition     = var.runtime_watchdog_max_runtime_hours >= 1 && var.runtime_watchdog_max_runtime_hours <= 168 && floor(var.runtime_watchdog_max_runtime_hours) == var.runtime_watchdog_max_runtime_hours
+    error_message = "runtime_watchdog_max_runtime_hours must be a whole number from 1 through 168."
+  }
+}
+
+variable "runtime_watchdog_rds_restart_warning_hours" {
+  description = "Hours before the RDS automatic restart time when the Watchdog alerts."
+  type        = number
+  default     = 24
+
+  validation {
+    condition     = var.runtime_watchdog_rds_restart_warning_hours >= 1 && var.runtime_watchdog_rds_restart_warning_hours <= 168 && floor(var.runtime_watchdog_rds_restart_warning_hours) == var.runtime_watchdog_rds_restart_warning_hours
+    error_message = "runtime_watchdog_rds_restart_warning_hours must be a whole number from 1 through 168."
+  }
+}
+
 variable "enable_ecs_compute_foundation" {
   description = "Whether to create the ECS cluster, EC2 launch template, zero-capacity ASG, and capacity provider."
   type        = bool

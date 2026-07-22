@@ -92,7 +92,12 @@ module "observability" {
   db_instance_arn               = module.data_layer.db_instance_arn
   runtime_observability_enabled = var.enable_runtime_observability
   runtime_enabled               = var.learning_runtime_enabled
+  watchdog_enabled              = var.enable_runtime_watchdog
+  watchdog_schedule_expression  = var.runtime_watchdog_schedule_expression
+  watchdog_max_runtime_hours    = var.runtime_watchdog_max_runtime_hours
+  watchdog_rds_warning_hours    = var.runtime_watchdog_rds_restart_warning_hours
   ecs_cluster_name              = try(module.ecs_compute[0].cluster_name, "")
+  ecs_autoscaling_group_name    = try(module.ecs_compute[0].autoscaling_group_name, "")
   ecs_service_names             = try(module.application_runtime[0].ecs_service_names, {})
   load_balancer_arn_suffix      = try(module.application_runtime[0].public_alb_arn_suffix, null)
   target_group_arn_suffixes     = try(module.application_runtime[0].public_target_group_arn_suffixes, {})

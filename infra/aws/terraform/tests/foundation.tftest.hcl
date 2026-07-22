@@ -147,6 +147,16 @@ run "runtime_observability_requires_foundations" {
   expect_failures = [var.enable_runtime_observability]
 }
 
+run "runtime_watchdog_requires_foundations" {
+  command = plan
+
+  variables {
+    enable_runtime_watchdog = true
+  }
+
+  expect_failures = [var.enable_runtime_watchdog]
+}
+
 run "observability_requires_email" {
   command = plan
 

@@ -4,6 +4,15 @@ data "aws_partition" "current" {}
 
 locals {
   runtime_active = var.runtime_observability_enabled && var.runtime_enabled
+  watchdog       = var.watchdog_enabled ? { this = true } : {}
+
+  watchdog_metric_namespace = "${var.name_prefix}/Watchdog"
+  watchdog_runtime_read_actions = [
+    "autoscaling:DescribeAutoScalingGroups",
+    "ec2:DescribeInstances",
+    "ecs:DescribeServices",
+    "rds:DescribeDBInstances",
+  ]
 
   rds_alarms = {
     cpu_high = {
@@ -155,6 +164,46 @@ locals {
     local.alb_alarms,
     local.target_group_alarms,
   )
+
+  watchdog_alarms = var.watchdog_enabled ? {
+    heartbeat-missing = {
+      namespace           = local.watchdog_metric_namespace
+      metric_name         = "Heartbeat"
+      comparison_operator = "LessThanThreshold"
+      threshold           = 1
+      statistic           = "Minimum"
+      period              = 1800
+      treat_missing_data  = "breaching"
+      description         = "The alert-only Runtime watchdog has not completed successfully in the last 30 minutes."
+      dimensions          = {}
+    }
+    execution-errors = {
+      namespace           = "AWS/Lambda"
+      metric_name         = "Errors"
+      comparison_operator = "GreaterThanOrEqualToThreshold"
+      threshold           = 1
+      statistic           = "Sum"
+      period              = 900
+      treat_missing_data  = "notBreaching"
+      description         = "The alert-only Runtime watchdog Lambda reported an execution error."
+      dimensions = {
+        FunctionName = "${var.name_prefix}-runtime-watchdog"
+      }
+    }
+    schedule-failed = {
+      namespace           = "AWS/Events"
+      metric_name         = "FailedInvocations"
+      comparison_operator = "GreaterThanOrEqualToThreshold"
+      threshold           = 1
+      statistic           = "Sum"
+      period              = 900
+      treat_missing_data  = "notBreaching"
+      description         = "EventBridge failed to invoke the alert-only Runtime watchdog."
+      dimensions = {
+        RuleName = "${var.name_prefix}-runtime-watchdog"
+      }
+    }
+  } : {}
 }
 
 resource "aws_sns_topic" "operations" {
@@ -319,6 +368,234 @@ resource "aws_db_event_subscription" "rds" {
 
   tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-rds-events"
+  })
+
+  depends_on = [aws_sns_topic_policy.operations]
+}
+
+data "archive_file" "watchdog" {
+  for_each = local.watchdog
+
+  type        = "zip"
+  source_file = "${path.module}/watchdog.py"
+  output_path = "${path.module}/watchdog.zip"
+}
+
+resource "aws_iam_role" "watchdog" {
+  for_each = local.watchdog
+
+  name = "${var.name_prefix}-runtime-watchdog"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid    = "LambdaAssumeRole"
+      Effect = "Allow"
+      Action = ["sts:AssumeRole"]
+      Principal = {
+        Service = ["lambda.amazonaws.com"]
+      }
+    }]
+  })
+
+  tags = merge(var.common_tags, {
+    Name = "${var.name_prefix}-runtime-watchdog"
+  })
+}
+
+resource "aws_cloudwatch_log_group" "watchdog" {
+  for_each = local.watchdog
+
+  name              = "/aws/lambda/${var.name_prefix}-runtime-watchdog"
+  retention_in_days = 7
+
+  tags = merge(var.common_tags, {
+    Name = "${var.name_prefix}-runtime-watchdog"
+  })
+}
+
+resource "aws_dynamodb_table" "watchdog_state" {
+  for_each = local.watchdog
+
+  name                        = "${var.name_prefix}-runtime-watchdog-state"
+  billing_mode                = "PAY_PER_REQUEST"
+  hash_key                    = "issue_key"
+  deletion_protection_enabled = true
+
+  attribute {
+    name = "issue_key"
+    type = "S"
+  }
+
+  server_side_encryption {
+    enabled = true
+  }
+
+  tags = merge(var.common_tags, {
+    Name = "${var.name_prefix}-runtime-watchdog-state"
+  })
+}
+
+resource "aws_iam_role_policy" "watchdog" {
+  for_each = local.watchdog
+
+  name = "runtime-watchdog"
+  role = aws_iam_role.watchdog[each.key].id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid      = "ReadRuntimeState"
+        Effect   = "Allow"
+        Action   = local.watchdog_runtime_read_actions
+        Resource = ["*"]
+      },
+      {
+        Sid      = "StoreNotificationState"
+        Effect   = "Allow"
+        Action   = ["dynamodb:GetItem", "dynamodb:PutItem"]
+        Resource = [aws_dynamodb_table.watchdog_state[each.key].arn]
+      },
+      {
+        Sid      = "PublishStateTransitions"
+        Effect   = "Allow"
+        Action   = ["sns:Publish"]
+        Resource = [aws_sns_topic.operations.arn]
+      },
+      {
+        Sid      = "PublishHeartbeatMetric"
+        Effect   = "Allow"
+        Action   = ["cloudwatch:PutMetricData"]
+        Resource = ["*"]
+        Condition = {
+          StringEquals = {
+            "cloudwatch:namespace" = local.watchdog_metric_namespace
+          }
+        }
+      },
+      {
+        Sid    = "WriteFunctionLogs"
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+        ]
+        Resource = ["${aws_cloudwatch_log_group.watchdog[each.key].arn}:*"]
+      },
+    ]
+  })
+}
+
+resource "aws_lambda_function" "watchdog" {
+  for_each = local.watchdog
+
+  function_name = "${var.name_prefix}-runtime-watchdog"
+  description   = "Alert-only Learning Runtime and RDS lifecycle watchdog."
+  role          = aws_iam_role.watchdog[each.key].arn
+  handler       = "watchdog.lambda_handler"
+  runtime       = "python3.12"
+  architectures = ["arm64"]
+
+  filename         = data.archive_file.watchdog[each.key].output_path
+  source_code_hash = data.archive_file.watchdog[each.key].output_base64sha256
+
+  memory_size                    = 128
+  timeout                        = 30
+  reserved_concurrent_executions = 1
+
+  environment {
+    variables = {
+      ASG_NAME                  = var.ecs_autoscaling_group_name
+      ECS_CLUSTER_NAME          = var.ecs_cluster_name
+      ECS_SERVICE_NAMES         = join(",", values(var.ecs_service_names))
+      METRIC_NAMESPACE          = local.watchdog_metric_namespace
+      RDS_INSTANCE_IDENTIFIER   = var.db_instance_identifier
+      RDS_RESTART_WARNING_HOURS = tostring(var.watchdog_rds_warning_hours)
+      RUNTIME_MAX_HOURS         = tostring(var.watchdog_max_runtime_hours)
+      SNS_TOPIC_ARN             = aws_sns_topic.operations.arn
+      STATE_TABLE_NAME          = aws_dynamodb_table.watchdog_state[each.key].name
+    }
+  }
+
+  tags = merge(var.common_tags, {
+    Name = "${var.name_prefix}-runtime-watchdog"
+  })
+
+  depends_on = [
+    aws_cloudwatch_log_group.watchdog,
+    aws_iam_role_policy.watchdog,
+  ]
+
+  lifecycle {
+    precondition {
+      condition = (
+        length(trimspace(var.ecs_autoscaling_group_name)) > 0 &&
+        length(trimspace(var.ecs_cluster_name)) > 0 &&
+        length(var.ecs_service_names) == 8
+      )
+      error_message = "The Runtime watchdog requires one ASG, one ECS cluster, and eight ECS service names."
+    }
+  }
+}
+
+resource "aws_cloudwatch_event_rule" "watchdog" {
+  for_each = local.watchdog
+
+  name                = "${var.name_prefix}-runtime-watchdog"
+  description         = "Runs the alert-only Learning Runtime and RDS lifecycle watchdog."
+  schedule_expression = var.watchdog_schedule_expression
+  state               = "ENABLED"
+
+  tags = merge(var.common_tags, {
+    Name = "${var.name_prefix}-runtime-watchdog"
+  })
+}
+
+resource "aws_cloudwatch_event_target" "watchdog" {
+  for_each = local.watchdog
+
+  rule      = aws_cloudwatch_event_rule.watchdog[each.key].name
+  target_id = "RuntimeWatchdog"
+  arn       = aws_lambda_function.watchdog[each.key].arn
+
+  retry_policy {
+    maximum_event_age_in_seconds = 3600
+    maximum_retry_attempts       = 2
+  }
+}
+
+resource "aws_lambda_permission" "watchdog_eventbridge" {
+  for_each = local.watchdog
+
+  statement_id  = "AllowEventBridgeInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.watchdog[each.key].function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.watchdog[each.key].arn
+}
+
+resource "aws_cloudwatch_metric_alarm" "watchdog" {
+  for_each = local.watchdog_alarms
+
+  alarm_name          = "${var.name_prefix}-watchdog-${each.key}"
+  alarm_description   = "${each.value.description} Runbook: docs/runbooks/aws-observability.md"
+  comparison_operator = each.value.comparison_operator
+  evaluation_periods  = 1
+  datapoints_to_alarm = 1
+  threshold           = each.value.threshold
+  metric_name         = each.value.metric_name
+  namespace           = each.value.namespace
+  period              = each.value.period
+  statistic           = each.value.statistic
+  treat_missing_data  = each.value.treat_missing_data
+  actions_enabled     = true
+  dimensions          = each.value.dimensions
+
+  alarm_actions = [aws_sns_topic.operations.arn]
+  ok_actions    = [aws_sns_topic.operations.arn]
+
+  tags = merge(var.common_tags, {
+    Name      = "${var.name_prefix}-watchdog-${each.key}"
+    Lifecycle = "persistent"
   })
 
   depends_on = [aws_sns_topic_policy.operations]

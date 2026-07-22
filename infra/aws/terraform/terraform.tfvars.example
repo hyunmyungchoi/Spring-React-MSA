@@ -11,6 +11,12 @@ enable_nat_gateway = false
 enable_data_layer  = false
 enable_observability_foundation = false
 enable_runtime_observability    = false
+enable_runtime_watchdog         = false
+
+# Alert-only Watchdog defaults. It observes state and never starts or stops Runtime resources.
+runtime_watchdog_schedule_expression         = "rate(15 minutes)"
+runtime_watchdog_max_runtime_hours           = 6
+runtime_watchdog_rds_restart_warning_hours   = 24
 
 # Create the persistent ECS/ASG foundation separately from running hourly EC2 capacity.
 enable_ecs_compute_foundation = false
