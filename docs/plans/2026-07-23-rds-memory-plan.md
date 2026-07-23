@@ -2,8 +2,8 @@
 
 - 작성일: 2026-07-23
 - 대상: AWS Learning PostgreSQL 16.14 `db.t4g.micro`
-- 상태: Hikari 교정 코드·38/38 테스트·Commit/Push·Runtime OFF Foundation 적용·OFF 재계획 검증 완료
-- 원칙: RDS와 Runtime을 켜지 않고 Foundation을 먼저 교정하며, 256MiB Alarm과 DB Class는 재측정 전 변경하지 않는다.
+- 상태: Hikari 교정 코드·38/38 테스트·Runtime OFF Foundation 적용·Runtime ON 30분 재측정·Full curl/SNS Smoke 완료, Runtime OFF 승인 대기
+- 원칙: Pool 효과와 RDS Class·Alarm 판단을 분리하고, 256MiB Alarm이나 DB Class를 재측정 결과 없이 변경하지 않는다.
 
 ## 1. 문제
 
@@ -156,8 +156,51 @@ Apply 직전 Source Commit/Push, Plan SHA-256, State serial 107, 운영 Gate와 
 
 2026-07-24 AWS Price List API 기준 시간당 고정비 추정은 NAT/EIP를 포함해 USD 0.3767이다. 이미 실행 중인 NAT/EIP USD 0.064를 제외한 Runtime ON 증분은 USD 0.3127/시간이고 명목 30분은 약 USD 0.1564다. EBS, ALB LCU, NAT 처리량, 데이터 전송, 서비스별 최소 또는 부분 시간 과금과 프로비저닝 시간은 별도다.
 
-Apply 전에는 Plan Hash·State serial 108·Gate·Git 원격 HEAD·AWS OFF를 다시 확인하고 RDS를 `available`까지 시작한다. Apply 후 ASG `1/1/2`, ECS·Container·Cloud Map 8/8, ALB Target 2/2, Valkey와 Runtime Alarm을 확인한 시점부터 최소 30분을 측정한다. RDS 시작이나 Apply는 아직 수행하지 않았다.
+Apply 전에는 Plan Hash·State serial 108·Gate·Git 원격 HEAD·AWS OFF를 다시 확인하고 RDS를 `available`까지 시작한다. Apply 후 ASG `1/1/2`, ECS·Container·Cloud Map 8/8, ALB Target 2/2, Valkey와 Runtime Alarm을 확인한 시점부터 최소 30분을 측정한다.
 
 다음 적용 승인 문구:
 
 `Hikari 5/1 Runtime ON 사전 문서 Commit/Push + RDS 시작 + Plan fa6a9c0d9c3facaa4611c4684e6f96bfcfad3a85f8580b0abbdf7a5a1c50e124 적용 + 30분 RDS 지표 재측정 + HTTPS/OAuth/Session/WebSocket/REST curl·SNS Alarm Smoke 승인`
+
+### 8.1 Runtime ON 실행 결과
+
+- 사전 문서 Commit `3837e3dd529b2c1e90a6c569bf08cc035a0e5693`을 `master`에 Push하고 원격 HEAD 일치를 확인했다.
+- 원본 RDS를 시작해 `2026-07-24 01:03:59 KST`에 `available`을 확인했다.
+- 승인 SHA-256을 다시 확인하고 Saved Plan을 정확히 `40 added, 11 changed, 0 destroyed`로 적용했다. RDS·Secret·Task Definition 교체는 없었다.
+- `2026-07-24 01:18:46 KST`에 ECS Service·Container Health·Cloud Map 8/8, ASG `1/1/2`, ALB Target 2/2와 Valkey 수렴을 확인하고 이 시각을 측정 시작으로 고정했다.
+- 최종 Remote State serial은 113, 주소는 289개다. ECS Service 8개는 `1/1/0`·`COMPLETED`, Task Health 8/8, RDS·Valkey는 `available`, Runtime Alarm 29/29는 `OK`다.
+
+측정 구간은 `2026-07-24 01:19:00~01:48:00 KST`의 1분 Data Point 30개다.
+
+| 지표 | 평균 | 최소 | 최대 | 첫 값 | 마지막 값 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| DatabaseConnections | 3.87 | 3 | 6 | 6 | 3 |
+| FreeableMemory | 197.09MiB | 190.14MiB | 201.43MiB | 198.50MiB | 190.14MiB |
+| SwapUsage | 0.45MiB | 0.43MiB | 0.45MiB | 0.45MiB | 0.45MiB |
+| CPUUtilization | 4.07% | 3.38% | 7.40% | 3.96% | 3.75% |
+| FreeStorageSpace | 17.12GiB | 17.12GiB | 17.12GiB | 17.12GiB | 17.12GiB |
+| ReadIOPS | 0.53 | 0 | 6.66 | 0.02 | 0 |
+| WriteIOPS | 2.39 | 0.23 | 10.57 | 0.40 | 0.43 |
+
+Pool 교정 전보다 Connection 평균은 `22.52 → 3.87`, 최대는 `30 → 6`으로 감소했다. 기동 안정화 뒤 `01:28~01:48 KST`에는 3으로 고정돼 Idle 목표와 상한 15를 모두 만족했다. FreeableMemory 평균은 `172.56 → 197.09MiB`, 최소는 `145.04 → 190.14MiB`로 개선됐고 Swap은 약 0.45MiB로 지속 증가하지 않았다.
+
+세 DB Task Definition의 Hikari `5/1`을 다시 확인했다. 세 서비스 모두 Hikari와 Spring 시작을 완료했고 Connection Timeout·Pool 초기화·Validation 오류는 0건이다. Stock Service의 직접 `hikaricp_connections_pending`은 `0.0`이었다. User Service Prometheus는 401로 보호되고 Member BFF Prometheus는 500 `INTERNAL_SERVER_ERROR`라 두 서비스의 Pending Gauge는 직접 읽지 못했으며, Member BFF Prometheus 500은 별도 진단 항목으로 남긴다.
+
+Smoke 결과:
+
+- 공개 HTTPS 정적·Readiness·OIDC·BFF Health 12/12 HTTP 200, Root 308과 Path/Query 보존
+- 새 무작위 ROLE_USER 1개로 Registration 201, Password Login·OAuth·Session·CSRF Heartbeat, User·Stock·Community·Chat REST 모두 200
+- 공개 WebSocket `CONNECTED`, `HISTORY`, `PONG`, 자체 `CHAT_MESSAGE`와 REST History 영속성 통과
+- 관리자 익명 `/auth/me`, 공개 가입 `404 RESOURCE_NOT_FOUND`, Password Login·OAuth, `ROLE_ADMIN`·`ROLE_USER`, 보호 REST 네 경로와 양쪽 Logout 통과
+- Member·Admin 모두 로그아웃 뒤 `authenticated=false`, 원본 `sessionId` 비노출
+- DPAPI 관리자 자격증명 파일과 Member·Admin Cookie Jar 삭제
+- ALB 합성 Alarm `OK → ALARM → OK`, SNS `Published 2`·Email `Delivered 2`·`Failed 0`
+- 실제 RDS FreeableMemory Alarm도 `ALARM`, SNS Action과 Email 전달 정상
+
+동일 Runtime ON 입력 재계획은 `exit 0`, `No changes`다. 최초 재계획에서 Foundation 플래그가 빠져 삭제 후보가 보인 시도는 Apply하지 않았고, 해당 중단이 남긴 Lock은 Terraform 프로세스 0과 Lock 소유·시각을 확인한 뒤 해제했다. 현재 Task Digest 8개와 모든 적용 Foundation·Watchdog·Restore 감사 Log를 보존한 입력으로 다시 수렴을 확인했다. 적용한 Saved Plan은 승인 Hash 재확인 뒤 삭제했다.
+
+Hikari 교정 자체는 성공했다. 그러나 FreeableMemory 30/30점이 256MiB 아래여서 3/3·15분 Alarm은 정상적으로 `ALARM`을 유지한다. Alarm만 임의로 낮추지 않고 `db.t4g.small` 전환과 기준선 기반 Alarm 재설계를 별도 비용·변경 결정으로 함께 검토한다. 먼저 별도 승인으로 Runtime을 OFF하고 RDS를 정지해 비용을 종료하며, Class나 Alarm 변경을 OFF Plan에 섞지 않는다.
+
+다음 승인 문구:
+
+`Hikari 5/1 재측정 Runtime OFF·RDS 정지 사전 점검 + Saved Plan 생성 승인`

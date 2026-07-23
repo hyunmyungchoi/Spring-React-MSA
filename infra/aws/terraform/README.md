@@ -1,6 +1,6 @@
 # AWS Terraform 운영 Runbook
 
-이 디렉터리는 `spring-react-msa` 학습 환경의 현재 AWS 인프라를 관리한다. 기본 리전은 `ap-northeast-2`다. Foundation 기준선, Backend ECR/GitHub OIDC, Private App 송신, RDS/Secrets Data Layer, ECS Compute, Database Bootstrap·Flyway Migration, Application·Frontend·Public Domain Foundation과 Runtime 관측성 수명주기·알림 전용 Watchdog을 Apply했다. Backup Restore·Cleanup과 원본 HTTPS/OAuth/Session/WebSocket/REST/SNS Full Smoke를 완료한 뒤 최종 Runtime OFF Plan `0/10/40`을 적용했다. 이어 AWS DB 서비스 Hikari Pool `5/1` Foundation Plan을 `3/3/3`으로 적용했다. 현재 ECS Service·Task·Container Instance·ASG Instance·Public ALB·Valkey·`origin`·Runtime Alarm은 0, Container Insights는 `disabled`, 원본 RDS는 `stopped`다. Frontend S3 6개·CloudFront 2개, SNS Email Subscription, RDS Alarm 3개·Watchdog Alarm 3개, Cloud Map Service와 Digest 고정 Task Definition 8개, Restore 감사 Log를 유지한다. State serial은 108이고 동일 OFF 입력 재계획은 `No changes`다. 후속 Runtime의 승인된 목표와 미구현 경계는 [AWS Learning Runtime 결정](../../../docs/aws-migration/07-learning-runtime-design.md)을 따른다.
+이 디렉터리는 `spring-react-msa` 학습 환경의 현재 AWS 인프라를 관리한다. 기본 리전은 `ap-northeast-2`다. Foundation 기준선부터 Backup Restore·Cleanup, 원본 Full Smoke·최종 Runtime OFF, AWS DB 서비스 Hikari Pool `5/1` Foundation까지 적용했다. Hikari 재측정 Runtime ON Plan도 `40/11/0`으로 적용해 30분 RDS 지표와 HTTPS/OAuth/Session/WebSocket/REST/SNS Smoke를 완료했다. 현재 ECS Service 8개 `1/1/0`, Task Health 8/8, ASG `1/1/2`, Public ALB Target 2/2, RDS·Valkey `available`, Runtime Alarm 29/29 `OK`다. RDS FreeableMemory Alarm은 `ALARM`, State serial은 113·주소는 289개이며 동일 ON 입력은 `No changes`다. 다음 단계는 Runtime OFF Saved Plan 생성·적용과 RDS 정지다. 후속 Runtime의 승인된 목표와 미구현 경계는 [AWS Learning Runtime 결정](../../../docs/aws-migration/07-learning-runtime-design.md)을 따른다.
 
 ## 현재 상태와 범위
 
@@ -619,7 +619,7 @@ Post-Restore Full Smoke Runtime ON Saved Plan `tfplan-post-restore-full-smoke-ru
 13. 완료: 원본 Full Smoke Runtime ON Plan `40/10/0` 적용, ECS/ALB/Valkey/RDS, HTTPS 12/12·Member/Admin OAuth·Session·WebSocket·REST·SNS Alarm·`No changes` 검증
 14. 완료: Post-Restore Full Smoke 최종 Runtime OFF Plan `0/10/40` 적용, ECS/ASG/ALB/Valkey/Runtime Alarm 0, RDS 정지, curl 6/6·OFF API 502·State serial 107 `No changes`
 15. 완료: RDS 메모리·Connection 분석, AWS DB 서비스 Hikari Pool `5/1` 교정·38/38 테스트·Commit/Push·Runtime OFF Foundation Plan `3/3/3` 적용, State serial 108·OFF `No changes`
-16. 진행 중: Hikari `5/1` Runtime ON 최소 30분 재측정 사전 점검·38/38 테스트·비용 검토와 Saved Plan `40/11/0` 생성 완료, SHA-256 `fa6a9c0d9c3facaa4611c4684e6f96bfcfad3a85f8580b0abbdf7a5a1c50e124` Apply 승인 대기
-17. 다음: 승인된 Runtime ON Apply·30분 RDS 지표·Full curl/SNS Alarm Smoke 후 별도 Runtime OFF·RDS 정지
+16. 완료: Hikari `5/1` Runtime ON Plan `40/11/0` 적용, 30분 Connection·FreeableMemory·Swap·CPU, Full curl/WebSocket/SNS Alarm, State serial 113·ON `No changes` 검증
+17. 다음: Hikari 재측정 Runtime OFF Saved Plan 생성·적용과 RDS 정지, 이후 DB Class·Alarm·Member BFF Prometheus 별도 결정
 
 Kubernetes↔AWS DR은 Learning 적용 범위에서 제외하고 후속 학습 과제로 보류한다.

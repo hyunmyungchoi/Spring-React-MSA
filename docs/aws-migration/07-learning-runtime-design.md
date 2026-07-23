@@ -6,7 +6,7 @@
 >
 > 저장소 상태: Foundation·ECR/OIDC·Private App 송신·RDS/Secrets·ECS Compute·DB Bootstrap/Flyway·Application Runtime·Frontend Hosting·Public Domain/TLS·RDS Restore Drill 코드 적용, AWS DB 서비스 Hikari Pool `5/1` 교정과 Terraform 계약 테스트 38/38 완료
 >
-> AWS 적용 상태: 최초 관리자 Bootstrap Runtime ON과 Private ECS Task 최초 `created`·동일 입력 `already_present`, 실제 `curl.exe` 관리자 OAuth·`ROLE_ADMIN` Session·관리자 1명·공개 가입 `404 RESOURCE_NOT_FOUND`·양쪽 Logout을 검증했다. 후속 Runtime OFF와 Foundation Cleanup, Backup Restore·Cleanup까지 완료했다. Post-Restore Full Smoke Runtime ON Saved Plan을 `40 added, 10 changed, 0 destroyed`로 적용했고 ECS·Container Health 8/8, ASG `1/1/2`, RDS·Valkey, HTTPS 12/12, Member/Admin OAuth·Session·WebSocket·REST·SNS와 동일 입력 `No changes`를 확인했다. 최종 Runtime OFF Saved Plan도 승인된 SHA-256 그대로 `0 added, 10 changed, 40 destroyed`로 적용했다. 이어 AWS DB 서비스 Hikari Pool `5/1` Foundation Plan을 `3 added, 3 changed, 3 destroyed`로 적용했다. 현재 ECS·ASG·Task·Container Instance·ALB·Valkey·Runtime Alarm은 0, RDS는 `stopped`, State serial 108이며 동일 OFF 입력은 `No changes`다.
+> AWS 적용 상태: 최초 관리자 Bootstrap과 Backup Restore·Cleanup, Post-Restore Full Smoke와 최종 Runtime OFF를 완료했다. 이어 AWS DB 서비스 Hikari Pool `5/1` Foundation Plan을 `3/3/3`, 재측정 Runtime ON Plan을 `40/11/0`으로 적용했다. 현재 ECS·Container Health 8/8, ASG `1/1/2`, ALB Target 2/2, RDS·Valkey `available`, Runtime Alarm 29/29 `OK`, State serial 113이며 동일 ON 입력은 `No changes`다. 30분 지표와 Member/Admin OAuth·Session·WebSocket·REST·SNS Smoke는 통과했다. Pool은 Connection을 안정 구간 3으로 줄였지만 FreeableMemory Alarm은 실측에 따라 `ALARM`이므로 Runtime OFF 뒤 DB Class와 Alarm을 별도 결정한다.
 
 이 문서는 AWS Foundation 이후 Learning 환경에 추가할 Runtime의 승인된 결정을 기록한다. 현재 적용된 리소스와 운영 절차는 [Terraform 운영 Runbook](../../infra/aws/terraform/README.md), 이미 적용된 네트워크 기준선은 [AWS Foundation 설계](04-aws-foundation-design.md)를 따른다.
 
@@ -307,8 +307,8 @@ Learning에서 적용할 복구 기준은 다음으로 제한한다.
 14. 완료: 원본 Full Smoke Runtime ON Plan `40/10/0` 적용, HTTPS/OAuth/Session/WebSocket/REST/SNS·`No changes` 검증
 15. 완료: 최종 Runtime OFF Plan `0/10/40` 적용, ECS·ASG·ALB·Valkey·Runtime Alarm 0, 원본 RDS 정지, 정적 curl 6/6·OFF API 502·State serial 107 `No changes`
 16. 완료: RDS 메모리 실측 분석, AWS DB 서비스 Hikari Pool `5/1` 교정·38/38 테스트·Commit/Push·Runtime OFF Foundation Plan `3/3/3` 적용, State serial 108·OFF `No changes`
-17. 진행 중: Hikari `5/1` Runtime ON 최소 30분 재측정 사전 점검·38/38 테스트·비용 검토와 Saved Plan `40/11/0` 생성 완료, Apply 승인 대기
-18. 다음: 승인된 Runtime ON Apply·30분 RDS 지표·Full curl/SNS Alarm Smoke 후 별도 Runtime OFF·RDS 정지
+17. 완료: Hikari `5/1` Runtime ON Plan `40/11/0` 적용, 30분 RDS 지표·Full curl/WebSocket/SNS Alarm·ON `No changes` 검증, State serial 113
+18. 다음: Hikari 재측정 Runtime OFF Saved Plan 생성·적용과 RDS 정지, 이후 DB Class·Alarm·Member BFF Prometheus 별도 결정
 
 각 단계는 `fmt`, `validate`, `test`, 저장 Plan 검토, 비용 확인과 명시적 Apply 승인을 거친다. 뒤 단계 리소스를 앞 단계 Plan에 섞지 않는다.
 
@@ -337,6 +337,7 @@ Runtime ON 검증 이후 남은 작업은 다음과 같다.
 - 완료: 원본 RDS 시작·Runtime ON Apply·전체 curl Smoke와 실제 RDS Memory Alarm 확인
 - 완료: 최종 Runtime OFF Saved Plan `0/10/40` 적용, 원본 RDS 정지와 동일 OFF 입력 `No changes`
 - 완료: RDS 메모리 분석과 Hikari Pool `5/1` Runtime OFF Foundation 적용, State serial 108·동일 OFF 입력 `No changes`
-- 다음: 별도 승인으로 Runtime ON 최소 30분 동안 Connection·FreeableMemory·Swap·Hikari Timeout을 재측정한 뒤 Runtime OFF·RDS 정지
+- 완료: Hikari `5/1` Runtime ON 최소 30분 Connection·FreeableMemory·Swap·Hikari Timeout 재측정과 전체 Smoke
+- 다음: 별도 승인으로 Runtime OFF Saved Plan을 생성·적용하고 RDS 정지, DB Class·Alarm·Member BFF Prometheus는 별도 결정
 
-CloudWatch Log 보존 기간은 7일로 코드와 계약 테스트에 고정했고 Frontend 독립 배포, HTTPS/DNS, Public Domain Runtime ON Full Smoke, Alarm과 Watchdog을 AWS에 적용·검증했다. 관리자 Bootstrap도 AWS Build Once·Promote, Foundation·Runtime ON, 일회성·멱등 Task, 공개 OAuth·Session·404 Smoke, Runtime OFF와 임시 Foundation Cleanup까지 완료했다. Backup Restore는 [격리 복원 계획](../plans/2026-07-23-backup-restore-plan.md), 사전 점검, Terraform 격리 구조·Validator, 전체 38개 계약 테스트, 감사 Foundation Apply, Restore ON 적용, 읽기 전용 검증, 복원 DB 즉시 정지와 Cleanup까지 완료했다. 원본 Full Smoke도 HTTPS/OAuth/Session/WebSocket/REST/SNS와 `No changes`까지 완료했고, 최종 Runtime OFF·RDS 정지·OFF `No changes`로 전체 AWS 단계가 수렴했다. 다음 ON 전 RDS 메모리와 Alarm 정책을 별도 검토한다.
+CloudWatch Log 보존 기간은 7일로 코드와 계약 테스트에 고정했고 Frontend 독립 배포, HTTPS/DNS, Public Domain Runtime ON Full Smoke, Alarm과 Watchdog을 AWS에 적용·검증했다. 관리자 Bootstrap과 Backup Restore·Cleanup, 원본 Full Smoke·최종 Runtime OFF도 완료했다. Hikari 재측정은 Connection 평균 3.87·최대 6·안정 구간 3, FreeableMemory 평균 197.09MiB·최소 190.14MiB, Swap 최대 0.45MiB였고 전체 curl/WebSocket/SNS와 `No changes`를 통과했다. Pool 효과는 확인됐지만 256MiB Alarm은 계속 `ALARM`이므로 비용 종료 후 DB Class와 Alarm을 함께 재검토한다.

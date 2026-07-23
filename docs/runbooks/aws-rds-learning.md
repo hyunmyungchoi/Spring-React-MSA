@@ -2,7 +2,7 @@
 
 > 기준일: 2026-07-23
 >
-> 현재 상태: Terraform/Flyway와 Admin Bootstrap, Backup Restore·Cleanup과 원본 Full Smoke 검증 완료; 최종 Runtime OFF 뒤 원본 RDS `stopped`, 자동 재시작 예정 `2026-07-30 18:44:16.118 KST`, 동일 OFF 입력 `No changes`
+> 현재 상태: Terraform/Flyway, Admin Bootstrap, Backup Restore·Cleanup과 원본 Full Smoke 완료; Hikari `5/1` 재측정 Runtime ON 적용 뒤 원본 RDS `available`, ECS 8/8, State serial 113, 동일 ON 입력 `No changes`; 다음은 Runtime OFF·RDS 정지
 >
 > 범위: Learning 환경의 PostgreSQL 16 RDS 시작·정지, Backup/PITR 확인, Flyway 실패 대응
 
@@ -186,6 +186,8 @@ PITR Restore API는 원본의 Backup Retention 7일을 복원본에 상속한다
 
 2026-07-23 마지막 Runtime ON 구간에서 `FreeableMemory`는 평균 172.56MiB·최소 145.04MiB, `SwapUsage`는 최대 0.98MiB, CPU는 평균 5.68%였다. 세 DB 서비스가 시작된 뒤 `DatabaseConnections=30`이 고정됐으므로 즉시 Class를 올리거나 256MiB Alarm을 낮추기 전에 AWS Runtime의 Hikari Pool을 서비스별 `maximumPoolSize=5`, `minimumIdle=1`로 줄인다.
 
-Pool Foundation은 RDS와 Runtime이 OFF인 상태에서 먼저 적용했다. 검증된 Foundation OFF Plan SHA-256 `56fabf74af8b2f50bf19ca5c1c6200246ddb9855715cc3257a3298d4940b3f87`을 정확히 `3 added, 3 changed, 3 destroyed`로 적용했고 State serial 108, 세 Task Definition Hikari `5/1`, ECS·ASG 0, RDS `stopped`, 동일 OFF 입력 `No changes`를 확인했다. 적용 Plan은 Hash 재검증 뒤 삭제했다. 다음 Runtime ON은 최소 30분 동안 Connection 약 3·상한 15, FreeableMemory 5분 Minimum, SwapUsage, Hikari Timeout을 확인한다. Swap이 지속 증가하거나 Pool 교정 뒤에도 FreeableMemory가 15분 이상 256MiB 이하이면 `db.t4g.small`과 Alarm 임계값을 함께 재검토한다. 상세 실측과 비용 Gate는 [RDS 메모리·연결 풀 교정 계획](../plans/2026-07-23-rds-memory-plan.md)을 따른다.
+Pool Foundation은 RDS와 Runtime이 OFF인 상태에서 먼저 적용했다. 검증된 Foundation OFF Plan SHA-256 `56fabf74af8b2f50bf19ca5c1c6200246ddb9855715cc3257a3298d4940b3f87`을 정확히 `3 added, 3 changed, 3 destroyed`로 적용했고 State serial 108, 세 Task Definition Hikari `5/1`, ECS·ASG 0, RDS `stopped`, 동일 OFF 입력 `No changes`를 확인했다. 적용 Plan은 Hash 재검증 뒤 삭제했다.
 
-재측정 Runtime ON Saved Plan은 State serial 108 기준 `40 add, 11 change, 0 destroy`, SHA-256 `fa6a9c0d9c3facaa4611c4684e6f96bfcfad3a85f8580b0abbdf7a5a1c50e124`다. Runtime 수명주기 범위 외 추가 변경은 AWS 공식 최신 ECS 최적화 AL2023 AMI의 Launch Template 갱신 1건뿐이며 RDS·Secret·Task Definition 변경은 없다. Gate 만료는 `2026-07-24 02:11:56.329 KST`다. RDS 시작과 Apply는 별도 승인 전 수행하지 않는다.
+재측정 Runtime ON Saved Plan SHA-256 `fa6a9c0d9c3facaa4611c4684e6f96bfcfad3a85f8580b0abbdf7a5a1c50e124`을 정확히 `40 added, 11 changed, 0 destroyed`로 적용했다. `01:19~01:48 KST` 30개 1분 지표에서 DatabaseConnections 평균 3.87·최대 6·안정 구간 3, FreeableMemory 평균 197.09MiB·최소 190.14MiB, Swap 최대 0.45MiB, CPU 평균 4.07%였다. 세 DB 서비스 Hikari 시작 완료와 timeout/pool 오류 0건, Stock Pending 0, 전체 인증·REST Smoke를 확인했다. State serial 113, 동일 ON 입력은 `No changes`다.
+
+Pool 교정은 성공했지만 FreeableMemory 30/30점이 256MiB 아래여서 Alarm은 실제 `ALARM`이다. Alarm만 낮추지 않고 `db.t4g.small`과 기준선 기반 Alarm 재설계를 별도 결정으로 함께 검토한다. Member BFF `/actuator/prometheus`의 500 `INTERNAL_SERVER_ERROR`도 별도 진단 대상으로 남긴다. 먼저 별도 승인으로 Runtime OFF·RDS 정지를 완료하며, 상세 실측과 비용 Gate는 [RDS 메모리·연결 풀 교정 계획](../plans/2026-07-23-rds-memory-plan.md)을 따른다.
