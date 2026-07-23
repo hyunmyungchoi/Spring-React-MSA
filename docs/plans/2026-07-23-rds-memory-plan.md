@@ -2,7 +2,7 @@
 
 - 작성일: 2026-07-23
 - 대상: AWS Learning PostgreSQL 16.14 `db.t4g.micro`
-- 상태: 과거 지표 분석·Hikari 교정 코드·Terraform 계약 테스트·Runtime OFF Saved Plan 검증 완료, Commit/Push·Apply 대기
+- 상태: Hikari 교정 코드·38/38 테스트·Commit/Push·Runtime OFF Foundation 적용·OFF 재계획 검증 완료
 - 원칙: RDS와 Runtime을 켜지 않고 Foundation을 먼저 교정하며, 256MiB Alarm과 DB Class는 재측정 전 변경하지 않는다.
 
 ## 1. 문제
@@ -95,6 +95,20 @@ Apply 직전 Source Commit/Push, Plan SHA-256, State serial 107, 운영 Gate와 
 
 `RDS Hikari Pool 5/1 교정 Commit/Push + Foundation OFF Plan 56fabf74af8b2f50bf19ca5c1c6200246ddb9855715cc3257a3298d4940b3f87 적용 승인`
 
+### 6.1 실행 결과
+
+- 코드·테스트 Commit: `629f2fbd2b72771c316678e4943083c7c46f89fe`
+- 계획 문서 Commit: `adb4d8a18b9da0d53e756dfc0b3ad14cc8eb08ea`
+- 두 Commit을 `master`에 Push한 뒤 원격 HEAD 일치를 확인했다.
+- Apply 직전 Plan SHA-256, State serial 107, 운영 Gate, ECS `0/0/0`, ASG `0/0/0`, RDS `stopped`를 재검증했다.
+- 승인 Plan을 정확히 `3 added, 3 changed, 3 destroyed`로 적용했다. Destroy 3개는 이전 Task Definition Revision 등록 해제다.
+- State serial은 108로 증가했다.
+- `user-service:3`, `stock-service:3`, `member-bff:4`가 Hikari `maximumPoolSize=5`, `minimumIdle=1`을 포함하며 각 ECS Service가 해당 Revision을 참조한다.
+- 나머지 다섯 Task Definition에는 두 Hikari 환경 변수가 없음을 확인했다.
+- ECS Service 8개 `0/0/0`, ASG `0/0/0`, RDS `stopped`, Valkey·ALB Target Group·Runtime Alarm 0을 유지했다.
+- 현재 Image 8개와 동일 OFF 입력의 재계획은 `exit 0`, `No changes`였다.
+- 적용한 Saved Plan은 같은 SHA-256을 다시 확인한 뒤 삭제했다.
+
 ## 7. 다음 Runtime ON 판정
 
 교정 Foundation 적용 후 별도 승인으로 Runtime을 켜고 최소 30분 동안 다음을 확인한다.
@@ -107,3 +121,7 @@ Apply 직전 Source Commit/Push, Plan SHA-256, State serial 107, 운영 Gate와 
 - FreeableMemory Alarm 상태와 SNS 전달
 
 검증 후 Runtime을 다시 OFF하고 RDS를 정지한다. 최종 Class 또는 Alarm 변경은 이 재측정 결과로만 결정한다.
+
+다음 승인 문구:
+
+`RDS Hikari Pool 5/1 Runtime ON 30분 재측정 사전 점검 + Saved Plan 생성 승인`

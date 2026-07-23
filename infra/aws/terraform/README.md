@@ -1,6 +1,6 @@
 # AWS Terraform 운영 Runbook
 
-이 디렉터리는 `spring-react-msa` 학습 환경의 현재 AWS 인프라를 관리한다. 기본 리전은 `ap-northeast-2`다. Foundation 기준선, Backend ECR/GitHub OIDC, Private App 송신, RDS/Secrets Data Layer, ECS Compute, Database Bootstrap·Flyway Migration, Application·Frontend·Public Domain Foundation과 Runtime 관측성 수명주기·알림 전용 Watchdog을 Apply했다. Backup Restore·Cleanup과 원본 HTTPS/OAuth/Session/WebSocket/REST/SNS Full Smoke를 완료한 뒤 최종 Runtime OFF Plan `0/10/40`을 적용했다. 현재 ECS Service·Task·Container Instance·ASG Instance·Public ALB·Valkey·`origin`·Runtime Alarm은 0, Container Insights는 `disabled`, 원본 RDS는 `stopped`다. Frontend S3 6개·CloudFront 2개, SNS Email Subscription, RDS Alarm 3개·Watchdog Alarm 3개, Cloud Map Service와 Digest 고정 Task Definition 8개, Restore 감사 Log를 유지한다. State serial 107에서 RDS FreeableMemory·Swap·Connection을 분석해 AWS DB 서비스 Hikari Pool `5/1` 교정 코드와 38/38 테스트를 완료했으며 Runtime OFF Foundation 적용은 아직 하지 않았다. 후속 Runtime의 승인된 목표와 미구현 경계는 [AWS Learning Runtime 결정](../../../docs/aws-migration/07-learning-runtime-design.md)을 따른다.
+이 디렉터리는 `spring-react-msa` 학습 환경의 현재 AWS 인프라를 관리한다. 기본 리전은 `ap-northeast-2`다. Foundation 기준선, Backend ECR/GitHub OIDC, Private App 송신, RDS/Secrets Data Layer, ECS Compute, Database Bootstrap·Flyway Migration, Application·Frontend·Public Domain Foundation과 Runtime 관측성 수명주기·알림 전용 Watchdog을 Apply했다. Backup Restore·Cleanup과 원본 HTTPS/OAuth/Session/WebSocket/REST/SNS Full Smoke를 완료한 뒤 최종 Runtime OFF Plan `0/10/40`을 적용했다. 이어 AWS DB 서비스 Hikari Pool `5/1` Foundation Plan을 `3/3/3`으로 적용했다. 현재 ECS Service·Task·Container Instance·ASG Instance·Public ALB·Valkey·`origin`·Runtime Alarm은 0, Container Insights는 `disabled`, 원본 RDS는 `stopped`다. Frontend S3 6개·CloudFront 2개, SNS Email Subscription, RDS Alarm 3개·Watchdog Alarm 3개, Cloud Map Service와 Digest 고정 Task Definition 8개, Restore 감사 Log를 유지한다. State serial은 108이고 동일 OFF 입력 재계획은 `No changes`다. 후속 Runtime의 승인된 목표와 미구현 경계는 [AWS Learning Runtime 결정](../../../docs/aws-migration/07-learning-runtime-design.md)을 따른다.
 
 ## 현재 상태와 범위
 
@@ -618,6 +618,7 @@ Post-Restore Full Smoke Runtime ON Saved Plan `tfplan-post-restore-full-smoke-ru
 12. 완료: Backup Restore 사전 점검·격리 Terraform·38/38 계약 테스트·감사 Foundation Apply·Restore ON `11/0/0` 적용·읽기 전용 검증·복원 DB 정지·Cleanup `0/0/11`·임시 리소스 0·`No changes`
 13. 완료: 원본 Full Smoke Runtime ON Plan `40/10/0` 적용, ECS/ALB/Valkey/RDS, HTTPS 12/12·Member/Admin OAuth·Session·WebSocket·REST·SNS Alarm·`No changes` 검증
 14. 완료: Post-Restore Full Smoke 최종 Runtime OFF Plan `0/10/40` 적용, ECS/ASG/ALB/Valkey/Runtime Alarm 0, RDS 정지, curl 6/6·OFF API 502·State serial 107 `No changes`
-15. 진행 중: RDS 메모리·Connection 분석, AWS DB 서비스 Hikari Pool `5/1` 교정·38/38 테스트와 Runtime OFF Foundation Plan `3/3/3` 검증 완료, Commit/Push·Apply 대기
+15. 완료: RDS 메모리·Connection 분석, AWS DB 서비스 Hikari Pool `5/1` 교정·38/38 테스트·Commit/Push·Runtime OFF Foundation Plan `3/3/3` 적용, State serial 108·OFF `No changes`
+16. 다음: 별도 Saved Plan 승인으로 Runtime ON 최소 30분 재측정 후 Runtime OFF·RDS 정지
 
 Kubernetes↔AWS DR은 Learning 적용 범위에서 제외하고 후속 학습 과제로 보류한다.

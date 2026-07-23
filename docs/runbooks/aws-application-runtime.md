@@ -2,7 +2,7 @@
 
 이 Runbook은 Backend 8개의 ECS Application Foundation과 짧은 Runtime ON/OFF 검증 순서를 정의한다. 실제 Secret 값, Account ID, ECR Digest와 저장 Plan 파일은 문서나 Git에 기록하지 않는다.
 
-> 실행 상태(2026-07-23): Restore Drill·Cleanup 후 원본 Full Smoke Runtime ON `40/10/0`과 전체 curl Smoke를 완료했다. 이어 승인된 최종 Runtime OFF Saved Plan을 정확히 `0/10/40`으로 적용했다. 현재 ECS Service Desired·Running·Pending, Task·Container Instance·ASG Instance, ALB·Valkey·`origin`·Runtime Alarm은 모두 0이고 Container Insights는 `disabled`다. 원본 RDS는 `stopped`, Cloud Map Service 8개·등록 0과 Digest Task Definition 8개를 유지한다. State serial 107의 OFF 기준에서 RDS 메모리 분석과 AWS DB 서비스 Hikari Pool `5/1` 교정 코드·38/38 테스트를 완료했다. Foundation OFF Plan SHA-256 `56fabf74af8b2f50bf19ca5c1c6200246ddb9855715cc3257a3298d4940b3f87`은 적용 대기다.
+> 실행 상태(2026-07-23): Restore Drill·Cleanup 후 원본 Full Smoke Runtime ON `40/10/0`과 전체 curl Smoke를 완료했다. 이어 승인된 최종 Runtime OFF Saved Plan을 정확히 `0/10/40`으로 적용했다. RDS 메모리 분석 후 AWS DB 서비스 Hikari Pool `5/1` Foundation Plan도 정확히 `3/3/3`으로 적용했다. 현재 ECS Service Desired·Running·Pending, Task·Container Instance·ASG Instance, ALB·Valkey·`origin`·Runtime Alarm은 모두 0이고 Container Insights는 `disabled`다. 원본 RDS는 `stopped`, Cloud Map Service 8개·등록 0과 Digest Task Definition 8개를 유지한다. State serial은 108이며 동일 OFF 입력은 `No changes`다.
 
 ## 적용 단위
 
