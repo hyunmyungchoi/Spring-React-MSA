@@ -2,7 +2,7 @@
 
 - 작성일: 2026-07-23
 - 대상: AWS Learning PostgreSQL 16.14 `db.t4g.micro`
-- 상태: Hikari 교정 코드·38/38 테스트·Runtime OFF Foundation 적용·Runtime ON 30분 재측정·Full curl/SNS Smoke 완료, Runtime OFF 승인 대기
+- 상태: Hikari 교정 코드·38/38 테스트·Runtime OFF Foundation 적용·Runtime ON 30분 재측정·Full curl/SNS Smoke·후속 Runtime OFF·RDS 정지 완료, 잔여 결정 대기
 - 원칙: Pool 효과와 RDS Class·Alarm 판단을 분리하고, 256MiB Alarm이나 DB Class를 재측정 결과 없이 변경하지 않는다.
 
 ## 1. 문제
@@ -242,3 +242,20 @@ Apply 직전 Source Commit·원격 HEAD, Plan SHA-256, State serial 113, Gate와
 다음 적용 승인 문구:
 
 `Hikari 5/1 재측정 Runtime OFF Plan 5e3f9b9a03dceab9eb57491b57b05a8c090693c2c41c10f047ee2c9b86cd779d 적용 + ECS/ASG/ALB/Valkey/Runtime Alarm 종료 + RDS 정지 승인`
+
+### 9.1 Runtime OFF 적용 결과
+
+2026-07-24 Apply 직전 Plan SHA-256, State serial 113, Git `master`·원격 HEAD, 운영 Gate와 실제 Runtime ON 상태를 다시 확인했다. 승인된 Saved Plan을 정확히 `0 added, 10 changed, 40 destroyed`로 적용했다.
+
+- ECS Service 8개 `0/0/0`, Running/Pending Task 0
+- ASG `0/0/0`, EC2·Active Container Instance 0
+- Public ALB·HTTPS Listener·Host Rule·`origin` Route 53 Record 0
+- Valkey·Redis Host Parameter와 Runtime Alarm 29개 0
+- Container Insights `disabled`
+- RDS·Task Definition 8개·Secret·Frontend S3 6개/CloudFront 2개·SNS 확인 구독·RDS Alarm 3개·Watchdog Alarm 3개·Restore 감사 Log 보존
+
+ASG는 ECS Managed Draining 뒤 마지막 Instance가 `Terminating:Proceed`를 거쳐 제거됐다. 원본 RDS는 별도 Stop API 호출 뒤 `2026-07-24 02:40:45 KST`에 `stopped`가 됐다. 삭제 보호와 Backup Retention 7일을 유지하며 자동 재시작 예정은 `2026-07-31 02:40:28.880 KST`다.
+
+최종 Remote State는 serial 119·주소 249개다. Saved Plan의 동일 입력을 메모리에서 재사용한 사후 Plan은 `exit 0`, `No changes`였고 Cloud Map `failure_threshold` Provider deprecation 경고만 남았다. 정적 curl은 Member Root·Community·Stock과 Admin Root·Users·Logs 6/6 HTTP 200, Root 308, Member/Admin API는 Runtime OFF 계약대로 502였다.
+
+다음 단계는 Runtime OFF와 분리해 `db.t4g.small` 전환 여부·FreeableMemory Alarm 기준선·Member BFF `/actuator/prometheus` 500을 진단하고 결정하는 것이다.
