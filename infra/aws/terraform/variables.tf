@@ -86,6 +86,84 @@ variable "enable_data_layer" {
   default     = false
 }
 
+variable "enable_rds_restore_drill_foundation" {
+  description = "Whether to retain the seven-day RDS restore drill audit log group while Runtime is OFF."
+  type        = bool
+  default     = false
+}
+
+variable "rds_restore_drill_enabled" {
+  description = "Whether to create the temporary isolated PITR database and Fargate validator."
+  type        = bool
+  default     = false
+
+  validation {
+    condition = !var.rds_restore_drill_enabled || (
+      var.enable_rds_restore_drill_foundation &&
+      var.enable_data_layer &&
+      var.enable_ecs_compute_foundation &&
+      var.enable_nat_gateway &&
+      !var.learning_runtime_enabled
+    )
+    error_message = "rds_restore_drill_enabled requires the restore audit foundation, data layer, ECS compute foundation, NAT, and Learning Runtime OFF."
+  }
+}
+
+variable "rds_restore_drill_identifier" {
+  description = "Unique target identifier for the temporary PITR database."
+  type        = string
+  default     = "spring-react-msa-learning-postgres-restore-drill"
+
+  validation {
+    condition = (
+      length(var.rds_restore_drill_identifier) >= 1 &&
+      length(var.rds_restore_drill_identifier) <= 63 &&
+      can(regex("^[a-z][a-z0-9-]*$", var.rds_restore_drill_identifier)) &&
+      !endswith(var.rds_restore_drill_identifier, "-") &&
+      !strcontains(var.rds_restore_drill_identifier, "--")
+    )
+    error_message = "rds_restore_drill_identifier must satisfy the RDS 1-63 character lowercase identifier contract."
+  }
+}
+
+variable "rds_restore_drill_use_latest_restorable_time" {
+  description = "Whether the restore drill uses the latest available PITR time."
+  type        = bool
+  default     = true
+
+  validation {
+    condition     = !var.rds_restore_drill_enabled || var.rds_restore_drill_use_latest_restorable_time
+    error_message = "The Learning restore drill must use the latest restorable time."
+  }
+}
+
+variable "rds_restore_drill_expires_at_utc" {
+  description = "Operator-supplied RFC3339 UTC expiry tag required only while the temporary restore is enabled."
+  type        = string
+  default     = null
+  nullable    = true
+
+  validation {
+    condition = !var.rds_restore_drill_enabled || (
+      var.rds_restore_drill_expires_at_utc != null &&
+      can(formatdate("YYYY-MM-DD'T'hh:mm:ss'Z'", var.rds_restore_drill_expires_at_utc)) &&
+      endswith(var.rds_restore_drill_expires_at_utc, "Z")
+    )
+    error_message = "rds_restore_drill_enabled requires rds_restore_drill_expires_at_utc as an RFC3339 UTC timestamp ending in Z."
+  }
+}
+
+variable "rds_restore_drill_validator_image" {
+  description = "Immutable public ECR PostgreSQL client image used by the read-only Fargate validator."
+  type        = string
+  default     = "public.ecr.aws/docker/library/postgres@sha256:7a396fd264a2067788b6551122b50f162bf6136312c7fc9d74381cb92c648382"
+
+  validation {
+    condition     = can(regex("^public\\.ecr\\.aws/.+@sha256:[0-9a-f]{64}$", var.rds_restore_drill_validator_image))
+    error_message = "rds_restore_drill_validator_image must be pinned to an immutable public ECR digest."
+  }
+}
+
 variable "enable_observability_foundation" {
   description = "Whether to create the persistent SNS operations channel, RDS alarms, and RDS event subscription."
   type        = bool

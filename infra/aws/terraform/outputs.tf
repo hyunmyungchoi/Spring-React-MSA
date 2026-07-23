@@ -94,6 +94,29 @@ output "application_secret_arns" {
   value       = module.data_layer.application_secret_arns
 }
 
+output "rds_restore_drill_audit_log_group_name" {
+  description = "Persistent restore drill audit log group, or null when its foundation is disabled."
+  value       = module.rds_restore_drill.audit_log_group_name
+}
+
+output "rds_restore_drill_db_identifier" {
+  description = "Temporary restored DB identifier, or null while the drill is disabled."
+  value       = module.rds_restore_drill.restored_db_identifier
+}
+
+output "rds_restore_drill_db_address" {
+  description = "Private temporary restored DB endpoint, or null while the drill is disabled."
+  value       = module.rds_restore_drill.restored_db_address
+}
+
+output "rds_restore_drill_validator_run_configuration" {
+  description = "Non-secret Fargate RunTask inputs for the restore validator, or null while disabled."
+  value = var.rds_restore_drill_enabled ? merge(
+    module.rds_restore_drill.validator_run_configuration,
+    { cluster_name = module.ecs_compute[0].cluster_name },
+  ) : null
+}
+
 output "operations_sns_topic_arn" {
   description = "Operations SNS topic ARN, or null when the observability foundation is disabled."
   value       = try(module.observability[0].operations_sns_topic_arn, null)

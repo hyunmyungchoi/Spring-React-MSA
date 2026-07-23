@@ -9,9 +9,16 @@ private_data_subnet_cidrs = ["10.20.20.0/24", "10.20.21.0/24"]
 
 enable_nat_gateway = false
 enable_data_layer  = false
+enable_rds_restore_drill_foundation = false
+rds_restore_drill_enabled           = false
 enable_observability_foundation = false
 enable_runtime_observability    = false
 enable_runtime_watchdog         = false
+
+# Set only for an approved temporary restore run. Keep null while the drill is OFF.
+rds_restore_drill_identifier                 = "spring-react-msa-learning-postgres-restore-drill"
+rds_restore_drill_use_latest_restorable_time = true
+rds_restore_drill_expires_at_utc             = null
 
 # Alert-only Watchdog defaults. It observes state and never starts or stops Runtime resources.
 runtime_watchdog_schedule_expression         = "rate(15 minutes)"

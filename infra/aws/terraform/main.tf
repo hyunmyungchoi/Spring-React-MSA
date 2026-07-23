@@ -81,6 +81,33 @@ module "data_layer" {
   common_tags              = local.common_tags
 }
 
+module "rds_restore_drill" {
+  source = "./modules/rds-restore-drill"
+
+  name_prefix                    = local.name_prefix
+  aws_region                     = var.aws_region
+  foundation_enabled             = var.enable_rds_restore_drill_foundation
+  restore_enabled                = var.rds_restore_drill_enabled
+  data_layer_enabled             = var.enable_data_layer
+  ecs_compute_foundation_enabled = var.enable_ecs_compute_foundation
+  nat_gateway_enabled            = var.enable_nat_gateway
+  application_runtime_enabled    = var.learning_runtime_enabled
+  vpc_id                         = module.network.vpc_id
+  vpc_cidr                       = var.vpc_cidr
+  private_app_subnet_ids         = module.network.private_app_subnet_ids
+  source_db_instance_identifier  = module.data_layer.db_instance_identifier
+  source_master_secret_arn       = nonsensitive(module.data_layer.master_user_secret_arn)
+  db_subnet_group_name           = module.data_layer.db_subnet_group_name
+  db_parameter_group_name        = module.data_layer.db_parameter_group_name
+  db_name                        = module.data_layer.db_name
+  db_instance_class              = var.db_instance_class
+  restore_identifier             = var.rds_restore_drill_identifier
+  use_latest_restorable_time     = var.rds_restore_drill_use_latest_restorable_time
+  expires_at_utc                 = var.rds_restore_drill_expires_at_utc
+  validator_image                = var.rds_restore_drill_validator_image
+  common_tags                    = local.common_tags
+}
+
 module "observability" {
   count  = var.enable_observability_foundation ? 1 : 0
   source = "./modules/observability"
