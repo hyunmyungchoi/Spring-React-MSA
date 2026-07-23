@@ -81,6 +81,7 @@
 - [관측성 계획](plans/2026-07-17-observability-plan.md)
 - [Kubernetes↔AWS DR 계획](plans/2026-07-17-k8s-aws-dr-plan.md)
 - [AWS RDS Backup Restore 계획](plans/2026-07-23-backup-restore-plan.md)
+- [AWS RDS 메모리·연결 풀 교정 계획](plans/2026-07-23-rds-memory-plan.md)
 
 ### Runbooks
 

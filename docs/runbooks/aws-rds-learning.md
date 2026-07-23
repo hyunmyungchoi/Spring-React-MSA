@@ -180,4 +180,10 @@ PITR Restore API는 원본의 Backup Retention 7일을 복원본에 상속한다
 - 완료: Cleanup Saved Plan 242,611 bytes, SHA-256 `f01c5588a23810ae038f6e12128c9bd51181179e89616aa4553f4c95c22bc875`, `0 add, 0 change, 11 destroy` 검증
 - 완료: 승인된 Cleanup Plan `0 added, 0 changed, 11 destroyed` 적용, 복원 RDS·SG·IAM·활성 Task Definition·Automated Backup 0 확인
 - 완료: 감사 Log 보존 7일, State 249개·Restore Drill 주소 1개, 동일 Cleanup 입력 `No changes`, 적용 Plan 삭제
-- 원본 RDS를 사용하는 최종 전체 Runtime Smoke 후 Runtime OFF·RDS 정지
+- 완료: 원본 RDS를 사용하는 최종 전체 Runtime Smoke 후 Runtime OFF·RDS 정지
+
+## 9. FreeableMemory와 Hikari Pool 판정
+
+2026-07-23 마지막 Runtime ON 구간에서 `FreeableMemory`는 평균 172.56MiB·최소 145.04MiB, `SwapUsage`는 최대 0.98MiB, CPU는 평균 5.68%였다. 세 DB 서비스가 시작된 뒤 `DatabaseConnections=30`이 고정됐으므로 즉시 Class를 올리거나 256MiB Alarm을 낮추기 전에 AWS Runtime의 Hikari Pool을 서비스별 `maximumPoolSize=5`, `minimumIdle=1`로 줄인다.
+
+Pool Foundation은 RDS와 Runtime이 OFF인 상태에서 먼저 적용한다. 검증된 Foundation OFF Plan SHA-256은 `56fabf74af8b2f50bf19ca5c1c6200246ddb9855715cc3257a3298d4940b3f87`이며 세 Task Definition 교체와 세 Service 참조 갱신만 포함한다. 다음 Runtime ON은 최소 30분 동안 Connection 약 3·상한 15, FreeableMemory 5분 Minimum, SwapUsage, Hikari Timeout을 확인한다. Swap이 지속 증가하거나 Pool 교정 뒤에도 FreeableMemory가 15분 이상 256MiB 이하이면 `db.t4g.small`과 Alarm 임계값을 함께 재검토한다. 상세 실측과 비용 Gate는 [RDS 메모리·연결 풀 교정 계획](../plans/2026-07-23-rds-memory-plan.md)을 따른다.
