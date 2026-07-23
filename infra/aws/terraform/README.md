@@ -1,6 +1,6 @@
 # AWS Terraform 운영 Runbook
 
-이 디렉터리는 `spring-react-msa` 학습 환경의 현재 AWS 인프라를 관리한다. 기본 리전은 `ap-northeast-2`다. Foundation 기준선부터 Backup Restore·Cleanup, 원본 Full Smoke·최종 Runtime OFF, AWS DB 서비스 Hikari Pool `5/1` Foundation까지 적용했다. Hikari 재측정 Runtime ON Plan도 `40/11/0`으로 적용해 30분 RDS 지표와 HTTPS/OAuth/Session/WebSocket/REST/SNS Smoke를 완료했다. 현재 ECS Service 8개 `1/1/0`, Task Health 8/8, ASG `1/1/2`, Public ALB Target 2/2, RDS·Valkey `available`, Runtime Alarm 29/29 `OK`다. RDS FreeableMemory Alarm은 `ALARM`, State serial은 113·주소는 289개이며 동일 ON 입력은 `No changes`다. 다음 단계는 Runtime OFF Saved Plan 생성·적용과 RDS 정지다. 후속 Runtime의 승인된 목표와 미구현 경계는 [AWS Learning Runtime 결정](../../../docs/aws-migration/07-learning-runtime-design.md)을 따른다.
+이 디렉터리는 `spring-react-msa` 학습 환경의 현재 AWS 인프라를 관리한다. 기본 리전은 `ap-northeast-2`다. Hikari `5/1` 재측정 Runtime ON과 30분 HTTPS/OAuth/Session/WebSocket/REST/SNS Smoke를 완료했다. 현재 ECS Service 8개 `1/1/0`, ASG `1/1/2`, RDS·Valkey `available`, Runtime Alarm 29/29 `OK`, RDS FreeableMemory Alarm `ALARM`, State serial 113이다. Runtime OFF Saved Plan `0/10/40`, SHA-256 `5e3f9b9a03dceab9eb57491b57b05a8c090693c2c41c10f047ee2c9b86cd779d`을 생성·검증했고 Apply 승인을 기다린다. Plan은 Runtime 실행 리소스만 종료하며 RDS 정지는 수렴 뒤 별도 API로 수행한다. 후속 Runtime의 승인된 목표와 미구현 경계는 [AWS Learning Runtime 결정](../../../docs/aws-migration/07-learning-runtime-design.md)을 따른다.
 
 ## 현재 상태와 범위
 
@@ -620,6 +620,7 @@ Post-Restore Full Smoke Runtime ON Saved Plan `tfplan-post-restore-full-smoke-ru
 14. 완료: Post-Restore Full Smoke 최종 Runtime OFF Plan `0/10/40` 적용, ECS/ASG/ALB/Valkey/Runtime Alarm 0, RDS 정지, curl 6/6·OFF API 502·State serial 107 `No changes`
 15. 완료: RDS 메모리·Connection 분석, AWS DB 서비스 Hikari Pool `5/1` 교정·38/38 테스트·Commit/Push·Runtime OFF Foundation Plan `3/3/3` 적용, State serial 108·OFF `No changes`
 16. 완료: Hikari `5/1` Runtime ON Plan `40/11/0` 적용, 30분 Connection·FreeableMemory·Swap·CPU, Full curl/WebSocket/SNS Alarm, State serial 113·ON `No changes` 검증
-17. 다음: Hikari 재측정 Runtime OFF Saved Plan 생성·적용과 RDS 정지, 이후 DB Class·Alarm·Member BFF Prometheus 별도 결정
+17. 진행 중: Hikari 재측정 Runtime OFF Saved Plan `0/10/40` 생성·검증 완료, SHA-256 `5e3f9b9a03dceab9eb57491b57b05a8c090693c2c41c10f047ee2c9b86cd779d` Apply 승인 대기
+18. 다음: 승인 Plan 적용·Runtime 리소스 종료·RDS 정지, 이후 DB Class·Alarm·Member BFF Prometheus 별도 결정
 
 Kubernetes↔AWS DR은 Learning 적용 범위에서 제외하고 후속 학습 과제로 보류한다.

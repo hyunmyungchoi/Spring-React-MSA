@@ -204,3 +204,41 @@ Hikari 교정 자체는 성공했다. 그러나 FreeableMemory 30/30점이 256Mi
 다음 승인 문구:
 
 `Hikari 5/1 재측정 Runtime OFF·RDS 정지 사전 점검 + Saved Plan 생성 승인`
+
+## 9. Runtime OFF Saved Plan
+
+2026-07-24 사전 점검에서 Git `master`와 원격 HEAD는 실행 기록 Commit `33e808e2ba4817d1dfce841e606d792442196567`로 일치했고 작업 폴더는 깨끗했다. Remote State serial은 113, 주소는 289개였다. ECS Service 8개 `1/1/0`, ASG `1/1/2`·Instance 1, RDS `available`, Runtime Alarm 29/29 `OK`, RDS FreeableMemory Alarm `ALARM`을 확인했다. 이전 Runtime ON Plan과 새 OFF Plan 파일은 모두 없고 Terraform 실행 프로세스도 0이었다.
+
+검증 결과:
+
+- `terraform fmt -check -recursive` 통과
+- `terraform validate` 통과
+- 전체 Terraform 계약 테스트 `38 passed, 0 failed`
+- 활성 Task Definition과 ECR Digest 고정 Image 8/8
+- `user-service`, `stock-service`, `member-bff`에만 Hikari `5/1`
+- Stock Client ID는 존재 여부만 확인하고 값을 출력하지 않음
+- Application·Frontend·Public Domain·Observability·Watchdog·Restore 감사 Foundation 보존
+
+검증된 Runtime OFF Saved Plan:
+
+- 파일: `tfplan-rds-hikari-runtime-off`
+- 크기: 251,142 bytes
+- SHA-256: `5e3f9b9a03dceab9eb57491b57b05a8c090693c2c41c10f047ee2c9b86cd779d`
+- 생성 시각: `2026-07-24 02:05:38.853 KST`
+- 운영 Gate 만료: `2026-07-24 03:35:38.853 KST`
+- 생성 기준 State serial: 113
+- 변경: `0 add, 10 change, 40 destroy`, 교체 0
+- 갱신: ECS Service 8개 Desired `1 → 0`, ASG Min/Max `1/2 → 0/0`, Container Insights `enabled → disabled`
+- ASG `desired_capacity`는 lifecycle ignore 때문에 Plan에서 `1 → 1`로 보인다. Apply 뒤 ECS Task drain과 Managed Scaling을 기다려 실제 ASG Desired·Instance·Container Instance가 0인지 별도로 검증한다.
+- 삭제: Runtime Alarm 29개, Valkey 관련 6개, Public ALB·HTTPS Listener·Host Rule 2개 등 4개, `origin` Route 53 Record 1개
+- RDS·Task Definition·Secret·Frontend·Watchdog Lambda·Restore 감사 Log 변경 0
+- Redis Password 실제 값은 Plan에 직렬화되지 않음
+- Plan 파일은 Git Ignore 대상이며 저장소에 포함하지 않음
+
+이 Plan은 RDS를 정지하지 않는다. 승인된 Plan Apply와 ECS·ASG·ALB·Valkey·Runtime Alarm 종료를 확인한 뒤 AWS RDS Stop API를 별도로 호출해 `stopped`와 다음 `AutomaticRestartTime`을 기록한다. Apply·RDS 정지 전까지 Runtime은 ON이며 기존 추정 총 USD 0.3767/시간, NAT/EIP를 제외한 증분 약 USD 0.3127/시간이 계속 발생한다.
+
+Apply 직전 Source Commit·원격 HEAD, Plan SHA-256, State serial 113, Gate와 실제 Runtime ON 상태를 다시 확인한다. State·Source가 변하거나 Gate가 만료되면 이 Plan을 적용하지 않고 삭제·재생성한다. OFF Apply에 DB Class·Alarm·Member BFF Prometheus 변경을 섞지 않는다.
+
+다음 적용 승인 문구:
+
+`Hikari 5/1 재측정 Runtime OFF Plan 5e3f9b9a03dceab9eb57491b57b05a8c090693c2c41c10f047ee2c9b86cd779d 적용 + ECS/ASG/ALB/Valkey/Runtime Alarm 종료 + RDS 정지 승인`
