@@ -619,6 +619,7 @@ Post-Restore Full Smoke Runtime ON Saved Plan `tfplan-post-restore-full-smoke-ru
 13. 완료: 원본 Full Smoke Runtime ON Plan `40/10/0` 적용, ECS/ALB/Valkey/RDS, HTTPS 12/12·Member/Admin OAuth·Session·WebSocket·REST·SNS Alarm·`No changes` 검증
 14. 완료: Post-Restore Full Smoke 최종 Runtime OFF Plan `0/10/40` 적용, ECS/ASG/ALB/Valkey/Runtime Alarm 0, RDS 정지, curl 6/6·OFF API 502·State serial 107 `No changes`
 15. 완료: RDS 메모리·Connection 분석, AWS DB 서비스 Hikari Pool `5/1` 교정·38/38 테스트·Commit/Push·Runtime OFF Foundation Plan `3/3/3` 적용, State serial 108·OFF `No changes`
-16. 다음: 별도 Saved Plan 승인으로 Runtime ON 최소 30분 재측정 후 Runtime OFF·RDS 정지
+16. 진행 중: Hikari `5/1` Runtime ON 최소 30분 재측정 사전 점검·38/38 테스트·비용 검토와 Saved Plan `40/11/0` 생성 완료, SHA-256 `fa6a9c0d9c3facaa4611c4684e6f96bfcfad3a85f8580b0abbdf7a5a1c50e124` Apply 승인 대기
+17. 다음: 승인된 Runtime ON Apply·30분 RDS 지표·Full curl/SNS Alarm Smoke 후 별도 Runtime OFF·RDS 정지
 
 Kubernetes↔AWS DR은 Learning 적용 범위에서 제외하고 후속 학습 과제로 보류한다.

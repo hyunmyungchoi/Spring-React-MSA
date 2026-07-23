@@ -2,7 +2,7 @@
 
 이 Runbook은 Backend 8개의 ECS Application Foundation과 짧은 Runtime ON/OFF 검증 순서를 정의한다. 실제 Secret 값, Account ID, ECR Digest와 저장 Plan 파일은 문서나 Git에 기록하지 않는다.
 
-> 실행 상태(2026-07-23): Restore Drill·Cleanup 후 원본 Full Smoke Runtime ON `40/10/0`과 전체 curl Smoke를 완료했다. 이어 승인된 최종 Runtime OFF Saved Plan을 정확히 `0/10/40`으로 적용했다. RDS 메모리 분석 후 AWS DB 서비스 Hikari Pool `5/1` Foundation Plan도 정확히 `3/3/3`으로 적용했다. 현재 ECS Service Desired·Running·Pending, Task·Container Instance·ASG Instance, ALB·Valkey·`origin`·Runtime Alarm은 모두 0이고 Container Insights는 `disabled`다. 원본 RDS는 `stopped`, Cloud Map Service 8개·등록 0과 Digest Task Definition 8개를 유지한다. State serial은 108이며 동일 OFF 입력은 `No changes`다.
+> 실행 상태(2026-07-24): Restore Drill·Cleanup 후 원본 Full Smoke Runtime ON `40/10/0`과 전체 curl Smoke를 완료했다. 이어 승인된 최종 Runtime OFF Saved Plan을 정확히 `0/10/40`으로 적용했다. RDS 메모리 분석 후 AWS DB 서비스 Hikari Pool `5/1` Foundation Plan도 정확히 `3/3/3`으로 적용했다. 현재 ECS Service Desired·Running·Pending, Task·Container Instance·ASG Instance, ALB·Valkey·`origin`·Runtime Alarm은 모두 0이고 Container Insights는 `disabled`다. 원본 RDS는 `stopped`, Cloud Map Service 8개·등록 0과 Digest Task Definition 8개를 유지한다. State serial은 108이며 동일 OFF 입력은 `No changes`다. Hikari `5/1` 최소 30분 재측정 Runtime ON Plan `40/11/0`은 별도 Apply 승인 대기다.
 
 ## 적용 단위
 
@@ -110,6 +110,8 @@ ON Plan 고정비 검토 기준은 대략 다음과 같다.
 - RDS `db.t4g.micro`: USD 0.025/시간, Storage 별도
 
 EC2 1대 기준 합계는 EBS, Secret, Storage, LCU, Data 처리와 전송을 제외하고 약 USD 0.3767/시간이다. 현재도 발생하는 NAT/EIP USD 0.064/시간을 제외한 Runtime ON 증분은 약 USD 0.3127/시간이다. Managed Scaling으로 EC2가 2대가 되면 같은 기준 약 USD 0.6127/시간까지 증가한다. 실제 Price List와 Plan을 다시 확인하고 새 SHA-256 승인을 받은 뒤에만 Apply한다.
+
+> Hikari `5/1` 재측정 Plan 준비 완료(Apply 전): `tfplan-rds-hikari-runtime-on-remeasurement`은 230,686 bytes, SHA-256 `fa6a9c0d9c3facaa4611c4684e6f96bfcfad3a85f8580b0abbdf7a5a1c50e124`, State serial 108 기준 `40 add, 11 change, 0 destroy`다. 기존 Runtime ON 40/10 범위에 AWS 공식 최신 ECS 최적화 AL2023 AMI의 Launch Template 비파괴 갱신 1건이 추가됐다. RDS·Secret·Task Definition 변경은 0이고 Redis Password는 직렬화되지 않았다. Gate 만료는 `2026-07-24 02:11:56.329 KST`이며 RDS 시작과 Apply는 아직 하지 않았다.
 
 > Post-Restore Full Smoke Plan 준비 완료(Apply 전): `tfplan-post-restore-full-smoke-runtime-on`은 230,705 bytes, SHA-256 `1dc1bf8bcc9eccb667659722e3c038f355293f7eb880c33fd14707c8f105f55e`, State serial 95 기준 `40 add, 10 change, 0 destroy`다. Valkey 6개, Runtime Alarm 29개, Public ALB·HTTPS Listener·Host Rule 2개·`origin` A Record 5개를 만들고 ECS Service 8개 Desired, ASG Min/Max와 Container Insights만 변경한다. 원본 RDS와 기존 Foundation 변경·삭제는 0이다. Redis Password는 Plan에 직렬화되지 않았고 Apply 때 다시 Ephemeral Variable로 제공한다. 운영 Gate 만료는 `2026-07-23 17:23:37.608 KST`다.
 

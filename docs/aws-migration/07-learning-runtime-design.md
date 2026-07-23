@@ -307,7 +307,8 @@ Learning에서 적용할 복구 기준은 다음으로 제한한다.
 14. 완료: 원본 Full Smoke Runtime ON Plan `40/10/0` 적용, HTTPS/OAuth/Session/WebSocket/REST/SNS·`No changes` 검증
 15. 완료: 최종 Runtime OFF Plan `0/10/40` 적용, ECS·ASG·ALB·Valkey·Runtime Alarm 0, 원본 RDS 정지, 정적 curl 6/6·OFF API 502·State serial 107 `No changes`
 16. 완료: RDS 메모리 실측 분석, AWS DB 서비스 Hikari Pool `5/1` 교정·38/38 테스트·Commit/Push·Runtime OFF Foundation Plan `3/3/3` 적용, State serial 108·OFF `No changes`
-17. 다음: 별도 Saved Plan 승인으로 Runtime ON 최소 30분 재측정 후 Runtime OFF·RDS 정지
+17. 진행 중: Hikari `5/1` Runtime ON 최소 30분 재측정 사전 점검·38/38 테스트·비용 검토와 Saved Plan `40/11/0` 생성 완료, Apply 승인 대기
+18. 다음: 승인된 Runtime ON Apply·30분 RDS 지표·Full curl/SNS Alarm Smoke 후 별도 Runtime OFF·RDS 정지
 
 각 단계는 `fmt`, `validate`, `test`, 저장 Plan 검토, 비용 확인과 명시적 Apply 승인을 거친다. 뒤 단계 리소스를 앞 단계 Plan에 섞지 않는다.
 

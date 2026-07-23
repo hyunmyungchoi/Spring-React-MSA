@@ -122,6 +122,42 @@ Apply 직전 Source Commit/Push, Plan SHA-256, State serial 107, 운영 Gate와 
 
 검증 후 Runtime을 다시 OFF하고 RDS를 정지한다. 최종 Class 또는 Alarm 변경은 이 재측정 결과로만 결정한다.
 
-다음 승인 문구:
+## 8. Runtime ON 재측정 Saved Plan
 
-`RDS Hikari Pool 5/1 Runtime ON 30분 재측정 사전 점검 + Saved Plan 생성 승인`
+2026-07-24 사전 점검에서 Git `master`와 원격 HEAD는 `c2a857a2c764be8fdc414bd2095ae49d0e25e714`로 일치했고 작업 폴더는 깨끗했다. Remote State serial은 108, 주소는 249개였다. ECS Service 8개 `0/0/0`, ASG `0/0/0`, RDS `stopped`, NAT `available`, Private App 기본 경로 `active`를 확인했다. RDS 자동 재시작 예정은 `2026-07-30 18:44:16.118 KST`다.
+
+입력과 검증 결과:
+
+- 활성 Task Definition과 Digest 고정 Image 8/8
+- `user-service`, `stock-service`, `member-bff`에만 Hikari `5/1`
+- Stock Client ID 존재 여부만 확인하고 값은 출력하지 않음
+- Shared Redis Secret의 `AWSCURRENT`, `redis_password` Key, 32~128자 영숫자 계약 확인
+- `terraform fmt -check -recursive`·`terraform validate` 통과
+- 전체 Terraform 계약 테스트 `38 passed, 0 failed`
+- RDS Alarm 3개 Action 활성, Operations SNS Email 구독 1개 `Confirmed`
+
+`TF_VAR_learning_runtime_enabled=true`로 만든 첫 시도는 `terraform.tfvars`의 `false`보다 우선순위가 낮아 Runtime을 켜지 못했다. 해당 Plan은 최신 ECS AMI 갱신 1건만 포함한 `0/1/0`, SHA-256 `9e0d68e070dd34ff05bd44fe443ce1fbe030c07254e73f7452adcc7347fe0518`이었고 Apply 없이 삭제했다. State와 AWS는 변경되지 않았다. 최종 Plan은 CLI `-var=learning_runtime_enabled=true`로 우선순위를 고정했다.
+
+검증된 Runtime ON Saved Plan:
+
+- 파일: `tfplan-rds-hikari-runtime-on-remeasurement`
+- 크기: 230,686 bytes
+- SHA-256: `fa6a9c0d9c3facaa4611c4684e6f96bfcfad3a85f8580b0abbdf7a5a1c50e124`
+- 생성 시각: `2026-07-24 00:41:56.329 KST`
+- 운영 Gate 만료: `2026-07-24 02:11:56.329 KST`
+- 생성 기준 State serial: 108
+- 변경: `40 add, 11 change, 0 destroy`, 교체 0
+- 생성: Runtime Alarm 29개, Valkey 관련 6개(ElastiCache 5개·Redis Host SSM Parameter 1개), Public ALB·HTTPS Listener·Host Rule 2개·`origin` Route 53 Record
+- 갱신: ECS Service 8개 Desired `0 → 1`, ASG Min/Max `0/0 → 1/2`, Container Insights `disabled → enabled`, ECS Launch Template AMI 1건
+- AMI: AWS 공식 ECS 최적화 AL2023 권장 `ami-0a3d67a807296fc6c`, `x86_64`, `available`
+- RDS·Secret·Frontend·Task Definition·Restore 리소스 변경 0
+- Redis Password는 Plan JSON에 직렬화되지 않았으며 Apply 때 같은 Ephemeral 입력을 다시 제공해야 함
+- Plan 생성 뒤 State serial 108과 AWS OFF 상태 유지
+
+2026-07-24 AWS Price List API 기준 시간당 고정비 추정은 NAT/EIP를 포함해 USD 0.3767이다. 이미 실행 중인 NAT/EIP USD 0.064를 제외한 Runtime ON 증분은 USD 0.3127/시간이고 명목 30분은 약 USD 0.1564다. EBS, ALB LCU, NAT 처리량, 데이터 전송, 서비스별 최소 또는 부분 시간 과금과 프로비저닝 시간은 별도다.
+
+Apply 전에는 Plan Hash·State serial 108·Gate·Git 원격 HEAD·AWS OFF를 다시 확인하고 RDS를 `available`까지 시작한다. Apply 후 ASG `1/1/2`, ECS·Container·Cloud Map 8/8, ALB Target 2/2, Valkey와 Runtime Alarm을 확인한 시점부터 최소 30분을 측정한다. RDS 시작이나 Apply는 아직 수행하지 않았다.
+
+다음 적용 승인 문구:
+
+`Hikari 5/1 Runtime ON 사전 문서 Commit/Push + RDS 시작 + Plan fa6a9c0d9c3facaa4611c4684e6f96bfcfad3a85f8580b0abbdf7a5a1c50e124 적용 + 30분 RDS 지표 재측정 + HTTPS/OAuth/Session/WebSocket/REST curl·SNS Alarm Smoke 승인`
