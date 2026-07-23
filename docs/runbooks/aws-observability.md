@@ -194,6 +194,13 @@ terraform show -no-color tfplan-observability-runtime-lifecycle-off
 - 애플리케이션 종료 뒤 RDS를 별도로 정지해 `stopped`, Enhanced Monitoring `0`, Performance Insights `false`, Backup Retention 7일, 삭제 보호 `true`를 확인했다. 자동 재시작 예정은 2026-07-29 02:33:31 KST다.
 - 정적 curl은 6/6 HTTP 200, Root는 308, Runtime OFF API는 502였고 동일 OFF 입력 재계획은 `No changes`였다. SNS Email Subscription 1개는 `Confirmed` 상태를 유지하며 적용된 Saved Plan은 Hash 재검증 후 삭제했다. 이로써 2A Runtime 관측성 수명주기 검증은 완료됐고 다음 단계는 2B 알림 전용 Watchdog이다.
 
+2026-07-23 Post-Restore Full Smoke 관측 기록:
+
+- 승인된 Runtime ON Plan을 `40 added, 10 changed, 0 destroyed`로 적용하고 Container Insights `enabled`, Runtime Alarm 29개 생성을 확인했다. ECS 8개 수렴 뒤 29/29가 `OK`였다.
+- `spring-react-msa-learning-alb-load-balancer-5xx`를 합성 `OK → ALARM → OK`로 전환했다. Operations SNS는 `Published 2`, 확인된 Email 구독은 `Delivered 2`, `Failed 0`이었다.
+- Watchdog Alarm 3개는 모두 `OK`다.
+- 별도의 실제 RDS `FreeableMemoryLow` Alarm은 `ALARM`이다. 256MiB 임계값에 대한 `2026-07-23 17:44 KST` 최신 5분 Minimum은 153.2MiB였다. 합성 상태 전환으로 덮어쓰거나 임계값을 낮추지 않았으며, 최종 Runtime OFF 뒤 다음 ON 전에 DB Class·연결 수·메모리 설정과 Alarm 정책을 별도 검토한다.
+
 ```powershell
 aws ecs describe-clusters `
   --region ap-northeast-2 `

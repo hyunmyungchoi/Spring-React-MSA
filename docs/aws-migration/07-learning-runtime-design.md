@@ -1,12 +1,12 @@
 # AWS Learning Runtime 결정
 
-> 문서 상태: Learning 목표 설계 승인, WebSocket Gateway·Member BFF Origin 교정과 전체 공개 경로 검증, Runtime OFF·RDS 정지 완료
+> 문서 상태: Learning 목표 설계 승인, Backup Restore·Cleanup과 원본 Full Smoke Runtime ON Apply·curl 검증, 최종 Runtime OFF·RDS 정지 완료
 >
-> 기준일: 2026-07-19
+> 기준일: 2026-07-23
 >
-> 저장소 상태: Foundation·ECR/OIDC·Private App 송신·RDS/Secrets·ECS Compute·DB Bootstrap/Flyway·Application Runtime·Frontend Hosting·Public Domain/TLS 코드 적용, Terraform 계약 테스트 23/23 완료
+> 저장소 상태: Foundation·ECR/OIDC·Private App 송신·RDS/Secrets·ECS Compute·DB Bootstrap/Flyway·Application Runtime·Frontend Hosting·Public Domain/TLS·RDS Restore Drill 코드 적용, Terraform 계약 테스트 38/38 완료
 >
-> AWS 적용 상태: Gateway 전용 `ws://` Route와 Member BFF Public Origin 계약을 모두 적용했다. 승인된 Origin 교정 Saved Plan은 Member BFF Task Definition과 ECS Service만 `1 added, 1 changed, 1 destroyed`로 갱신했고 Revision 3이 `HEALTHY`·`COMPLETED`로 수렴했다. curl 기반 Registration·Password Login·OAuth Authorization Code·BFF Session·CSRF Heartbeat·Logout과 공개 `wss://`의 `CONNECTED`, `HISTORY`, `PONG`, `CHAT_MESSAGE`, REST History 영속성을 확인했다. 후속 Runtime OFF Saved Plan을 승인된 Hash 그대로 `0 added, 9 changed, 11 destroyed`로 적용하고 RDS를 정지했다. 현재 ECS·ASG·Container Instance·ALB·Valkey·`origin`은 0, RDS는 `stopped`이며 정적 curl 6/6·Root 308·Runtime OFF API 502와 OFF 재계획 `No changes`를 확인했다.
+> AWS 적용 상태: 최초 관리자 Bootstrap Runtime ON과 Private ECS Task 최초 `created`·동일 입력 `already_present`, 실제 `curl.exe` 관리자 OAuth·`ROLE_ADMIN` Session·관리자 1명·공개 가입 `404 RESOURCE_NOT_FOUND`·양쪽 Logout을 검증했다. 후속 Runtime OFF와 Foundation Cleanup, Backup Restore·Cleanup까지 완료했다. Post-Restore Full Smoke Runtime ON Saved Plan을 `40 added, 10 changed, 0 destroyed`로 적용했고 ECS·Container Health 8/8, ASG `1/1/2`, RDS·Valkey, HTTPS 12/12, Member/Admin OAuth·Session·WebSocket·REST·SNS와 동일 입력 `No changes`를 확인했다. 최종 Runtime OFF Saved Plan도 승인된 SHA-256 그대로 `0 added, 10 changed, 40 destroyed`로 적용했다. 현재 ECS·ASG·Task·Container Instance·ALB·Valkey·Runtime Alarm은 0, RDS는 `stopped`, State serial 107의 동일 OFF 입력은 `No changes`다. 다음 ON 전 RDS Freeable Memory와 Alarm 정책을 검토한다.
 
 이 문서는 AWS Foundation 이후 Learning 환경에 추가할 Runtime의 승인된 결정을 기록한다. 현재 적용된 리소스와 운영 절차는 [Terraform 운영 Runbook](../../infra/aws/terraform/README.md), 이미 적용된 네트워크 기준선은 [AWS Foundation 설계](04-aws-foundation-design.md)를 따른다.
 
@@ -24,7 +24,7 @@
 | P1 | 데이터베이스 | PostgreSQL 16 공유 인스턴스·서비스별 Schema·Flyway | DB Secret·Bootstrap·Flyway V1 3개 실제 실행과 사후 검증 완료 |
 | P1 | Frontend | 독립 Private S3 6개와 Member/Admin CloudFront 2개 | Apply·AWS 계약·첫 전체 배포·curl 6/6 검증 완료 |
 | P1 | Secret | Secrets Manager로 통일 | Container 7개·최소 권한 IAM 적용, DB Secret 3개와 Runtime Secret 6개 계약 초기화 완료 |
-| P1 | 도메인 | 기존 Hosted Zone Import와 별도 Global DNS State | Global DNS/ACM·Public Alias/TLS 적용 완료, Runtime ON Full Smoke 승인 대기 |
+| P1 | 도메인 | 기존 Hosted Zone Import와 별도 Global DNS State | Global DNS/ACM·Public Alias/TLS와 Runtime ON Full Smoke 검증 완료 |
 | P2 | DR | Learning 범위에서 제외하고 후속 학습 과제로 보류 | 보류 |
 
 ## 2. 목표 구조
@@ -186,9 +186,9 @@ spring.sql.init.mode=never
 
 세 서비스의 Flyway V1 SQL, PostgreSQL 16 Testcontainers 검증과 전용 `FlywayMigrationMain`을 구현했다. 서비스별 DB 사용자·Schema·Grant를 만드는 Bootstrap Task Definition과 최소 권한 IAM/Log Group을 AWS에 적용하고, Secret 3개 초기화와 실제 RDS Bootstrap을 완료했다. RDS 호환 Revision 2와 읽기 전용 검증 Task로 안전한 Role 3개, Schema 3개, 자기 Schema 권한 조합 3개, 교차 Schema 권한 0개를 확인했다. 이후 Build Once·Digest Promote한 ECR Image를 사용하는 Migration Task Definition 3개를 적용하고 실제 Flyway V1을 순차 실행했다. 사후 검증에서 History 3개, V1 성공 3개, Application Table과 올바른 소유자 각 5개, 실패 Migration·교차 권한·Seed Data 0개를 확인했다.
 
-검토한 저장 Plan으로 RDS, DB Subnet Group, Parameter Group과 빈 Secret Container 7개를 AWS에 적용했다. RDS 보안·Backup 설정, Managed Master Secret과 재계획 `No changes`를 검증한 뒤 비용 통제를 위해 RDS를 정지했다. 첫 Backup 완료와 최신 복원 가능 시각은 확인했지만 실제 PITR Restore 훈련은 아직 남아 있다.
+검토한 저장 Plan으로 RDS, DB Subnet Group, Parameter Group과 빈 Secret Container 7개를 AWS에 적용했다. RDS 보안·Backup 설정과 Managed Master Secret을 검증한 뒤 비용 통제를 위해 RDS를 정지했다. 2026-07-23 Automated Backup `RestoreWindow`로 약 115.2시간의 복원 가능 구간, 최신 시점 지연 최초 약 44.1분·Foundation Saved Plan 직전 약 102분, Backup 1개·Snapshot 4개와 복원 대상 가용성을 확인했다. 격리 PITR·읽기 전용 Fargate Validator Terraform과 전체 계약 테스트 38개를 구현했고 감사 Foundation을 `1 added, 0 changed, 0 destroyed`로 적용했다. 후속 Restore ON Plan은 `11 added, 0 changed, 0 destroyed`로 적용했고 `2026-07-23 11:02:47 KST` 시점의 별도 Private RDS를 복원했다. Fargate Validator가 Schema·Role·Flyway·Table·활성 관리자 계약을 Exit Code `0`으로 검증했으며, 검증 직후 복원 DB를 정지했다.
 
-RDS는 Runtime OFF 때 삭제하지 않고 정지한다. Automated Backup 보존 기간은 7일, PITR은 활성화하고 의도적인 최종 삭제 전 Final Snapshot을 생성한다. 실제 복구 시간은 Restore 훈련 전까지 보장값으로 표시하지 않는다.
+RDS는 Runtime OFF 때 삭제하지 않고 정지한다. Automated Backup 보존 기간은 7일, PITR은 활성화하고 의도적인 최종 삭제 전 Final Snapshot을 생성한다. 이번 관측 RTO 약 28분 35초와 RPO 지연 약 2시간 54분 14초는 단일 Learning 훈련값이며 운영 보장값으로 표시하지 않는다.
 
 ## 7. Frontend
 
@@ -258,7 +258,7 @@ Terraform이 관리할 Application Record는 다음과 같다.
 - Admin Session 조회 응답에는 원본 Session ID를 반환하지 않고 SHA-256 Fingerprint 또는 Masked ID만 반환한다.
 - 원본 Session ID가 필요한 강제 Logout은 별도 인증된 Endpoint 내부에서만 처리하고 감사 로그를 남긴다.
 
-이 결정의 공개 가입 차단과 Session ID 제거는 코드에 적용했다. Admin Registration Controller는 `prod` 기본값과 AWS Task 환경 변수에서 비활성이며, 로컬 Kubernetes만 명시적으로 활성화한다. Admin Session API와 Frontend는 원본 ID 대신 SHA-256 Fingerprint를 사용한다. AWS Frontend 가입 UI 비노출, User Service의 멱등 일회성 Bootstrap, 임시 Secret·최소 권한 Task·감사 Log 계약도 구현했다. 4~100자 공개 요청 규칙은 Learning 환경에 남지만 AWS 공개 Route는 등록하지 않으며 Bootstrap 비밀번호는 별도 20~72 UTF-8 byte 기준을 사용한다. Source SHA `8e5aaa06540541e365e5cfaf7cc559c8b777ae63`의 User Service·Admin BFF Build Once·ECR Promote와 Admin 기본 화면 선택 배포까지 완료했고, AWS Bootstrap 실행·삭제 Smoke는 아직 남아 있다.
+이 결정의 공개 가입 차단과 Session ID 제거는 코드와 AWS에 적용했다. Admin Registration Controller는 `prod` 기본값과 AWS Task 환경 변수에서 비활성이며, 로컬 Kubernetes만 명시적으로 활성화한다. Admin Session API와 Frontend는 원본 ID 대신 SHA-256 Fingerprint를 사용한다. AWS Frontend 가입 UI 비노출, User Service의 멱등 일회성 Bootstrap, 임시 Secret·최소 권한 Task·감사 Log 계약도 구현했다. 4~100자 공개 요청 규칙은 Learning 환경에 남지만 AWS 공개 Route는 등록하지 않으며 Bootstrap 비밀번호는 별도 20~72 UTF-8 byte 기준을 사용한다. Source SHA `8e5aaa06540541e365e5cfaf7cc559c8b777ae63`의 User Service·Admin BFF Build Once·ECR Promote와 Admin 선택 배포, Private ECS Task `created`·`already_present`, 공개 가입 404와 관리자 OAuth·Session·Logout, Runtime OFF와 임시 Foundation Cleanup까지 완료했다.
 
 ## 11. Image Build Once와 Promote
 
@@ -302,8 +302,10 @@ Learning에서 적용할 복구 기준은 다음으로 제한한다.
 9. 완료: State Role·기존 Hosted Zone Import·ACM, Root·Member·Admin A/AAAA와 CloudFront HTTPS/API Origin, 정적 curl 6/6·Root 308·`No changes`
 10. 완료: WebSocket Gateway Route와 Member BFF Public Origin 교정 적용, Runtime ON HTTPS·OAuth·Session·WebSocket 네 프레임·채팅 영속성·Logout·`No changes` 검증
 11. 완료: CloudWatch Logs·Metrics·Alarms, SNS 실알림, Learning ON/OFF와 알림 전용 Watchdog
-12. 진행 중: 최초 관리자 Bootstrap과 공개 관리자 가입 차단
-13. 예정: Backup Restore와 전체 Smoke Test
+12. 완료: 최초 관리자 Bootstrap·공개 가입 차단·Runtime OFF·RDS 정지·Foundation Cleanup·Secret 7일 삭제 예약·감사 Log 보존
+13. 완료: Backup Restore 사전 점검·격리 Terraform·38/38 계약 테스트·감사 Foundation Apply·Restore ON `11/0/0` 적용·읽기 전용 검증·복원 DB 정지·Cleanup `0/0/11`·임시 리소스 0·`No changes`
+14. 완료: 원본 Full Smoke Runtime ON Plan `40/10/0` 적용, HTTPS/OAuth/Session/WebSocket/REST/SNS·`No changes` 검증
+15. 완료: 최종 Runtime OFF Plan `0/10/40` 적용, ECS·ASG·ALB·Valkey·Runtime Alarm 0, 원본 RDS 정지, 정적 curl 6/6·OFF API 502·State serial 107 `No changes`
 
 각 단계는 `fmt`, `validate`, `test`, 저장 Plan 검토, 비용 확인과 명시적 Apply 승인을 거친다. 뒤 단계 리소스를 앞 단계 Plan에 섞지 않는다.
 
@@ -315,7 +317,7 @@ Learning에서 적용할 복구 기준은 다음으로 제한한다.
 - Redis: Valkey 7.2, `cache.t4g.micro`, Single Node, Runtime OFF 삭제
 - 내부 통신: `awsvpcTrunking` + `awsvpc` + Cloud Map A Record, Service Connect 미사용
 - IAM: Task Role 없음, 서비스별 Execution Role이 자기 ECR/Log와 필요한 Secret/Redis Host Parameter만 읽음
-- ALB: Runtime ON에만 생성, `app`/`admin` Host Rule과 Gateway Readiness Health Check 사용. HTTPS/ACM·CloudFront Origin과 Runtime OFF Gate C 적용 완료, Runtime ON Full Smoke Plan 승인 대기
+- ALB: Runtime ON에만 생성, `app`/`admin` Host Rule과 Gateway Readiness Health Check 사용. HTTPS/ACM·CloudFront Origin과 Runtime OFF Gate C, Runtime ON Full Smoke 검증 완료
 
 Application Foundation 적용 전에 필요했던 다음 항목은 완료했다.
 
@@ -327,7 +329,10 @@ Application Foundation 최초 Apply는 56개 리소스를 추가했다. 빈 Clou
 
 Runtime ON 검증 이후 남은 작업은 다음과 같다.
 
-- 최초 관리자 Bootstrap AWS Foundation Apply, 일회성 실행·멱등 재시도·공개 404·Cleanup 검증
-- Backup Restore와 전체 Smoke Test
+- 완료: Restore Drill Cleanup `0/0/11`, 임시 리소스 0·감사 Log 보존·`No changes`
+- 완료: 원본 Full Smoke Runtime ON Saved Plan `40/10/0`·SHA-256·비용·Static curl 6/6·SNS/Alarm 기반선 검증
+- 완료: 원본 RDS 시작·Runtime ON Apply·전체 curl Smoke와 실제 RDS Memory Alarm 확인
+- 완료: 최종 Runtime OFF Saved Plan `0/10/40` 적용, 원본 RDS 정지와 동일 OFF 입력 `No changes`
+- 다음 ON 전 RDS Class·메모리·Alarm 정책 검토
 
-CloudWatch Log 보존 기간은 7일로 코드와 계약 테스트에 고정했고 Frontend 독립 배포, HTTPS/DNS, Public Domain Runtime ON Full Smoke, Alarm과 Watchdog을 AWS에 적용·검증했다. 관리자 Bootstrap은 저장소 구현과 로컬 계약 검증까지 완료했으며 AWS Build Once·Promote와 Saved Plan부터 별도 승인한다.
+CloudWatch Log 보존 기간은 7일로 코드와 계약 테스트에 고정했고 Frontend 독립 배포, HTTPS/DNS, Public Domain Runtime ON Full Smoke, Alarm과 Watchdog을 AWS에 적용·검증했다. 관리자 Bootstrap도 AWS Build Once·Promote, Foundation·Runtime ON, 일회성·멱등 Task, 공개 OAuth·Session·404 Smoke, Runtime OFF와 임시 Foundation Cleanup까지 완료했다. Backup Restore는 [격리 복원 계획](../plans/2026-07-23-backup-restore-plan.md), 사전 점검, Terraform 격리 구조·Validator, 전체 38개 계약 테스트, 감사 Foundation Apply, Restore ON 적용, 읽기 전용 검증, 복원 DB 즉시 정지와 Cleanup까지 완료했다. 원본 Full Smoke도 HTTPS/OAuth/Session/WebSocket/REST/SNS와 `No changes`까지 완료했고, 최종 Runtime OFF·RDS 정지·OFF `No changes`로 전체 AWS 단계가 수렴했다. 다음 ON 전 RDS 메모리와 Alarm 정책을 별도 검토한다.

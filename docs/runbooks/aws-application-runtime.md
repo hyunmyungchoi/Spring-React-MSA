@@ -2,7 +2,7 @@
 
 이 Runbook은 Backend 8개의 ECS Application Foundation과 짧은 Runtime ON/OFF 검증 순서를 정의한다. 실제 Secret 값, Account ID, ECR Digest와 저장 Plan 파일은 문서나 Git에 기록하지 않는다.
 
-> 실행 상태(2026-07-19): Runtime ON과 서비스 계약 교정, curl Smoke 6/6 검증 후 Runtime OFF까지 완료했다. 현재 ECS Service 8개 `0/0/0`, Task·Container Instance·EC2 0, ASG `0/0/0`, Public ALB·Valkey·Redis Host Parameter 삭제, RDS `stopped`이며 Terraform 재계획은 `No changes`다. Cloud Map Service 8개, Task Definition 8개와 Gateway Target Group 2개는 다음 ON을 위해 유지한다.
+> 실행 상태(2026-07-23): Restore Drill·Cleanup 후 원본 Full Smoke Runtime ON `40/10/0`과 전체 curl Smoke를 완료했다. 이어 승인된 최종 Runtime OFF Saved Plan을 정확히 `0/10/40`으로 적용했다. 현재 ECS Service Desired·Running·Pending, Task·Container Instance·ASG Instance, ALB·Valkey·`origin`·Runtime Alarm은 모두 0이고 Container Insights는 `disabled`다. 원본 RDS는 `stopped`, Cloud Map Service 8개·등록 0과 Digest Task Definition 8개를 유지하며 동일 OFF 입력은 State serial 107 기준 `No changes`다.
 
 ## 적용 단위
 
@@ -19,7 +19,7 @@ Runtime ON에서만 다음 유료 리소스를 만든다.
 
 - ECS ASG `min=1`, `desired=1`, `max=2`
 - Backend Service별 Task 1개
-- Public ALB와 HTTP Listener/Host Rule
+- Public ALB와 HTTPS Listener/Host Rule
 - Valkey 7.2 `cache.t4g.micro` 단일 Node와 Redis Host SSM Parameter
 
 RDS는 Terraform이 삭제·재생성하지 않는다. 별도 명령으로 시작하고 검증 후 다시 정지한다. NAT도 `enable_nat_gateway`로 별도 ON/OFF한다.
@@ -111,6 +111,10 @@ ON Plan 고정비 검토 기준은 대략 다음과 같다.
 
 EC2 1대 기준 합계는 EBS, Secret, Storage, LCU, Data 처리와 전송을 제외하고 약 USD 0.3767/시간이다. 현재도 발생하는 NAT/EIP USD 0.064/시간을 제외한 Runtime ON 증분은 약 USD 0.3127/시간이다. Managed Scaling으로 EC2가 2대가 되면 같은 기준 약 USD 0.6127/시간까지 증가한다. 실제 Price List와 Plan을 다시 확인하고 새 SHA-256 승인을 받은 뒤에만 Apply한다.
 
+> Post-Restore Full Smoke Plan 준비 완료(Apply 전): `tfplan-post-restore-full-smoke-runtime-on`은 230,705 bytes, SHA-256 `1dc1bf8bcc9eccb667659722e3c038f355293f7eb880c33fd14707c8f105f55e`, State serial 95 기준 `40 add, 10 change, 0 destroy`다. Valkey 6개, Runtime Alarm 29개, Public ALB·HTTPS Listener·Host Rule 2개·`origin` A Record 5개를 만들고 ECS Service 8개 Desired, ASG Min/Max와 Container Insights만 변경한다. 원본 RDS와 기존 Foundation 변경·삭제는 0이다. Redis Password는 Plan에 직렬화되지 않았고 Apply 때 다시 Ephemeral Variable로 제공한다. 운영 Gate 만료는 `2026-07-23 17:23:37.608 KST`다.
+
+> Post-Restore Full Smoke Apply 결과: 승인된 Hash를 재검증하고 원본 RDS `available` 뒤 Saved Plan을 적용해 정확히 `40 added, 10 changed, 0 destroyed`로 완료했다. ECS·Container Health 8/8, ASG `1/1/2`, Valkey·RDS `available`, ALB Target 2/2, Cloud Map 8/8, Runtime Alarm 29/29 `OK`와 동일 입력 `No changes`를 확인했다. HTTPS 12/12·Root 308, Member/Admin Password Login·OAuth·Session·CSRF·보호 REST·양쪽 Logout, 공개 Admin 가입 404, WebSocket `CONNECTED/HISTORY/PONG/CHAT_MESSAGE`와 REST History가 통과했다. 합성 Alarm 전달은 SNS `Published 2`, Email `Delivered 2`, `Failed 0`이었다. 실제 RDS Freeable Memory Alarm은 최신 최소 153.2MiB로 256MiB 임계값 아래이므로 설정 변경 없이 후속 검토 대상으로 남겼다. 적용한 Saved Plan은 Hash 재검증 후 삭제했다.
+
 > 첫 Apply 기록: 승인된 Runtime ON Plan은 ASG를 `1/1/2`로 올리고 Valkey Application User·Subnet Group·Parameter Group을 만든 뒤, Valkey 엔진이 인증 없는 `default` 사용자를 거부해 중단됐다. ECS Service는 `0/0/0`을 유지했으며 ALB, Listener/Rule, Valkey Node, User Group과 Redis Host Parameter는 생성되지 않았다. 실패한 Plan은 State 변경으로 무효화하므로 재사용하지 않는다.
 
 > 복구 Plan 준비 완료(Apply 전): `tfplan-application-runtime-on-recovery`는 7개 생성, 8개 갱신, 삭제·교체 0개다. Public ALB·Listener·Host Rule 2개, Password 인증 Application User만 포함하는 Valkey User Group, 단일 Valkey Node와 Redis Host Parameter를 만들고 ECS Service 8개 Desired를 1로 바꾼다. SHA-256은 `3cd3eeae10b6cdb3182d0c1e727056f1a87570eea279e73ea98fd84db8b1980e`이며 Redis Password가 Plan JSON·파일에 남지 않음을 확인했다. 새 Hash 승인 전에는 Apply하지 않는다.
@@ -174,6 +178,8 @@ curl.exe --fail --silent --show-error --connect-timeout 10 --max-time 30 `
 ACM/Route 53/CloudFront 단계 전의 HTTP ALB는 Infrastructure Health 검증용이다. 실제 OAuth Browser Flow 완료 판정은 HTTPS와 Public DNS 적용 후 수행한다.
 
 ## 6. Runtime OFF
+
+최종 승인 Plan `tfplan-post-restore-full-smoke-runtime-off`, SHA-256 `2c6dd23cb9f1acd2977018b83b5f43b4b48c4937d48e1c462ca15ecdf7897e07`은 State serial 101 기준 `0 added, 10 changed, 40 destroyed`로 적용했다. RDS·Restore 감사 Log·Task Definition·Frontend·Secret·SNS Subscription은 변경하지 않았다. 원본 RDS는 `2026-07-23 18:44:22.196 KST`에 `stopped`가 됐고 자동 재시작 예정은 `2026-07-30 18:44:16.118 KST`다. State serial 107의 OFF 재계획은 `No changes`, 정적 curl 6/6은 200, Root는 308, Member/Admin API는 502다. 적용 Plan은 Hash 재검증 뒤 삭제한다.
 
 1. `learning_runtime_enabled=false` 새 저장 Plan을 만든다.
 2. Service 8개가 `desired_count=0`, ASG가 `0/0/0`이 되는지 확인한다.

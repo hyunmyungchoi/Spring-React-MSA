@@ -35,7 +35,9 @@ Authorization Server, Member/Admin BFF, User Service, Redis Session, Gateway/Ing
 | A-15 | 익명 관리자 가입 | AWS Learning Public Traffic 정책에서 거부되어야 함 |
 | A-16 | 최초 관리자 Bootstrap 재실행 | 최초 `created`, 동일 입력 `already_present`, 다른 Admin 거부 |
 
-A-15는 AWS Admin BFF Task의 `ADMIN_BFF_REGISTRATION_ENABLED=false`, 조건부 Controller Bean 부재, 정적 가입 UI 비노출과 공개 `POST` 404를 함께 검증한다. Backend가 실제 보안 경계다. 저장소 자동 테스트는 고정했지만 새 Image를 적용한 Public Domain Smoke는 아직 남아 있다.
+A-15는 AWS Admin BFF Task의 `ADMIN_BFF_REGISTRATION_ENABLED=false`, 조건부 Controller Bean 부재, 정적 가입 UI 비노출과 공개 `POST` 404를 함께 검증한다. Backend가 실제 보안 경계다. 2026-07-23 새 Image의 Public Domain에서 실제 `curl.exe`로 `404 RESOURCE_NOT_FOUND`를 확인했다. A-16도 Private ECS Task 최초 `created`와 동일 입력 `already_present`, 관리자 1명, Password Login·OAuth·`ROLE_ADMIN` Session·양쪽 Logout까지 통과했다. Cookie·Password·Token 값은 기록하지 않았다.
+
+2026-07-23 Post-Restore Full Smoke에서도 새 무작위 `ROLE_USER`의 Registration 201, Password Login, OAuth Authorization Code, `AUTHSESSIONID`·`BFFSESSIONID`, 인증 `/bff/auth/me`, CSRF Heartbeat, `/bff/user/me`, WebSocket 네 Frame, REST History와 양쪽 Logout을 실제 `curl.exe`로 재검증했다. 기존 Bootstrap 관리자는 DPAPI 암호화 자격증명으로만 제공해 Password Login, OAuth, `AUTHSESSIONID`·`ADMINSESSIONID`, `ROLE_ADMIN+ROLE_USER`, 보호 User/Session/Presence REST, 관리자 정확히 1명, 공개 가입 404와 양쪽 Logout을 확인했다. 원본 `sessionId`는 응답에 없었고 자격증명·Cookie·합성 비밀번호는 폐기했다. 로컬 WebSocket 실행기 인자 전달 오류로 연결 전에 중단된 합성 회원 1명과 최종 성공 회원 1명은 비밀번호가 폐기된 감사·정리 대상이다.
 
 ## 브라우저 수동 확인
 

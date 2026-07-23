@@ -2,9 +2,9 @@
 
 > 문서 상태: RDS Terraform·DB Bootstrap·Build Once/Promote·Flyway V1 실제 실행 및 검증 완료
 >
-> 기준일: 2026-07-19
+> 기준일: 2026-07-23
 >
-> AWS 적용 상태: DB Secret 3개와 Role·Schema Bootstrap, Digest 고정 Migration Task 3개, 실제 Flyway V1·Runtime ON 사후 검증 완료; 현재 RDS `stopped`, 자동 재시작 예정 2026-07-26 05:15:28 KST, 재계획 `No changes`
+> AWS 적용 상태: DB Secret 3개와 Role·Schema Bootstrap, Digest 고정 Migration Task 3개, 실제 Flyway V1·Runtime ON 사후 검증 완료; Backup Restore·Cleanup과 원본 Full Smoke Runtime ON `40/10/0` Apply·curl 검증, 최종 Runtime OFF `0/10/40` Apply·RDS 정지·`No changes` 완료
 
 테이블 소유권과 현재 제약은 [시스템 개요](../architecture/overview.md), [회원 서비스 스펙](../specs/member-service.md), [주식 서비스 스펙](../specs/stock-service.md), [실시간 채팅 스펙](../specs/realtime-chat.md)을 기준으로 한다.
 
@@ -85,7 +85,9 @@ Source SHA `f0c88e32b883c391dcf993dfbf40839312de0f39`의 User Service, Member BF
 
 RDS Terraform은 서울 리전에서 지원을 확인한 PostgreSQL `16.14`, `db.t4g.micro`, Single-AZ, 암호화된 고정 20 GiB `gp3`, Private Data Subnet 2개와 Data Security Group을 사용한다. RDS Master 비밀번호는 Terraform 값으로 만들지 않고 RDS Managed Master Secret을 사용한다.
 
-검토한 저장 Plan으로 Terraform 리소스 10개를 Apply했고 Remote State 81개 주소와 재계획 `No changes`를 확인했다. RDS의 Private 접근, 암호화, Backup 7일, 삭제 보호와 Managed Master Secret `active`를 검증했으며 Application Secret 7개는 Version 0개인 빈 Container 상태다. 첫 Backup 완료와 `LatestRestorableTime`은 확인했지만 실제 PITR Restore 훈련은 아직 수행하지 않았다. 검증 뒤 RDS는 비용 통제를 위해 정지했다.
+검토한 저장 Plan으로 Terraform 리소스 10개를 Apply했고 Remote State 81개 주소와 재계획 `No changes`를 확인했다. RDS의 Private 접근, 암호화, Backup 7일, 삭제 보호와 Managed Master Secret `active`를 검증했다. 첫 Backup 완료와 `LatestRestorableTime`을 확인했고, 2026-07-23 정지 상태에서는 Automated Backup `RestoreWindow` 기준 약 115.2시간의 복원 가능 구간과 최신 시점 지연 최초 약 44.1분·Foundation Saved Plan 직전 약 102분을 확인했다. Restore Drill Terraform과 읽기 전용 Validator를 구현하고 전체 mock test `38 passed, 0 failed`, Foundation OFF Plan `1 add, 0 change, 0 destroy`를 검증했다.
+
+후속 Restore ON Plan은 승인한 SHA-256 그대로 `11 added, 0 changed, 0 destroyed`로 적용했다. `2026-07-23 11:02:47 KST` 시점의 별도 Private PostgreSQL `16.14` RDS를 복원했고 Fargate Validator가 읽기 전용 Transaction에서 Schema 3개, Application Role 3개, Table 5개, Flyway V1 3개, 실패 Migration 0개와 활성 관리자 1명을 Exit Code `0`으로 검증했다. Apply부터 검증 성공까지 관측 RTO는 약 28분 35초, 최신 복원 시점 지연은 약 2시간 54분 14초였다. 검증 직후 복원 DB를 정지해 원본·복원 RDS 모두 `stopped`이며, 이 관측값은 운영 보장값이 아니다.
 
 ## Verified Local DB Snapshot
 
@@ -111,7 +113,14 @@ Docker Compose PostgreSQL was inspected with `psql` after local services started
 
 - 완료: 현재 Source를 Build Once·Digest Promote하고 세 Flyway Migration Task Definition을 등록·실행했다.
 - 완료: 서비스별 Table과 독립된 `flyway_schema_history`, 소유권과 권한 격리를 실제 RDS에서 검증했다.
-- 남은 작업: Automated Backup을 사용해 별도 복원 RDS로 PITR Restore 훈련을 수행한다.
+- 완료: [Backup Restore 계획](../plans/2026-07-23-backup-restore-plan.md)의 Terraform 격리 구조·Validator·계약 테스트를 구현하고 감사 Foundation을 적용해 `No changes`를 확인했다.
+- 완료: RestoreWindow·Quota·Identifier·Subnet·Secret·Runtime OFF를 재점검하고 Restore ON Saved Plan을 `11 add, 0 change, 0 destroy`로 검증했다.
+- 완료: 별도 복원 RDS PITR, Fargate 읽기 전용 검증 Exit Code `0`, 관측 RTO/RPO 기록과 복원 DB 즉시 정지를 수행했다.
+- 완료: Cleanup Saved Plan SHA-256 `f01c5588a23810ae038f6e12128c9bd51181179e89616aa4553f4c95c22bc875`가 임시 11개만 삭제하고 감사 Log와 기존 Foundation을 보존함을 검증했다.
+- 완료: 승인된 Cleanup Plan을 `0 added, 0 changed, 11 destroyed`로 적용해 임시 리소스 0, 감사 Log 보존과 동일 입력 `No changes`를 확인했다.
+- 완료: 원본 Full Smoke Runtime ON Saved Plan `40 add, 10 change, 0 destroy`를 적용해 HTTPS/OAuth/Session/WebSocket/REST/SNS와 동일 입력 `No changes`를 검증했다. RDS Freeable Memory Alarm은 실제 `ALARM`으로 후속 검토한다.
+- 완료: 원본 RDS 시작, Runtime ON Apply와 전체 curl Smoke를 수행했다.
+- 완료: State serial 101 기준 최종 Runtime OFF Saved Plan `0 add, 10 change, 40 destroy`를 승인 적용하고 원본 RDS를 정지했다. State serial 107 기준 같은 OFF 입력은 `No changes`다.
 
 ## Current Gap Alignment
 

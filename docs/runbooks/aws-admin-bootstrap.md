@@ -2,7 +2,17 @@
 
 이 Runbook은 AWS Learning 환경에 최초 `ROLE_ADMIN` 계정을 한 번만 만들고 공개 관리자 가입 경로를 계속 닫아 두는 절차를 정의한다. 관리자 식별자, 비밀번호, Secret Value, Account ID, ECR Digest와 Saved Plan 파일은 문서나 Git에 기록하지 않는다.
 
-> 실행 상태(2026-07-23): Source SHA `8e5aaa06540541e365e5cfaf7cc559c8b777ae63`에 User Service의 일회성 `AdminBootstrapMain`, 임시 ECS Task Definition·Execution Role·Secrets Manager Container, 7일 감사 Log Group, AWS Admin 가입 UI 비노출과 비등록 경로 404 처리를 반영했다. [GHCR Run 29943128766](https://github.com/hyunmyungchoi/Spring-React-MSA/actions/runs/29943128766)에서 User Service·Admin BFF 테스트와 Build Once를 완료했고, [User Service ECR Run 29943405775](https://github.com/hyunmyungchoi/Spring-React-MSA/actions/runs/29943405775)와 [Admin BFF ECR Run 29943469707](https://github.com/hyunmyungchoi/Spring-React-MSA/actions/runs/29943469707)에서 재빌드 없이 Promote·Digest 검증을 완료했다. Kubernetes Digest는 Bot Commit `9e78f84034e17bb9f4884dca4c7475919c0a0386`에 고정됐다. [Admin Frontend Run 29943536376](https://github.com/hyunmyungchoi/Spring-React-MSA/actions/runs/29943536376)은 `spring-admin-web`만 S3에 동기화하고 CloudFront를 무효화했으며 HTTPS curl은 200이었다. 아직 AWS Bootstrap Foundation Apply, 관리자 생성과 Runtime Public Domain Smoke·Cleanup은 수행하지 않았다.
+> 실행 상태(2026-07-23): Source SHA `8e5aaa06540541e365e5cfaf7cc559c8b777ae63`에 User Service의 일회성 `AdminBootstrapMain`, 임시 ECS Task Definition·Execution Role·Secrets Manager Container, 7일 감사 Log Group, AWS Admin 가입 UI 비노출과 비등록 경로 404 처리를 반영했다. [GHCR Run 29943128766](https://github.com/hyunmyungchoi/Spring-React-MSA/actions/runs/29943128766)에서 User Service·Admin BFF 테스트와 Build Once를 완료했고, [User Service ECR Run 29943405775](https://github.com/hyunmyungchoi/Spring-React-MSA/actions/runs/29943405775)와 [Admin BFF ECR Run 29943469707](https://github.com/hyunmyungchoi/Spring-React-MSA/actions/runs/29943469707)에서 재빌드 없이 Promote·Digest 검증을 완료했다. Kubernetes Digest는 Bot Commit `9e78f84034e17bb9f4884dca4c7475919c0a0386`에 고정됐다. [Admin Frontend Run 29943536376](https://github.com/hyunmyungchoi/Spring-React-MSA/actions/runs/29943536376)은 `spring-admin-web`만 S3에 동기화하고 CloudFront를 무효화했으며 HTTPS curl은 200이었다.
+>
+> Admin Bootstrap Foundation OFF Saved Plan은 217,371 bytes, SHA-256 `ba8146a2702c56811802127eb6d634f1643eb27b64495e44d236774fa8753d0a`, `7 add, 2 change, 2 destroy`로 승인 적용했고 실제 결과도 일치했다. 적용 뒤 Task Role 없음, Read-only Root, UID 65534, Digest Image, Secret 여섯 개, Secret 읽기 Resource 정확히 두 개, 7일 감사 Log와 값이 없는 임시 Secret을 확인했다. Foundation 적용 직후 RDS는 `stopped`, ASG는 `0/0/0`, ECS Service 8개와 실행 Task·Public ALB·Valkey는 모두 0이었다.
+>
+> 임시 Secret은 실제 값을 출력하지 않고 최신 `AWSCURRENT` 1개와 `email`, `login_id`, `password`, `username` 네 Key 및 모든 길이·형식 계약을 확인했다. 입력 교정 과정의 이전 Version은 `AWSPREVIOUS` 1개와 Unstaged 1개로 암호화 보관됐고 Bootstrap Task는 최신 `AWSCURRENT`만 읽었다. Runtime ON 일회성 생성·멱등 재실행, Public Domain Smoke, Runtime OFF·RDS 정지와 임시 Foundation Cleanup을 모두 완료했다.
+>
+> Runtime ON 검증 당시 RDS는 `available`이었고 삭제 보호, Backup 7일과 Private 접근을 유지했다. Admin Bootstrap Runtime ON Saved Plan은 226,002 bytes, SHA-256 `062a2ae4ec81e5711b3acde497c72753e4a67081bf2053803b67e092a6a117ca`, `40 add, 10 change, 0 destroy`로 승인 적용했고 실제 결과도 일치했다. Redis Password는 Ephemeral 입력으로만 전달했다. ECS Service·Healthy Task·Healthy Container·Digest는 8/8, ASG는 `1/1/2`, ALB Target은 2/2, Runtime Alarm은 29/29 Actions Enabled로 수렴했으며 RDS와 Valkey는 `available`이었다.
+>
+> Admin Bootstrap Runtime OFF Saved Plan `tfplan-admin-bootstrap-runtime-off`는 244,881 bytes, SHA-256 `0bacdea5c340446205f05ea038ab26bcc1290979c68e7cbc0e36f2a25b495c00`, `0 add, 10 change, 40 destroy`로 승인 적용했다. ECS Desired·Running·Pending 8개, Running Task·Container Instance·ASG Instance·Public ALB·Valkey·`origin`·Redis Host Parameter·Runtime Alarm은 모두 0이고 Container Insights는 `disabled`다. RDS는 삭제 보호, Backup 7일과 Private 접근을 유지한 `stopped`이며 자동 재시작 예정은 2026-07-30 11:16:46 KST다. 정적 `curl.exe` 6/6 HTTP 200, Root 308·Path/Query 보존, Runtime OFF API 502와 동일 OFF 입력 `No changes`를 확인한 뒤 적용 Plan을 삭제했다. Admin Bootstrap Foundation과 감사 Log는 유지한다.
+>
+> Admin Bootstrap Foundation Cleanup Saved Plan `tfplan-admin-bootstrap-foundation-cleanup`은 219,703 bytes, SHA-256 `220f3c551f1c9b86e19ec539bbbf58e334cd56d59900d66ee934dae9a95cb93a`, `0 add, 0 change, 4 destroy`로 승인 적용했다. 임시 ECS Task Definition·Execution Role·Inline Policy를 제거했고 Secret은 CloudTrail 기준 Recovery Window 7일·약 168시간의 삭제 예약 상태다. 7일 감사 Log Group과 기존 Stream 2개, 관리자 DB 계정, Application Foundation·Frontend·Public Domain·Watchdog은 보존했다. 동일 Cleanup 입력 `No changes`를 확인하고 적용 Plan을 삭제했다.
 
 ## 보안 계약
 
@@ -66,11 +76,21 @@ PowerShell History와 Transcript에 실제 값이 남지 않게 대화형 입력
 
 실패 시 Public 가입 Route를 임시로 열지 않는다. Bootstrap Transaction은 Commit 전에 실패하면 전체 Rollback되므로 Task Log, Exit Code, RDS 연결과 schema를 교정한 뒤 같은 입력으로 재시도한다.
 
+2026-07-23 실행 증적은 다음과 같다.
+
+- 최초 ECS Task: Exit Code 0, `result=created`
+- 동일 Secret Version·동일 실행 식별자 재시도: Exit Code 0, `result=already_present`
+- 두 실행의 감사 Actor·Request ID·Identity Fingerprint 일치
+- 구조화된 감사 Log에서 비밀번호·Cookie·Token과 예상하지 않은 Secret 노출 없음
+- 인증된 관리자 목록에서 `ROLE_ADMIN` 사용자는 정확히 1명
+
 ## 5. HTTPS·OAuth·Session·404 Smoke
 
 Admin 정적 화면에서 가입 탭이 보이지 않는지 확인한 뒤 Bootstrap 계정으로 Admin OAuth2 로그인, `ADMINSESSIONID`, CSRF, `/admin-bff/auth/me`, 사용자 목록과 Logout을 검증한다. Cookie·Password·Token은 캡처나 문서에 남기지 않는다.
 
 공개 가입 경로는 유효한 개인정보를 보내지 않고 CSRF Cookie를 먼저 발급받은 다음 빈 JSON으로 404만 검증한다.
+
+2026-07-23 실제 `curl.exe` 검증에서 공개 HTTPS·Readiness·OIDC·BFF 12/12가 HTTP 200이었고 Root는 Path와 Query를 보존해 HTTP 308로 이동했다. 관리자 흐름은 익명 `/auth/me`, 공개 등록 `404 RESOURCE_NOT_FOUND`, Password Login, OAuth Redirect Chain, `ROLE_ADMIN`·`ROLE_USER`, 관리자 목록, BFF Logout, Authorization Server Logout, 로그아웃 뒤 익명 상태를 모두 통과했다. 응답에 원본 `sessionId`가 없음을 확인했다. Cookie 값은 출력하지 않았으며 수명주기별 이름만 확인했다: 익명 시 `ADMIN-XSRF-TOKEN`, Password Login 뒤 `AUTHSESSIONID`, OAuth 뒤 `ADMINSESSIONID`, 인증된 `/auth/me` 뒤 세 이름 모두 존재했다.
 
 ```powershell
 $cookieJar = Join-Path $env:TEMP "spring-msa-admin-bootstrap-cookies.txt"
@@ -111,6 +131,8 @@ finally {
 404 응답은 `RESOURCE_NOT_FOUND` 공통 Envelope여야 한다. 201, 400 또는 Validation Error면 Controller가 활성화된 것이므로 즉시 실패로 처리하고 Runtime을 내린다. 403은 CSRF Cookie/Header 전달을 먼저 교정한 뒤 재검사한다.
 
 ## 6. Runtime OFF와 임시 리소스 제거
+
+Runtime OFF·RDS 정지와 임시 Foundation Cleanup을 완료했다. 적용 Plan은 SHA-256 재검증과 동일 Cleanup 입력 `No changes` 확인 뒤 삭제했다.
 
 1. Smoke 완료 후 Runtime OFF Saved Plan을 승인·Apply하고 ECS/ASG/ALB/Valkey와 Runtime Alarm을 종료한다.
 2. RDS가 `stopped`인지 확인하고 다음 자동 시작 시각을 기록한다.

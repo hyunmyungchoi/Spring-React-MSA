@@ -16,7 +16,7 @@
 
 **AWS Learning 결정:** Controller는 `admin-bff.registration.enabled` 조건으로 등록된다. 공통 기본값은 로컬 개발을 위해 `true`지만 `prod` 기본값은 `false`이며, 로컬 Kubernetes만 `ADMIN_BFF_REGISTRATION_ENABLED=true`를 명시한다. AWS ECS는 `false`로 고정해 공개 가입 Route 자체를 등록하지 않고 AWS 정적 Admin Frontend도 가입 탭을 Build 시 제거한다.
 
-최초 관리자는 User Service Image의 일회성 `AdminBootstrapMain`을 Private ECS Task로 실행해 만든다. 입력은 임시 Secrets Manager Secret, 실행 주체와 Request ID는 `RunTask` Override로 전달한다. Transaction Lock 아래 Admin이 없을 때만 BCrypt strength 12 계정과 `ROLE_USER`, `ROLE_ADMIN`을 함께 생성한다. 같은 입력 재실행만 `already_present`로 허용하고 다른 Admin이나 충돌은 거부한다. 상세 실행·삭제 절차는 [AWS 최초 관리자 Bootstrap Runbook](../runbooks/aws-admin-bootstrap.md)을 따른다. 저장소 계약은 구현했지만 AWS 실행 검증은 아직 완료하지 않았다.
+최초 관리자는 User Service Image의 일회성 `AdminBootstrapMain`을 Private ECS Task로 실행해 만든다. 입력은 임시 Secrets Manager Secret, 실행 주체와 Request ID는 `RunTask` Override로 전달한다. Transaction Lock 아래 Admin이 없을 때만 BCrypt strength 12 계정과 `ROLE_USER`, `ROLE_ADMIN`을 함께 생성한다. 같은 입력 재실행만 `already_present`로 허용하고 다른 Admin이나 충돌은 거부한다. 상세 실행·삭제 절차는 [AWS 최초 관리자 Bootstrap Runbook](../runbooks/aws-admin-bootstrap.md)을 따른다. AWS에서 최초 `created`, 동일 입력 `already_present`, 관리자 1명, 실제 Password Login·OAuth·Admin Session·Logout과 공개 가입 `404 RESOURCE_NOT_FOUND`를 검증했다. Runtime OFF·RDS 정지 뒤 임시 Task/Role을 제거하고 Secret을 7일 삭제 예약했으며 감사 Log와 관리자 계정은 보존했다.
 
 ## 사용자 조회
 
