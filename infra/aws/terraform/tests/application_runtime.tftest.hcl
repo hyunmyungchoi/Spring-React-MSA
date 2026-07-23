@@ -103,6 +103,21 @@ run "runtime_off_keeps_foundation_at_zero_tasks" {
   }
 
   assert {
+    condition = alltrue([
+      for service_name in ["user-service", "stock-service", "member-bff"] :
+      lookup({
+        for entry in jsondecode(aws_ecs_task_definition.service[service_name].container_definitions)[0].environment :
+        entry.name => entry.value
+      }, "SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE", null) == "5" &&
+      lookup({
+        for entry in jsondecode(aws_ecs_task_definition.service[service_name].container_definitions)[0].environment :
+        entry.name => entry.value
+      }, "SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE", null) == "1"
+    ])
+    error_message = "The three RDS clients must use the bounded AWS Learning Hikari pool contract."
+  }
+
+  assert {
     condition = lookup({
       for entry in jsondecode(aws_ecs_task_definition.service["member-gateway"].container_definitions)[0].environment :
       entry.name => entry.value

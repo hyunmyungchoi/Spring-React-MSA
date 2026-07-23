@@ -33,6 +33,11 @@ locals {
     SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI = "http://${local.service_dns.authorization_server}:9000/oauth2/jwks"
   }
 
+  database_pool_environment = {
+    SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE = "5"
+    SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE      = "1"
+  }
+
   service_configs = {
     member-gateway = {
       repository_service = "spring-member-gateway"
@@ -113,7 +118,7 @@ locals {
       cpu                = 512
       memory             = 768
       public_host        = null
-      environment = merge(local.common_environment, local.jwt_environment, {
+      environment = merge(local.common_environment, local.jwt_environment, local.database_pool_environment, {
         SPRING_DATASOURCE_URL                          = "jdbc:postgresql://${var.db_address}:${var.db_port}/${var.db_name}?currentSchema=user_service&sslmode=require"
         SPRING_JPA_HIBERNATE_DDL_AUTO                  = "validate"
         SPRING_SQL_INIT_MODE                           = "never"
@@ -152,7 +157,7 @@ locals {
       cpu                = 512
       memory             = 1024
       public_host        = null
-      environment = merge(local.common_environment, local.jwt_environment, {
+      environment = merge(local.common_environment, local.jwt_environment, local.database_pool_environment, {
         SPRING_DATASOURCE_URL                          = "jdbc:postgresql://${var.db_address}:${var.db_port}/${var.db_name}?currentSchema=stock_service&sslmode=require"
         SPRING_JPA_HIBERNATE_DDL_AUTO                  = "validate"
         SPRING_SQL_INIT_MODE                           = "never"
@@ -186,7 +191,7 @@ locals {
       cpu                = 512
       memory             = 1024
       public_host        = null
-      environment = merge(local.common_environment, {
+      environment = merge(local.common_environment, local.database_pool_environment, {
         SPRING_DATASOURCE_URL                          = "jdbc:postgresql://${var.db_address}:${var.db_port}/${var.db_name}?currentSchema=member_bff&sslmode=require"
         SPRING_JPA_HIBERNATE_DDL_AUTO                  = "validate"
         SPRING_SQL_INIT_MODE                           = "never"
