@@ -25,8 +25,8 @@
 | Data | PostgreSQL 16, Redis 7 |
 | Messaging | Kafka 3.7.0 |
 | Platform | Docker Compose, Kubernetes, ingress-nginx, GHCR, Argo CD |
-| AWS migration | Backup Restore·Cleanup과 Hikari `5/1` 재측정 완료; RDS Alarm 5개·Member BFF Prometheus Runtime ON 전체 Smoke와 후속 OFF `0/10/40` 적용·RDS 정지 완료 |
-| Observability | Kubernetes Prometheus·Grafana·Loki; AWS SNS·Runtime Watchdog 적용 완료, RDS Alarm 5개·Watchdog Alarm 3개 유지, Runtime Alarm 29개 종료·RDS 정지 완료 |
+| AWS migration | Backup Restore·Cleanup, Hikari `5/1`, RDS Alarm·Member BFF Prometheus Runtime ON/OFF 전체 검증과 Applied Plan·임시 로그 정리 완료; 현재 Runtime·RDS OFF |
+| Observability | Kubernetes Prometheus·Grafana·Loki; AWS SNS·Runtime Watchdog 적용 완료, RDS Alarm 5개·Watchdog Alarm 3개 유지, Runtime Alarm 29개 종료·최종 감사 완료 |
 
 ## 문서 상태 표현
 

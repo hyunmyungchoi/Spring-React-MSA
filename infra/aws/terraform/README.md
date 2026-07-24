@@ -1,6 +1,6 @@
 # AWS Terraform 운영 Runbook
 
-이 디렉터리는 `spring-react-msa` 학습 환경의 현재 AWS 인프라를 관리한다. 기본 리전은 `ap-northeast-2`다. RDS Alarm 5개·Member BFF Prometheus 200/404 교정의 Runtime ON 전체 Smoke와 후속 OFF를 완료했다. 현재 State serial 131·주소 251개, ECS Service 8개 `0/0/0`, ASG `0/0/0`, EC2·Task·Container Instance·ALB·Valkey·Runtime Alarm·`origin` Record는 0이고 RDS는 `stopped`다. 영속 RDS Alarm 5개·Watchdog Alarm 3개, SNS, Task Definition·ECR Repository 8개와 Frontend를 유지한다. 적용한 OFF Plan SHA-256은 `9a4ce0c1e778c874c115806d0135987559c289d50d804835588a35e60d7ff69f`이며 State 변경 후 재사용하지 않는다. 후속 Runtime의 승인된 목표와 미구현 경계는 [AWS Learning Runtime 결정](../../../docs/aws-migration/07-learning-runtime-design.md)을 따른다.
+이 디렉터리는 `spring-react-msa` 학습 환경의 현재 AWS 인프라를 관리한다. 기본 리전은 `ap-northeast-2`다. RDS Alarm 5개·Member BFF Prometheus 200/404 교정의 Runtime ON/OFF 전체 검증과 최종 정리를 완료했다. 현재 State serial 131·주소 251개, ECS Service 8개 `0/0/0`, ASG `0/0/0`, EC2·Task·Container Instance·ALB·Valkey·Runtime Alarm·`origin` Record는 0이고 RDS는 `stopped`다. 영속 RDS Alarm 5개·Watchdog Alarm 3개, SNS, Task Definition·ECR Repository 8개와 Frontend를 유지하며 Applied Saved Plan·Runtime Apply 로그 잔여는 0이다. 후속 Runtime의 승인된 목표와 미구현 경계는 [AWS Learning Runtime 결정](../../../docs/aws-migration/07-learning-runtime-design.md)을 따른다.
 
 ## 현재 상태와 범위
 
@@ -630,7 +630,7 @@ Post-Restore Full Smoke Runtime ON Saved Plan `tfplan-post-restore-full-smoke-ru
 24. 완료: 검증된 Runtime ON Saved Plan `40/10/0` 적용, State serial 125·주소 291개, ECS/Health 8/8·ASG `1/1/2`·ALB Target 2/2·Cloud Map 8/8·Alarm 34/34 OK와 전체 Smoke·ON `No changes`
 25. 완료: Runtime OFF 사전 점검과 Saved Plan `0/10/40` 생성, 삭제 40개 Runtime 경계·RDS/Task/Image/Secret/Network/Frontend 변경 0 검증
 26. 완료: 검증된 Runtime OFF Saved Plan `0/10/40` 적용, State serial 131·주소 251개, Runtime 0·정적 curl·OFF `No changes`·RDS 정지
-27. 다음: Applied Saved Plan·임시 로그 정리와 최종 AWS·문서 감사
+27. 완료: Applied Saved Plan 4개·Runtime Apply 로그 4개 삭제, 최종 OFF `No changes`·AWS/Git/문서·curl 9/9 감사
 
 2026-07-24 진단에서 Hikari `5/1` 재측정값은 DatabaseConnections 평균 3.87·최대 6, FreeableMemory 최소 190.14 MiB, Swap 최대 0.45 MiB, CPU 평균 4.07%였다. Class는 `db.t4g.micro`를 유지하고 FreeableMemory 128 MiB·SwapUsage 64 MiB·DatabaseConnections 16과 기존 CPU·FreeStorage를 합친 영속 Alarm 5개를 구현했다. Member BFF 500은 Prometheus Registry 누락과 `NoResourceFoundException` catch-all 500 변환이 원인이었으며 Member BFF Image만 교정했다. 상세 범위는 [RDS Alarm·Member BFF Prometheus 교정 계획](../../../docs/plans/2026-07-24-rds-alarm-prometheus-plan.md)을 따른다.
 
@@ -651,5 +651,7 @@ HTTPS 정적 6개와 Readiness·OIDC·BFF 6개는 모두 200, Root는 Path·Quer
 승인된 OFF Plan Hash·Gate·State·Git·Runtime ON을 다시 확인한 뒤 동일 Binary만 적용했다. 결과는 `0 added, 10 changed, 40 destroyed`, stderr 0이며 State serial 131·주소 251개다. ECS Service 8개와 Running Task·Container Instance, ASG `0/0/0`·Instance, ALB·Valkey·`origin`·Redis Host Parameter·Runtime Alarm·Target 등록은 모두 0이고 Container Insights는 `disabled`다. Task Definition·ECR Repository 8개, Cloud Map Service, Network/NAT, Secret, Frontend와 영속 Alarm/SNS/Watchdog은 유지했다.
 
 정적 curl 6/6은 200·HTML, Root는 Path·Query를 보존한 308, Member/Admin API는 502였다. 동일 OFF 입력은 `DetailedExitCode 0`, `No changes`다. RDS는 `2026-07-25 04:19:15.988 KST` 정지 요청 후 `04:26:10.668 KST`에 `stopped`를 확인했고 삭제 보호·Backup 7일을 유지한다. 자동 재시작 예정은 `2026-08-01 04:25:37.967 KST`다. 적용 Plan은 State 변경 후 재사용하지 않고 최종 정리 단계에서 삭제한다.
+
+최종 정리에서 `tfplan.ecr`과 교정 Foundation OFF·Runtime ON·Runtime OFF Applied Plan 4개, Runtime Apply stdout/stderr 4개를 승인된 절대 경로에서만 삭제했다. 삭제 전 OFF 재계획은 `DetailedExitCode 0`, `No changes`였고 삭제 후 `tfplan*`·해당 로그 잔여는 0이다. 최종 AWS 감사는 State serial 131·주소 251개, Runtime 0, RDS stopped, 영속 Alarm 8/8 `OK`, SNS Confirmed, Task Definition/ECR/Cloud Map Service 8개, CloudFront 2/2를 확인했다. 정적·Root·OFF API curl은 9/9 통과했고 Git과 Terraform 프로세스도 clean이다.
 
 Kubernetes↔AWS DR은 Learning 적용 범위에서 제외하고 후속 학습 과제로 보류한다.
