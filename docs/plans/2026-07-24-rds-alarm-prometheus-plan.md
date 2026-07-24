@@ -1,9 +1,9 @@
 # RDS Alarm·Member BFF Prometheus 교정 계획
 
 - 작성일: 2026-07-24
-- 상태: 코드·테스트, Member BFF Build Once·ECR Promote, Foundation OFF와 Runtime ON 적용·전체 Smoke 완료, 후속 Runtime OFF 준비
+- 상태: 코드·테스트, Member BFF Build Once·ECR Promote, Foundation OFF와 Runtime ON 적용·전체 Smoke 완료, Runtime OFF Saved Plan 적용 전
 - 적용 기준: Source Git `65c326496477953c05791fad73b05cf80d258445`, Terraform 적용 전 State serial 119·주소 249개
-- 현재 AWS 상태: State serial 125·주소 291개, ECS Service·Container Health 8/8, ASG `1/1/2`, Public ALB·Valkey·원본 RDS 가동, RDS Alarm 5/5·Runtime Alarm 29/29 `OK`
+- 현재 AWS 상태: State serial 125·주소 291개, ECS Service·Container Health 8/8, ASG `1/1/2`, Public ALB·Valkey·원본 RDS 가동, 관련 Alarm 37/37 정상. OFF Plan은 생성했지만 미적용
 
 ## 1. 범위
 
@@ -265,3 +265,29 @@ Plan 생성 후에도 State serial 120·주소 251개, ECS Service 8개 `0/0/0`,
 SNS Email 구독은 `Confirmed`이며 DatabaseConnections Alarm을 승인된 Smoke로 `ALARM → OK` 전환했다. 최근 1시간 지표는 `Published 45 → 47`, `Delivered 45 → 47`, `Failed 0 → 0`으로 실제 두 알림 전달을 확인했고 최종 전체 관련 Alarm은 `ALARM 0`, `INSUFFICIENT_DATA 0`이다. 승인 Saved Plan의 원래 입력과 새 Ephemeral Redis Password를 사용한 ON 재계획은 `DetailedExitCode 0`, `No changes`다.
 
 다음 단계는 별도 승인으로 Runtime OFF 사전 점검과 비용 종료 Saved Plan을 생성하는 것이다.
+
+## 13. Runtime OFF 사전 점검·Saved Plan
+
+2026-07-25 Runtime ON 기준 Git HEAD와 origin/master `1194be816f2c0ab768999bb071a1143cea75fbf6`, Git clean, Terraform 프로세스 0, State serial 125·주소 291개를 확인했다. ECS 8개 `1/1/0`·Rollout 완료, ASG `1/1/2`·Healthy Instance 1개, RDS·Valkey `available`, ALB `active`, Target 2/2·Cloud Map 8/8, 관련 Alarm 37/37 정상이었다.
+
+Application Image는 실행 Task Definition과 8/8 일치하며 모두 OCI Digest로 고정돼 있다. Runtime Secret 7개는 삭제 예약 0, Redis Secret은 AWSCURRENT Key 계약을 통과했고 SNS Email 구독은 `Confirmed`, `origin` A Alias와 DNS A 2개도 정상이다. Secret 실제 값은 출력·문서화하지 않았다.
+
+Runtime ON Saved Plan의 고정 입력을 그대로 재사용하고 `learning_runtime_enabled=false`만 적용해 다음 Binary Saved Plan을 만들었다.
+
+- 파일: `tfplan-rds-alarm-member-bff-runtime-off`
+- 크기: 252,778 bytes
+- SHA-256: `9a4ce0c1e778c874c115806d0135987559c289d50d804835588a35e60d7ff69f`
+- 생성 시각: `2026-07-25 03:56:04.360 KST`
+- 운영 Gate 만료: `2026-07-25 05:26:04.360 KST`
+- 생성 기준 State: serial 125·주소 291개
+- 변경: `0 add, 10 change, 40 destroy`, Replace 0
+
+삭제 40개는 Runtime Alarm 29개, Valkey·Redis Host Parameter 6개, Public ALB·HTTPS Listener·Gateway Rule 2개·`origin` 5개뿐이다. 갱신 10개는 ECS Service 8개 `desired 1 → 0`, ASG min/max `1/2 → 0/0`과 ECS Container Insights `enabled → disabled`다. 계획 출력의 ASG Runtime Capacity는 `0/0/0`이다. ASG의 `desired_capacity` 리소스 속성은 Managed Scaling을 위해 코드에서 `ignore_changes`지만 max 0 적용 시 AWS Desired도 0으로 수렴해야 하며 Apply 후 실상태로 검증한다.
+
+Task Definition·Image·Service Registry, RDS·영속 RDS Alarm 5개, SNS·Watchdog, Secret, Network/NAT, Frontend/CloudFront, ACM과 정적 DNS 변경은 0이다. Plan 변수의 Redis Password는 `null`이며 실제 값은 직렬화되지 않았다. 이 Plan은 RDS를 정지하지 않으므로 Runtime 종료 검증 뒤 별도 `stop-db-instance`가 필요하다.
+
+OFF Apply 직후 RDS를 제외한 고정 비용 약 `$0.2777/시간`이 종료되고, 후속 RDS 정지로 Compute `$0.025/시간`이 추가 종료돼 현재 고정 비용 `$0.3027/시간`을 멈춘다. LCU·전송량·Alarm 사용량은 별도다. Plan 생성 후 State와 AWS는 그대로 ON이며 Git clean과 Binary Hash를 다시 확인했다.
+
+다음 승인 문구:
+
+`RDS Alarm·Member BFF Runtime OFF Plan 9a4ce0c1e778c874c115806d0135987559c289d50d804835588a35e60d7ff69f 적용 + ECS/ASG/ALB/Valkey/Runtime Alarm 종료 + 정적 curl Smoke·No changes + RDS 정지 승인`

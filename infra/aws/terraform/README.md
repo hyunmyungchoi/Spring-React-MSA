@@ -628,7 +628,8 @@ Post-Restore Full Smoke Runtime ON Saved Plan `tfplan-post-restore-full-smoke-ru
 22. 완료: 검증된 Foundation OFF Saved Plan `3/2/1` 적용, State serial 120·주소 251개, RDS Alarm 5개·Member BFF revision 5·동일 입력 `No changes`·Runtime OFF 검증
 23. 완료: RDS 시작·available, Secret/ECR/Network/Edge/SNS·비용 사전 점검과 Runtime ON Saved Plan `40/10/0` 생성·범위 검증
 24. 완료: 검증된 Runtime ON Saved Plan `40/10/0` 적용, State serial 125·주소 291개, ECS/Health 8/8·ASG `1/1/2`·ALB Target 2/2·Cloud Map 8/8·Alarm 34/34 OK와 전체 Smoke·ON `No changes`
-25. 다음: Runtime OFF 사전 점검과 비용 종료 Saved Plan 생성
+25. 완료: Runtime OFF 사전 점검과 Saved Plan `0/10/40` 생성, 삭제 40개 Runtime 경계·RDS/Task/Image/Secret/Network/Frontend 변경 0 검증
+26. 다음: 검증된 Runtime OFF Saved Plan 적용, Runtime 종료·정적 curl·RDS 정지
 
 2026-07-24 진단에서 Hikari `5/1` 재측정값은 DatabaseConnections 평균 3.87·최대 6, FreeableMemory 최소 190.14 MiB, Swap 최대 0.45 MiB, CPU 평균 4.07%였다. Class는 `db.t4g.micro`를 유지하고 FreeableMemory 128 MiB·SwapUsage 64 MiB·DatabaseConnections 16과 기존 CPU·FreeStorage를 합친 영속 Alarm 5개를 구현했다. Member BFF 500은 Prometheus Registry 누락과 `NoResourceFoundException` catch-all 500 변환이 원인이었으며 Member BFF Image만 교정했다. 상세 범위는 [RDS Alarm·Member BFF Prometheus 교정 계획](../../../docs/plans/2026-07-24-rds-alarm-prometheus-plan.md)을 따른다.
 
@@ -641,5 +642,9 @@ Post-Restore Full Smoke Runtime ON Saved Plan `tfplan-post-restore-full-smoke-ru
 승인 Gate 안에서 같은 Plan Hash·State·Git·RDS와 `40/10/0` 범위를 재검증하고 Redis Password를 Apply 프로세스 메모리에만 주입해 적용했다. 결과는 `40 added, 10 changed, 0 destroyed`, stderr 0이며 State serial 125·주소 291개다. ASG `1/1/2`, ECS Service `1/1/0`·Task/Container Health·Rollout 8/8, RDS·Valkey `available`, ALB `active`·Target 2/2, Cloud Map 8/8, RDS Alarm 5/5·Runtime Alarm 29/29 `OK`로 수렴했다.
 
 HTTPS 정적 6개와 Readiness·OIDC·BFF 6개는 모두 200, Root는 Path·Query를 보존한 308이었다. 신규 `ROLE_USER`의 Registration 201, Password Login·OAuth·BFF Session·CSRF Heartbeat·보호 REST·Logout, WebSocket `CONNECTED`·`HISTORY`·`PONG`·`CHAT_MESSAGE`와 REST History를 검증했다. Member BFF Prometheus는 200·Prometheus Content-Type·JVM Metric·Hikari Pending 0, 미존재 Actuator는 404 `application/json`이다. SNS Alarm `ALARM → OK`로 최근 1시간 `Published 45 → 47`, `Delivered 45 → 47`, `Failed 0 → 0`을 확인했고 최종 관련 Alarm은 모두 정상이다. 승인 Plan 입력으로 재계획한 결과는 `DetailedExitCode 0`, `No changes`이며 Ephemeral Secret 환경변수와 Cookie 파일을 제거했다.
+
+후속 Runtime OFF 사전 점검에서 State serial 125·주소 291개, Git clean, ECS·Health 8/8, ASG `1/1/2`, RDS·Valkey·ALB, Target 2/2·Cloud Map 8/8, 관련 Alarm 37/37 정상과 Image Digest 8/8·Secret 7개·SNS·DNS 계약을 확인했다. Saved Plan `tfplan-rds-alarm-member-bff-runtime-off`은 252,778 bytes, SHA-256 `9a4ce0c1e778c874c115806d0135987559c289d50d804835588a35e60d7ff69f`, State serial 125 기준 `0 add, 10 change, 40 destroy`다. Gate는 `2026-07-25 05:26:04.360 KST`까지다.
+
+삭제는 Runtime Alarm 29·Valkey 계열 6·ALB/HTTPS/Rule/`origin` 5개, 갱신은 ECS Service 8·ASG·Container Insights뿐이다. 계획 출력 ASG Capacity는 `0/0/0`이고 RDS·Task Definition/Image·Secret·Network/NAT·Frontend/CloudFront·영속 Alarm/SNS/Watchdog 변경은 0이다. Redis Password는 Plan에서 `null`이다. OFF Apply 뒤 Runtime 고정 비용 `$0.2777/시간`, 별도 RDS 정지 뒤 `$0.025/시간`을 추가 종료한다. Plan 생성 후 AWS는 여전히 ON이고 State·Git·Hash는 변하지 않았다.
 
 Kubernetes↔AWS DR은 Learning 적용 범위에서 제외하고 후속 학습 과제로 보류한다.
