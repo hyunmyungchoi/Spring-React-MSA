@@ -623,8 +623,12 @@ Post-Restore Full Smoke Runtime ON Saved Plan `tfplan-post-restore-full-smoke-ru
 17. 완료: Hikari 재측정 Runtime OFF Saved Plan SHA-256 `5e3f9b9a03dceab9eb57491b57b05a8c090693c2c41c10f047ee2c9b86cd779d`을 `0/10/40`으로 적용, ECS·ASG·ALB·Valkey·Runtime Alarm·`origin` 0, RDS 정지, State serial 119·OFF `No changes`, 정적 curl 6/6·Root 308·API 502 검증
 18. 완료: DB Class·FreeableMemory Alarm과 Member BFF Prometheus 500 사전 진단 — `db.t4g.micro` 유지, 영속 RDS Alarm 5개와 Member BFF Prometheus 200/404 교정 결정
 19. 완료: 영속 RDS Alarm 5개·Member BFF Prometheus 200/404 구현, Terraform 38/38·Member BFF 10/10·Fat JAR Registry 검증
-20. 다음: Member BFF Build Once·ECR Promote와 Runtime OFF Foundation Saved Plan 생성
+20. 완료: Source `65c3264`, GHCR Build Once Run `30110469700`, ECR Promote Run `30110888017`, 동일 OCI Digest와 Kubernetes Member BFF Digest 고정
+21. 완료: Runtime OFF Foundation Saved Plan `3/2/1`, SHA-256 `147eb62ff0298e3fe0cb707bff32e7b432bcbb63cbf24f98cf13334549c73331` 생성·범위 검증
+22. 다음: 검증된 Foundation OFF Saved Plan 적용
 
 2026-07-24 진단에서 Hikari `5/1` 재측정값은 DatabaseConnections 평균 3.87·최대 6, FreeableMemory 최소 190.14 MiB, Swap 최대 0.45 MiB, CPU 평균 4.07%였다. Class는 `db.t4g.micro`를 유지하고 FreeableMemory 128 MiB·SwapUsage 64 MiB·DatabaseConnections 16과 기존 CPU·FreeStorage를 합친 영속 Alarm 5개를 후속 구현한다. Member BFF 500은 Prometheus Registry 누락과 `NoResourceFoundException` catch-all 500 변환이 원인이며, Member BFF Image만 교정한다. 현재 Terraform·AWS 적용값은 기존 RDS Alarm 3개·FreeableMemory 256 MiB이고 RDS는 `stopped`다. 상세 범위는 [RDS Alarm·Member BFF Prometheus 교정 계획](../../../docs/plans/2026-07-24-rds-alarm-prometheus-plan.md)을 따른다.
+
+2026-07-25 검증된 Member BFF Image의 GHCR·ECR OCI Digest가 일치했다. 현재 ECS Task Definition 8개를 기준으로 Member BFF Application Image만 교체하고 영속 RDS Alarm을 3개에서 5개로 바꾸는 Saved Plan `tfplan-rds-alarm-member-bff-foundation-off`를 생성했다. Plan은 227,865 bytes, SHA-256 `147eb62ff0298e3fe0cb707bff32e7b432bcbb63cbf24f98cf13334549c73331`, State serial 119 기준이며 정확히 `3 add, 2 change, 1 destroy`다. 변경 주소는 Member BFF Task Definition 교체·Desired 0 Service 참조, FreeableMemory Alarm 변경, SwapUsage·DatabaseConnections Alarm 생성뿐이다. 다른 7개 Image·Flyway Migration·RDS·ECS/ASG 용량·ALB·Valkey·Network·DNS·Frontend·Secret 변경은 0이고 Redis Password 값은 `null`이다. Gate 만료는 `2026-07-25 03:36:58.675 KST`이며 Apply 전 Hash·State·Git·OFF 상태를 다시 검증한다.
 
 Kubernetes↔AWS DR은 Learning 적용 범위에서 제외하고 후속 학습 과제로 보류한다.

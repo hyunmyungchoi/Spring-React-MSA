@@ -6,7 +6,7 @@
 >
 > 저장소 상태: Foundation·ECR/OIDC·Private App 송신·RDS/Secrets·ECS Compute·DB Bootstrap/Flyway·Application Runtime·Frontend Hosting·Public Domain/TLS·RDS Restore Drill 코드 적용, AWS DB 서비스 Hikari Pool `5/1`과 영속 RDS Alarm 5개·Member BFF Prometheus 200/404 교정, Terraform 계약 테스트 38/38·Member BFF 테스트 10/10 완료
 >
-> AWS 적용 상태: Hikari Pool `5/1` Foundation Plan `3/3/3`과 재측정 Runtime ON Plan `40/11/0`을 적용하고 30분 전체 Smoke를 완료했다. 후속 Runtime OFF Plan SHA-256 `5e3f9b9a03dceab9eb57491b57b05a8c090693c2c41c10f047ee2c9b86cd779d`을 `0/10/40`으로 적용해 ECS·ASG·ALB·Valkey·Runtime Alarm·`origin`을 0으로 수렴시키고 RDS를 정지했다. 현재 State serial 119·주소 249개, 동일 OFF 입력 `No changes`이며 정적 curl 6/6·Root 308·API 502를 확인했다. `db.t4g.micro` 유지와 RDS Alarm 5개·Member BFF Prometheus 200/404 교정을 결정했지만 아직 구현·AWS 적용 전이다.
+> AWS 적용 상태: Hikari Pool `5/1` Foundation Plan `3/3/3`과 재측정 Runtime ON Plan `40/11/0`을 적용하고 30분 전체 Smoke를 완료했다. 후속 Runtime OFF Plan SHA-256 `5e3f9b9a03dceab9eb57491b57b05a8c090693c2c41c10f047ee2c9b86cd779d`을 `0/10/40`으로 적용해 ECS·ASG·ALB·Valkey·Runtime Alarm·`origin`을 0으로 수렴시키고 RDS를 정지했다. 현재 State serial 119·주소 249개, ECS·ASG 0과 RDS `stopped`다. RDS Alarm 5개·Member BFF Prometheus 200/404 코드를 검증하고 Member BFF Build Once·ECR Promote를 완료했으며 Foundation OFF Plan `3/2/1`은 Apply 대기다.
 
 이 문서는 AWS Foundation 이후 Learning 환경에 추가할 Runtime의 승인된 결정을 기록한다. 현재 적용된 리소스와 운영 절차는 [Terraform 운영 Runbook](../../infra/aws/terraform/README.md), 이미 적용된 네트워크 기준선은 [AWS Foundation 설계](04-aws-foundation-design.md)를 따른다.
 
@@ -311,7 +311,9 @@ Learning에서 적용할 복구 기준은 다음으로 제한한다.
 18. 완료: Hikari 재측정 Runtime OFF Saved Plan `0/10/40` 적용, Runtime 리소스 0 수렴·RDS 정지·State serial 119·OFF `No changes`·정적 curl 6/6·Root 308·API 502 검증
 19. 완료: `db.t4g.micro` 유지, FreeableMemory 128 MiB·SwapUsage 64 MiB·DatabaseConnections 16 Alarm과 Member BFF Prometheus 200/404 후속 결정
 20. 완료: 영속 RDS Alarm 5개·Member BFF Prometheus 200/404 구현, Terraform 38/38·Member BFF 10/10·Fat JAR Registry 검증
-21. 다음: Member BFF Build Once·ECR Promote와 Runtime OFF Foundation Saved Plan 생성
+21. 완료: Source `65c3264`, GHCR Run `30110469700`, ECR Run `30110888017`, 동일 OCI Digest와 Member BFF Kubernetes Digest 고정
+22. 완료: Runtime OFF Foundation Saved Plan `3/2/1`, SHA-256 `147eb62ff0298e3fe0cb707bff32e7b432bcbb63cbf24f98cf13334549c73331` 생성·범위 검증
+23. 다음: 검증된 Foundation OFF Saved Plan 적용
 
 각 단계는 `fmt`, `validate`, `test`, 저장 Plan 검토, 비용 확인과 명시적 Apply 승인을 거친다. 뒤 단계 리소스를 앞 단계 Plan에 섞지 않는다.
 
@@ -345,6 +347,8 @@ Runtime ON 검증 이후 남은 작업은 다음과 같다.
 - 완료: `db.t4g.micro` 유지와 FreeableMemory 128 MiB·SwapUsage 64 MiB·DatabaseConnections 16 영속 Alarm 결정
 - 완료: Member BFF Prometheus Registry 누락·미존재 Resource 500 원인 진단과 200/404 교정 범위 결정
 - 완료: 교정 구현·테스트, Member BFF Runtime Registry와 Gradle Lock·Verification Metadata 고정
-- 다음: Member BFF Build Once·ECR Promote와 Runtime OFF Foundation Saved Plan 생성
+- 완료: Member BFF Build Once·ECR Promote와 동일 OCI Digest 검증, Kubernetes Member BFF Digest 자동 고정
+- 완료: Runtime OFF Foundation Saved Plan `3/2/1` 생성, 변경 주소 5개·RDS/Runtime OFF·Secret 값 null 검증
+- 다음: 검증된 Foundation OFF Saved Plan 적용
 
 CloudWatch Log 보존 기간은 7일로 코드와 계약 테스트에 고정했고 Frontend 독립 배포, HTTPS/DNS, Public Domain Runtime ON Full Smoke, Alarm과 Watchdog을 AWS에 적용·검증했다. 관리자 Bootstrap과 Backup Restore·Cleanup, 원본 Full Smoke·최종 Runtime OFF도 완료했다. Hikari 재측정은 Connection 평균 3.87·최대 6·안정 구간 3, FreeableMemory 평균 197.09MiB·최소 190.14MiB, Swap 최대 0.45MiB였고 전체 curl/WebSocket/SNS와 `No changes`를 통과했다. Pool 효과와 낮은 Swap·CPU를 근거로 `db.t4g.micro`를 유지하며, 256 MiB 단독 Alarm 대신 기준선 기반 영속 Alarm 5개를 후속 구현한다. 상세 결정은 [RDS Alarm·Member BFF Prometheus 교정 계획](../plans/2026-07-24-rds-alarm-prometheus-plan.md)을 따른다.

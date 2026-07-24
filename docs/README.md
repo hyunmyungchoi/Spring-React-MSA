@@ -26,7 +26,7 @@
 | Messaging | Kafka 3.7.0 |
 | Platform | Docker Compose, Kubernetes, ingress-nginx, GHCR, Argo CD |
 | AWS migration | Backup Restore·Cleanup과 Hikari `5/1` 재측정, 최종 Runtime OFF·RDS 정지·`No changes` 완료; RDS Alarm·Member BFF Prometheus 후속 결정 완료 |
-| Observability | Kubernetes Prometheus·Grafana·Loki; AWS SNS·Runtime Watchdog 적용 완료, RDS Alarm 5개·Member BFF Prometheus 200/404 코드와 테스트 완료·AWS Foundation 반영 대기 |
+| Observability | Kubernetes Prometheus·Grafana·Loki; AWS SNS·Runtime Watchdog 적용 완료, RDS Alarm 5개·Member BFF Prometheus 200/404 Build Once·ECR Promote·Foundation OFF Saved Plan 생성 완료·Apply 대기 |
 
 ## 문서 상태 표현
 

@@ -1,7 +1,7 @@
 # RDS Alarm·Member BFF Prometheus 교정 계획
 
 - 작성일: 2026-07-24
-- 상태: 사전 진단·후속 결정과 코드·테스트 완료, Member BFF Build Once·ECR Promote·Foundation OFF Saved Plan 생성 전
+- 상태: 코드·테스트, Member BFF Build Once·ECR Promote와 Foundation OFF Saved Plan 생성 완료, Apply 전
 - 기준 상태: Git `2f18a384d79999f6513b7ee7ec1283aea764b4b4`, Terraform State serial 119·주소 249개
 - AWS 상태: ECS Service 8개와 ASG 0, Public ALB·Valkey·Runtime Alarm 0, 원본 RDS `stopped`
 
@@ -143,3 +143,37 @@ Foundation 적용 뒤 Runtime ON·전체 Smoke와 후속 Runtime OFF·RDS 정지
 - 전체 Terraform 계약 테스트: `38 passed, 0 failed`
 
 이 시점에는 아직 Member BFF Image를 게시·Promote하지 않았고 Terraform Saved Plan도 생성·적용하지 않았다. AWS 적용값은 기존 RDS Alarm 3개와 FreeableMemory 256 MiB이며 Runtime과 RDS는 OFF 기준을 유지해야 한다.
+
+## 9. Build Once·ECR Promote·Foundation OFF Plan
+
+2026-07-25 Source Commit `65c326496477953c05791fad73b05cf80d258445`를 기준으로 자동 Push Workflow가 Member BFF 하나만 선택했다.
+
+- GHCR Build Once: Run `30110469700`, 성공
+- GHCR 검사 결과: 기존 SHA Image 없음, 새 Image 1개 Build
+- GHCR OCI Digest: `sha256:ee0d4cc6a4aa096ab4f48b4c45adf5d08f9f8f369100362df9b1d063cfdd7cc3`
+- Kubernetes 자동 고정: Member BFF 매니페스트만 Bot Commit `23b0ac25bdf1fdd1cf4ef13b68e9c1588c3dc077`로 갱신
+- ECR Promote: Run `30110888017`, `action=promoted`, 재빌드 없음
+- ECR Source SHA Tag와 OCI Digest가 GHCR Digest와 일치
+
+현재 ECS Task Definition 8개의 Image를 기준 입력으로 사용하고 Member BFF 항목만 검증된 ECR Digest로 교체했다. 기존 Flyway Migration Image Map은 변경하지 않았다. Restore 감사 Log·Frontend·Public Domain·Observability·Watchdog Foundation을 보존하고 `learning_runtime_enabled=false`로 Saved Plan을 생성했다.
+
+검증된 Saved Plan:
+
+- 파일: `tfplan-rds-alarm-member-bff-foundation-off`
+- 크기: 227,865 bytes
+- SHA-256: `147eb62ff0298e3fe0cb707bff32e7b432bcbb63cbf24f98cf13334549c73331`
+- 생성 시각: `2026-07-25 02:06:58.675 KST`
+- 운영 Gate 만료: `2026-07-25 03:36:58.675 KST`
+- 생성 기준 State serial: 119
+- 변경: `3 add, 2 change, 1 destroy`
+- 생성: SwapUsage 64 MiB·DatabaseConnections 16 Alarm 2개, Member BFF Task Definition 새 Revision 1개
+- 변경: FreeableMemory `256 MiB → 128 MiB` Alarm, Desired 0 Member BFF ECS Service의 Task Definition 참조
+- 삭제: 이전 Member BFF Task Definition Revision 1개
+- RDS Class·Engine·Storage·상태, 다른 7개 Image·Task Definition, Flyway Migration, ECS/ASG 용량, ALB·Valkey·Runtime Alarm, Network·DNS·Frontend·Secret 변경 0
+- Ephemeral Redis Password는 Plan 변수 항목의 값이 `null`
+
+Plan 생성 후에도 ECS Service 8개 `0/0/0`, ASG `0/0/0`, RDS `stopped`, State serial 119를 유지했다. 임시 JSON 변수 파일은 삭제했고 Binary Saved Plan만 Git Ignore 상태로 보존한다.
+
+다음 적용 승인 문구:
+
+`RDS Alarm·Member BFF Foundation OFF Plan 147eb62ff0298e3fe0cb707bff32e7b432bcbb63cbf24f98cf13334549c73331 적용 승인`
