@@ -1,12 +1,12 @@
 # AWS Learning Runtime 결정
 
-> 문서 상태: Hikari `5/1` 재측정·Runtime OFF 완료, RDS Alarm 5개·Member BFF Prometheus 200/404 코드와 테스트 완료
+> 문서 상태: Hikari `5/1` 재측정·Runtime OFF와 RDS Alarm 5개·Member BFF Prometheus 200/404 Foundation OFF 적용 완료, Runtime ON Saved Plan Apply 전
 >
 > 기준일: 2026-07-24
 >
 > 저장소 상태: Foundation·ECR/OIDC·Private App 송신·RDS/Secrets·ECS Compute·DB Bootstrap/Flyway·Application Runtime·Frontend Hosting·Public Domain/TLS·RDS Restore Drill 코드 적용, AWS DB 서비스 Hikari Pool `5/1`과 영속 RDS Alarm 5개·Member BFF Prometheus 200/404 교정, Terraform 계약 테스트 38/38·Member BFF 테스트 10/10 완료
 >
-> AWS 적용 상태: Hikari Pool `5/1` Foundation Plan `3/3/3`과 재측정 Runtime ON Plan `40/11/0`을 적용하고 30분 전체 Smoke를 완료했다. 후속 Runtime OFF Plan SHA-256 `5e3f9b9a03dceab9eb57491b57b05a8c090693c2c41c10f047ee2c9b86cd779d`을 `0/10/40`으로 적용해 ECS·ASG·ALB·Valkey·Runtime Alarm·`origin`을 0으로 수렴시키고 RDS를 정지했다. RDS Alarm·Member BFF Foundation OFF Plan SHA-256 `147eb62ff0298e3fe0cb707bff32e7b432bcbb63cbf24f98cf13334549c73331`도 `3/2/1`로 적용했다. 현재 State serial 120·주소 251개, RDS Alarm 5개, Member BFF Task Definition revision 5이며 ECS·ASG 0과 RDS `stopped`, 동일 입력 `No changes`다.
+> AWS 적용 상태: Hikari Pool `5/1` 재측정 Runtime ON·전체 Smoke와 후속 Runtime OFF를 완료하고 RDS Alarm·Member BFF Foundation OFF Plan SHA-256 `147eb62ff0298e3fe0cb707bff32e7b432bcbb63cbf24f98cf13334549c73331`을 `3/2/1`로 적용했다. 현재 State serial 120·주소 251개, RDS Alarm 5개, Member BFF Task Definition revision 5다. RDS는 `available`이고 ECS·ASG·ALB·Valkey·Runtime Alarm은 0이다. Runtime ON Saved Plan SHA-256 `679fa01852e67ce8b13137a545eba220605c78984fe7e07c9b6824e00abc9d89`은 `40/10/0`으로 검증했으며 Apply 대기다.
 
 이 문서는 AWS Foundation 이후 Learning 환경에 추가할 Runtime의 승인된 결정을 기록한다. 현재 적용된 리소스와 운영 절차는 [Terraform 운영 Runbook](../../infra/aws/terraform/README.md), 이미 적용된 네트워크 기준선은 [AWS Foundation 설계](04-aws-foundation-design.md)를 따른다.
 
@@ -314,7 +314,8 @@ Learning에서 적용할 복구 기준은 다음으로 제한한다.
 21. 완료: Source `65c3264`, GHCR Run `30110469700`, ECR Run `30110888017`, 동일 OCI Digest와 Member BFF Kubernetes Digest 고정
 22. 완료: Runtime OFF Foundation Saved Plan `3/2/1`, SHA-256 `147eb62ff0298e3fe0cb707bff32e7b432bcbb63cbf24f98cf13334549c73331` 생성·범위 검증
 23. 완료: 검증된 Foundation OFF Saved Plan `3/2/1` 적용, State serial 120·주소 251개, RDS Alarm 5개·Member BFF revision 5·동일 입력 `No changes`·Runtime OFF 검증
-24. 다음: RDS 시작과 Runtime ON 사전 점검·Saved Plan 생성
+24. 완료: RDS 시작·available, Secret/ECR/Network/Edge/SNS·비용 사전 점검과 Runtime ON Saved Plan `40/10/0` 생성·범위 검증
+25. 다음: 검증된 Runtime ON Saved Plan 적용과 ECS 수렴·전체 Smoke
 
 각 단계는 `fmt`, `validate`, `test`, 저장 Plan 검토, 비용 확인과 명시적 Apply 승인을 거친다. 뒤 단계 리소스를 앞 단계 Plan에 섞지 않는다.
 
@@ -351,6 +352,7 @@ Runtime ON 검증 이후 남은 작업은 다음과 같다.
 - 완료: Member BFF Build Once·ECR Promote와 동일 OCI Digest 검증, Kubernetes Member BFF Digest 자동 고정
 - 완료: Runtime OFF Foundation Saved Plan `3/2/1` 생성, 변경 주소 5개·RDS/Runtime OFF·Secret 값 null 검증
 - 완료: 검증된 Foundation OFF Saved Plan `3/2/1` 적용, State serial 120·주소 251개, RDS Alarm 5개·Member BFF revision 5·동일 입력 `No changes`
-- 다음: RDS 시작과 RDS Alarm·Member BFF Runtime ON 사전 점검·Saved Plan 생성
+- 완료: RDS 시작·available, Runtime ON 기반·비용 점검과 Saved Plan `40/10/0` 생성, 삭제·민감 범위 변경 0 검증
+- 다음: 검증된 Runtime ON Saved Plan 적용과 ECS 수렴·HTTPS/OAuth/Session/WebSocket/REST/Prometheus/SNS Alarm Smoke
 
 CloudWatch Log 보존 기간은 7일로 코드와 계약 테스트에 고정했고 Frontend 독립 배포, HTTPS/DNS, Public Domain Runtime ON Full Smoke, Alarm과 Watchdog을 AWS에 적용·검증했다. 관리자 Bootstrap과 Backup Restore·Cleanup, 원본 Full Smoke·최종 Runtime OFF도 완료했다. Hikari 재측정은 Connection 평균 3.87·최대 6·안정 구간 3, FreeableMemory 평균 197.09MiB·최소 190.14MiB, Swap 최대 0.45MiB였고 전체 curl/WebSocket/SNS와 `No changes`를 통과했다. Pool 효과와 낮은 Swap·CPU를 근거로 `db.t4g.micro`를 유지하며, 256 MiB 단독 Alarm 대신 기준선 기반 영속 Alarm 5개를 구현하고 Foundation OFF에 적용했다. 상세 결정은 [RDS Alarm·Member BFF Prometheus 교정 계획](../plans/2026-07-24-rds-alarm-prometheus-plan.md)을 따른다.

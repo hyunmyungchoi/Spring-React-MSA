@@ -1,9 +1,9 @@
 # RDS Alarm·Member BFF Prometheus 교정 계획
 
 - 작성일: 2026-07-24
-- 상태: 코드·테스트, Member BFF Build Once·ECR Promote와 Foundation OFF 적용·검증 완료, Runtime ON 사전 점검 전
+- 상태: 코드·테스트, Member BFF Build Once·ECR Promote와 Foundation OFF 적용·검증, Runtime ON 사전 점검·Saved Plan 생성 완료, Apply 전
 - 적용 기준: Source Git `65c326496477953c05791fad73b05cf80d258445`, Terraform 적용 전 State serial 119·주소 249개
-- 적용 후 AWS 상태: State serial 120·주소 251개, ECS Service 8개와 ASG 0, Public ALB·Valkey·Runtime Alarm 0, 원본 RDS `stopped`
+- 현재 AWS 상태: State serial 120·주소 251개, ECS Service 8개와 ASG 0, Public ALB·Valkey·Runtime Alarm 0, 원본 RDS `available`
 
 ## 1. 범위
 
@@ -198,6 +198,51 @@ Plan 생성 후에도 ECS Service 8개 `0/0/0`, ASG `0/0/0`, RDS `stopped`, Stat
 
 `No changes` 첫 출력 캡처가 PowerShell native stderr 처리로 중단되며 현재 실행이 만든 S3 잠금이 남았다. Terraform 프로세스 0과 State serial 120을 확인하고 해당 잠금 ID만 `force-unlock`한 뒤, 변수 타입별 인코딩과 `-lock=false` 읽기 전용 Plan으로 `No changes`를 확정했다. AWS 리소스와 State 추가 변경은 없었다.
 
-다음 승인 문구:
+Runtime ON 사전 점검 승인 문구(완료):
 
 `RDS 시작 + RDS Alarm·Member BFF Runtime ON 사전 점검 + Saved Plan 생성 승인`
+
+## 11. Runtime ON 사전 점검·Saved Plan
+
+2026-07-25 Runtime OFF 기준 State serial 120·주소 251개와 Git clean을 확인하고 원본 RDS만 시작했다.
+
+- 시작 요청: `02:52:12.309 KST`
+- `available`: `03:00:48 KST`, 약 8분 36초
+- RDS: PostgreSQL 16.14, `db.t4g.micro`, Single-AZ, Private, 20 GiB `gp3`, Backup 7일, 삭제 보호
+- Monitoring Interval 0·Performance Insights OFF·Master Secret `active`
+- 영속 RDS Alarm 5개 모두 계약 일치, `ALARM` 상태 0
+- 서울 리전 RDS 현재가: `$0.025/시간`, 6시간 Compute `$0.15`
+
+Runtime ON 기반 점검:
+
+- Runtime Secret 7개: 삭제 예약 없음, `AWSCURRENT` 각 1개, 필수 JSON Key·비어 있지 않은 값 계약 통과, 값 비노출
+- Application ECR Digest·ECS Task Definition Image 8/8 일치
+- Member BFF revision 5와 ECR Digest `sha256:ee0d4cc6a4aa096ab4f48b4c45adf5d08f9f8f369100362df9b1d063cfdd7cc3`
+- NAT `available`, Private App Subnet 2개·서로 다른 2 AZ·Public IP 자동 할당 OFF
+- 정적 DNS 3개 존재, Runtime `origin` Record 부재
+- CloudFront 2개 `Deployed`, 서울·버지니아 ACM `ISSUED`, SNS Email 구독 1개 확인
+
+Saved Plan:
+
+- 파일: `tfplan-rds-alarm-member-bff-runtime-on`
+- 크기: 234,394 bytes
+- SHA-256: `679fa01852e67ce8b13137a545eba220605c78984fe7e07c9b6824e00abc9d89`
+- 생성 시각: `2026-07-25 03:03:05.037 KST`
+- 운영 Gate 만료: `2026-07-25 04:33:05.037 KST`
+- 생성 기준 State serial: 120
+- 변경: `40 add, 10 change, 0 destroy`
+- 생성 40개: Public ALB·HTTPS·Gateway Rule 2·`origin` 5개, Valkey 계열 6개, Runtime Alarm 29개
+- 변경 10개: ECS Service 8개 Desired 1, ASG `1/1/2`, ECS Container Insights 활성
+- Task Definition·Image·RDS·영속 RDS Alarm·Secret·Network·Frontend 변경과 삭제 0
+- Redis Password: Source `ephemeral=true`·Sensitive, Plan 변수값 `null`, 실제 Secret 문자열 Plan 비포함
+- Apply 때 Redis Password를 Secrets Manager에서 프로세스 메모리로 다시 주입해야 한다.
+
+첫 후보는 `terraform.tfvars`의 Runtime OFF 값이 환경변수보다 우선해 `No changes`로 끝났고 Saved Plan을 만들지 않았다. Runtime 플래그를 CLI 우선순위로 고정한 두 번째 후보가 정상 `40/10/0`을 생성했다. PowerShell이 출력 파일 변수명을 문자 그대로 전달해 생성된 Binary는 Terraform 디렉터리 경계를 검증한 뒤 의도한 Git Ignore 파일명으로 이동했다. 두 경우 모두 AWS와 State 변경은 없었다.
+
+현재 고정 시간당 비용은 RDS `$0.025` + EC2 `m6i.xlarge` `$0.236` + Valkey `cache.t4g.micro` `$0.0192` + ALB `$0.0225` = `$0.3027`, 6시간 `$1.8162`다. ALB LCU `$0.008/LCU-h`와 데이터 전송은 별도이고 NAT는 기존 Foundation 비용이라 증분에서 제외한다.
+
+Plan 생성 후에도 State serial 120·주소 251개, ECS Service 8개 `0/0/0`, ASG `0/0/0`, ALB·Valkey·Runtime Alarm 0이다. RDS만 `available`이며 Binary Plan 외 Git 변경은 문서 기록뿐이다.
+
+다음 승인 문구:
+
+`RDS Alarm·Member BFF Runtime ON Plan 679fa01852e67ce8b13137a545eba220605c78984fe7e07c9b6824e00abc9d89 적용 + ECS 수렴 + HTTPS/OAuth/Session/WebSocket/REST/Prometheus 200·404/SNS Alarm curl Smoke 승인`

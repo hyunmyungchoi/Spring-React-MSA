@@ -1,6 +1,6 @@
 # AWS Terraform 운영 Runbook
 
-이 디렉터리는 `spring-react-msa` 학습 환경의 현재 AWS 인프라를 관리한다. 기본 리전은 `ap-northeast-2`다. Hikari `5/1` 재측정 Runtime ON과 30분 HTTPS/OAuth/Session/WebSocket/REST/SNS Smoke를 완료한 뒤 승인된 Runtime OFF Saved Plan SHA-256 `5e3f9b9a03dceab9eb57491b57b05a8c090693c2c41c10f047ee2c9b86cd779d`을 정확히 `0 added, 10 changed, 40 destroyed`로 적용했다. 이어 RDS Alarm·Member BFF Foundation OFF Plan SHA-256 `147eb62ff0298e3fe0cb707bff32e7b432bcbb63cbf24f98cf13334549c73331`을 `3 added, 2 changed, 1 destroyed`로 적용했다. 현재 ECS Service 8개 `0/0/0`, ASG `0/0/0`, EC2·Task·Container Instance·ALB·Valkey·Runtime Alarm·`origin` Record는 0이고 RDS는 `stopped`, 영속 RDS Alarm은 5개, State serial 120·주소 251개이며 동일 입력은 `No changes`다. 정적 curl 6/6 HTTP 200, Root 308, Member/Admin API 502도 확인했다. 후속 Runtime의 승인된 목표와 미구현 경계는 [AWS Learning Runtime 결정](../../../docs/aws-migration/07-learning-runtime-design.md)을 따른다.
+이 디렉터리는 `spring-react-msa` 학습 환경의 현재 AWS 인프라를 관리한다. 기본 리전은 `ap-northeast-2`다. Hikari `5/1` 재측정 Runtime ON·전체 Smoke와 후속 Runtime OFF를 완료하고 RDS Alarm·Member BFF Foundation OFF Plan SHA-256 `147eb62ff0298e3fe0cb707bff32e7b432bcbb63cbf24f98cf13334549c73331`을 `3 added, 2 changed, 1 destroyed`로 적용했다. 현재 State serial 120·주소 251개, 영속 RDS Alarm 5개, Member BFF revision 5다. RDS는 `available`이고 ECS Service 8개 `0/0/0`, ASG `0/0/0`, EC2·Task·Container Instance·ALB·Valkey·Runtime Alarm·`origin` Record는 0이다. Runtime ON Saved Plan SHA-256 `679fa01852e67ce8b13137a545eba220605c78984fe7e07c9b6824e00abc9d89`은 `40/10/0`으로 검증했으며 Apply 대기다. 후속 Runtime의 승인된 목표와 미구현 경계는 [AWS Learning Runtime 결정](../../../docs/aws-migration/07-learning-runtime-design.md)을 따른다.
 
 ## 현재 상태와 범위
 
@@ -626,12 +626,15 @@ Post-Restore Full Smoke Runtime ON Saved Plan `tfplan-post-restore-full-smoke-ru
 20. 완료: Source `65c3264`, GHCR Build Once Run `30110469700`, ECR Promote Run `30110888017`, 동일 OCI Digest와 Kubernetes Member BFF Digest 고정
 21. 완료: Runtime OFF Foundation Saved Plan `3/2/1`, SHA-256 `147eb62ff0298e3fe0cb707bff32e7b432bcbb63cbf24f98cf13334549c73331` 생성·범위 검증
 22. 완료: 검증된 Foundation OFF Saved Plan `3/2/1` 적용, State serial 120·주소 251개, RDS Alarm 5개·Member BFF revision 5·동일 입력 `No changes`·Runtime OFF 검증
-23. 다음: RDS 시작과 RDS Alarm·Member BFF Runtime ON 사전 점검·Saved Plan 생성
+23. 완료: RDS 시작·available, Secret/ECR/Network/Edge/SNS·비용 사전 점검과 Runtime ON Saved Plan `40/10/0` 생성·범위 검증
+24. 다음: 검증된 Runtime ON Saved Plan 적용과 ECS 수렴·전체 Smoke
 
 2026-07-24 진단에서 Hikari `5/1` 재측정값은 DatabaseConnections 평균 3.87·최대 6, FreeableMemory 최소 190.14 MiB, Swap 최대 0.45 MiB, CPU 평균 4.07%였다. Class는 `db.t4g.micro`를 유지하고 FreeableMemory 128 MiB·SwapUsage 64 MiB·DatabaseConnections 16과 기존 CPU·FreeStorage를 합친 영속 Alarm 5개를 구현했다. Member BFF 500은 Prometheus Registry 누락과 `NoResourceFoundException` catch-all 500 변환이 원인이었으며 Member BFF Image만 교정했다. 상세 범위는 [RDS Alarm·Member BFF Prometheus 교정 계획](../../../docs/plans/2026-07-24-rds-alarm-prometheus-plan.md)을 따른다.
 
 2026-07-25 검증된 Member BFF Image의 GHCR·ECR OCI Digest가 일치했다. 현재 ECS Task Definition 8개를 기준으로 Member BFF Application Image만 교체하고 영속 RDS Alarm을 3개에서 5개로 바꾸는 Saved Plan `tfplan-rds-alarm-member-bff-foundation-off`를 생성했다. Plan은 227,865 bytes, SHA-256 `147eb62ff0298e3fe0cb707bff32e7b432bcbb63cbf24f98cf13334549c73331`, State serial 119 기준이며 정확히 `3 add, 2 change, 1 destroy`다. 변경 주소는 Member BFF Task Definition 교체·Desired 0 Service 참조, FreeableMemory Alarm 변경, SwapUsage·DatabaseConnections Alarm 생성뿐이다. 다른 7개 Image·Flyway Migration·RDS·ECS/ASG 용량·ALB·Valkey·Network·DNS·Frontend·Secret 변경은 0이고 Redis Password 값은 `null`이다. Gate 만료는 `2026-07-25 03:36:58.675 KST`이며 Apply 전 Hash·State·Git·OFF 상태를 다시 검증한다.
 
 동일 Plan을 `2026-07-25 02:29:26.395 KST`에 `3 added, 2 changed, 1 destroyed`로 적용했다. State는 serial 120·주소 251개가 되었고 Member BFF Task Definition revision 5가 승인된 ECR Digest를 사용한다. RDS Alarm 5개는 코드의 Threshold·Statistic·Comparison·300초·3/3·`notBreaching`·SNS Action 계약과 일치한다. ECS/ASG 0, RDS `stopped`, ALB·Valkey·Runtime Alarm 0, Watchdog Alarm 3개, `ALARM` 상태 0을 확인했고 적용 당시 변수의 State 기준 Plan은 `No changes`다. 출력 캡처 중 현재 실행이 만든 고아 S3 잠금은 Terraform 프로세스 0·State serial 120 확인 후 해당 잠금만 해제했으며 AWS 리소스나 State 추가 변경은 없었다.
+
+후속 Runtime ON 사전 점검에서 RDS를 `2026-07-25 02:52:12.309 KST`에 시작해 `03:00:48 KST`에 `available`을 확인했다. Secret 7개 Key 계약, ECR·Task Image 8/8, NAT·Private Subnet 2 AZ, 정적 DNS·CloudFront·ACM·SNS와 RDS Alarm 5개를 값 비노출로 검증했다. Saved Plan `tfplan-rds-alarm-member-bff-runtime-on`은 234,394 bytes, SHA-256 `679fa01852e67ce8b13137a545eba220605c78984fe7e07c9b6824e00abc9d89`, State serial 120 기준 `40 add, 10 change, 0 destroy`다. 생성은 ALB·Origin 5, Valkey 6, Runtime Alarm 29이고 변경은 ECS Service 8·ASG·ECS Cluster뿐이다. Redis Password는 Ephemeral·Sensitive이며 Plan 값 `null`·실제 문자열 비포함이라 Apply 때 Secrets Manager에서 메모리로 다시 제공한다. Gate는 `2026-07-25 04:33:05.037 KST`까지다. 고정 비용은 `$0.3027/시간`, 6시간 `$1.8162`이고 LCU·전송량은 별도다. 현재 RDS만 `available`, 나머지 Runtime은 OFF이며 State 변경은 없다.
 
 Kubernetes↔AWS DR은 Learning 적용 범위에서 제외하고 후속 학습 과제로 보류한다.
