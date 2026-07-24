@@ -26,10 +26,26 @@ locals {
     freeable_memory_low = {
       metric_name         = "FreeableMemory"
       comparison_operator = "LessThanOrEqualToThreshold"
-      threshold           = 268435456
+      threshold           = 134217728
       statistic           = "Minimum"
       unit                = "Bytes"
-      description         = "RDS freeable memory is at or below 256 MiB for 15 minutes."
+      description         = "RDS freeable memory is at or below 128 MiB for 15 minutes."
+    }
+    swap_usage_high = {
+      metric_name         = "SwapUsage"
+      comparison_operator = "GreaterThanOrEqualToThreshold"
+      threshold           = 67108864
+      statistic           = "Maximum"
+      unit                = "Bytes"
+      description         = "RDS swap usage is at least 64 MiB for 15 minutes."
+    }
+    database_connections_high = {
+      metric_name         = "DatabaseConnections"
+      comparison_operator = "GreaterThanOrEqualToThreshold"
+      threshold           = 16
+      statistic           = "Maximum"
+      unit                = "Count"
+      description         = "RDS database connections are at least 16 for 15 minutes."
     }
     free_storage_low = {
       metric_name         = "FreeStorageSpace"

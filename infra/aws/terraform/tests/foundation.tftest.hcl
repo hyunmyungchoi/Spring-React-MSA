@@ -130,10 +130,10 @@ run "observability_foundation_contract" {
   assert {
     condition = (
       length(module.observability) == 1 &&
-      length(module.observability[0].rds_alarm_names) == 3 &&
+      length(module.observability[0].rds_alarm_names) == 5 &&
       length(module.observability[0].runtime_alarm_names) == 0
     )
-    error_message = "The enabled observability foundation must create one module instance, three RDS alarms, and no Runtime alarms while OFF."
+    error_message = "The enabled observability foundation must create one module instance, five RDS alarms, and no Runtime alarms while OFF."
   }
 }
 

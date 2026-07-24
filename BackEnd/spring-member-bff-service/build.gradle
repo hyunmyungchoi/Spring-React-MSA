@@ -32,6 +32,7 @@ dependencies {
     implementation 'com.springmsa:spring-msa-common-kafka:0.0.1-SNAPSHOT'
 
     runtimeOnly 'org.flywaydb:flyway-database-postgresql'
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
     runtimeOnly 'org.postgresql:postgresql'
 
     compileOnly 'org.projectlombok:lombok'

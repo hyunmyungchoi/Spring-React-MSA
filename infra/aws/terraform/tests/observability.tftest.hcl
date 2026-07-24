@@ -53,8 +53,8 @@ run "observability_contract" {
   }
 
   assert {
-    condition     = length(aws_cloudwatch_metric_alarm.rds) == 3
-    error_message = "Exactly three persistent RDS alarms must be configured."
+    condition     = length(aws_cloudwatch_metric_alarm.rds) == 5
+    error_message = "Exactly five persistent RDS alarms must be configured."
   }
 
   assert {
@@ -74,11 +74,21 @@ run "observability_contract" {
   assert {
     condition = (
       aws_cloudwatch_metric_alarm.rds["freeable_memory_low"].metric_name == "FreeableMemory" &&
-      aws_cloudwatch_metric_alarm.rds["freeable_memory_low"].threshold == 268435456 &&
+      aws_cloudwatch_metric_alarm.rds["freeable_memory_low"].comparison_operator == "LessThanOrEqualToThreshold" &&
+      aws_cloudwatch_metric_alarm.rds["freeable_memory_low"].statistic == "Minimum" &&
+      aws_cloudwatch_metric_alarm.rds["freeable_memory_low"].threshold == 134217728 &&
+      aws_cloudwatch_metric_alarm.rds["swap_usage_high"].metric_name == "SwapUsage" &&
+      aws_cloudwatch_metric_alarm.rds["swap_usage_high"].comparison_operator == "GreaterThanOrEqualToThreshold" &&
+      aws_cloudwatch_metric_alarm.rds["swap_usage_high"].statistic == "Maximum" &&
+      aws_cloudwatch_metric_alarm.rds["swap_usage_high"].threshold == 67108864 &&
+      aws_cloudwatch_metric_alarm.rds["database_connections_high"].metric_name == "DatabaseConnections" &&
+      aws_cloudwatch_metric_alarm.rds["database_connections_high"].comparison_operator == "GreaterThanOrEqualToThreshold" &&
+      aws_cloudwatch_metric_alarm.rds["database_connections_high"].statistic == "Maximum" &&
+      aws_cloudwatch_metric_alarm.rds["database_connections_high"].threshold == 16 &&
       aws_cloudwatch_metric_alarm.rds["free_storage_low"].metric_name == "FreeStorageSpace" &&
       aws_cloudwatch_metric_alarm.rds["free_storage_low"].threshold == 5368709120
     )
-    error_message = "RDS memory and storage thresholds must remain at 256 MiB and 5 GiB."
+    error_message = "RDS memory, swap, connection, and storage thresholds must remain at 128 MiB, 64 MiB, 16, and 5 GiB."
   }
 
   assert {

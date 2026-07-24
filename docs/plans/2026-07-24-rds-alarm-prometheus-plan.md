@@ -1,7 +1,7 @@
 # RDS Alarm·Member BFF Prometheus 교정 계획
 
 - 작성일: 2026-07-24
-- 상태: 사전 진단·후속 결정 완료, 구현·AWS 적용 전
+- 상태: 사전 진단·후속 결정과 코드·테스트 완료, Member BFF Build Once·ECR Promote·Foundation OFF Saved Plan 생성 전
 - 기준 상태: Git `2f18a384d79999f6513b7ee7ec1283aea764b4b4`, Terraform State serial 119·주소 249개
 - AWS 상태: ECS Service 8개와 ASG 0, Public ALB·Valkey·Runtime Alarm 0, 원본 RDS `stopped`
 
@@ -121,3 +121,25 @@ Foundation 적용 뒤 Runtime ON·전체 Smoke와 후속 Runtime OFF·RDS 정지
 다음 승인 문구:
 
 `RDS Alarm 128MiB·Swap 64MiB·Connection 16 + Member BFF Prometheus 200/404 교정 구현·테스트 + Member BFF Build Once·ECR Promote + Foundation OFF Saved Plan 생성 승인`
+
+## 8. 구현·테스트 결과
+
+2026-07-25 승인 범위로 다음 변경을 구현했다.
+
+- FreeableMemory 임계값 `256 MiB → 128 MiB`
+- SwapUsage Maximum 64 MiB와 DatabaseConnections Maximum 16 Alarm 추가
+- 영속 RDS Alarm 계약 `3 → 5`, 5분 3/3과 `treat_missing_data=notBreaching` 유지
+- Member BFF Runtime에 Micrometer Prometheus Registry 1.16.5 추가
+- Gradle Lock과 SHA-256 Verification Metadata에 Prometheus 1.4.3 전이 의존성 고정
+- 실제 임의 포트 `/actuator/prometheus` HTTP 200·Prometheus Content-Type·Metric 노출 테스트 추가
+- Member BFF `NoResourceFoundException` 404 응답과 회귀 테스트 추가
+
+검증 결과:
+
+- Member BFF `clean test bootJar`: `10 passed, 0 failed`
+- Fat JAR: `micrometer-registry-prometheus-1.16.5.jar`와 Prometheus 1.4.3 구성요소 6개 포함
+- `terraform fmt -check -recursive`: 통과
+- `terraform validate -no-color`: 통과
+- 전체 Terraform 계약 테스트: `38 passed, 0 failed`
+
+이 시점에는 아직 Member BFF Image를 게시·Promote하지 않았고 Terraform Saved Plan도 생성·적용하지 않았다. AWS 적용값은 기존 RDS Alarm 3개와 FreeableMemory 256 MiB이며 Runtime과 RDS는 OFF 기준을 유지해야 한다.
