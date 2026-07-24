@@ -1,9 +1,9 @@
 # RDS Alarm·Member BFF Prometheus 교정 계획
 
 - 작성일: 2026-07-24
-- 상태: 코드·테스트, Member BFF Build Once·ECR Promote, Foundation OFF와 Runtime ON 적용·전체 Smoke 완료, Runtime OFF Saved Plan 적용 전
+- 상태: 코드·테스트, Member BFF Build Once·ECR Promote, Foundation OFF·Runtime ON 전체 Smoke·후속 Runtime OFF와 RDS 정지 완료
 - 적용 기준: Source Git `65c326496477953c05791fad73b05cf80d258445`, Terraform 적용 전 State serial 119·주소 249개
-- 현재 AWS 상태: State serial 125·주소 291개, ECS Service·Container Health 8/8, ASG `1/1/2`, Public ALB·Valkey·원본 RDS 가동, 관련 Alarm 37/37 정상. OFF Plan은 생성했지만 미적용
+- 현재 AWS 상태: State serial 131·주소 251개, ECS/Task/Container Instance·ASG Instance·Public ALB·Valkey·`origin`·Runtime Alarm 0, RDS `stopped`, 영속 Alarm 8개 `OK`
 
 ## 1. 범위
 
@@ -291,3 +291,21 @@ OFF Apply 직후 RDS를 제외한 고정 비용 약 `$0.2777/시간`이 종료�
 다음 승인 문구:
 
 `RDS Alarm·Member BFF Runtime OFF Plan 9a4ce0c1e778c874c115806d0135987559c289d50d804835588a35e60d7ff69f 적용 + ECS/ASG/ALB/Valkey/Runtime Alarm 종료 + 정적 curl Smoke·No changes + RDS 정지 승인`
+
+## 14. Runtime OFF 적용·RDS 정지
+
+2026-07-25 `04:07:34.094 KST`에 Plan Hash·Gate·`0/10/40`·State serial 125·주소 291개·Git clean·Runtime ON 8/8·RDS available을 재검증했다. 승인된 Binary Saved Plan만 단일 Terraform 프로세스로 적용했고 결과는 `0 added, 10 changed, 40 destroyed`, stderr 0이다.
+
+- 적용 후 State: serial 131·주소 251개
+- ECS Service 8개 `0/0/0`, Running Task 0, Active Container Instance 0
+- Container Insights `disabled`
+- ASG `0/0/0`, Instance 0
+- Public ALB·Valkey·`origin`·Redis Host Parameter·Runtime Alarm·Target 등록 0
+- Task Definition·ECR Repository 8개, Cloud Map Service 8개, Network/NAT, Frontend/CloudFront, Secret 보존
+- 영속 RDS Alarm 5개·Watchdog Alarm 3개 총 8개 `OK`, SNS Email 구독 `Confirmed`
+
+CloudFront 정적 Member/Admin 6개는 모두 HTTP 200·HTML이었고 Root는 Path·Query를 보존한 308이었다. Runtime이 제거된 Member/Admin API는 각각 502로 OFF 계약을 충족했다. 동일 OFF 입력 Terraform 재계획은 `DetailedExitCode 0`, `No changes`, State serial 131·주소 251개였다.
+
+Runtime 0과 `No changes`를 확인한 뒤 원본 RDS 정지를 `2026-07-25 04:19:15.988 KST`에 요청했고 `04:26:10.668 KST` 조회에서 `stopped`를 확인했다. PostgreSQL 16.14 `db.t4g.micro`, 삭제 보호, Backup 7일을 유지하며 자동 재시작 예정은 `2026-08-01 04:25:37.967 KST`다.
+
+적용된 Saved Plan Hash는 승인값과 일치하지만 State가 변경됐으므로 재사용하지 않는다. 다음 단계는 별도 승인으로 Applied Saved Plan과 임시 Apply 로그를 삭제하고 최종 AWS·Git·문서를 감사하는 것이다.
