@@ -1,9 +1,9 @@
 # RDS Alarm·Member BFF Prometheus 교정 계획
 
 - 작성일: 2026-07-24
-- 상태: 코드·테스트, Member BFF Build Once·ECR Promote와 Foundation OFF Saved Plan 생성 완료, Apply 전
-- 기준 상태: Git `2f18a384d79999f6513b7ee7ec1283aea764b4b4`, Terraform State serial 119·주소 249개
-- AWS 상태: ECS Service 8개와 ASG 0, Public ALB·Valkey·Runtime Alarm 0, 원본 RDS `stopped`
+- 상태: 코드·테스트, Member BFF Build Once·ECR Promote와 Foundation OFF 적용·검증 완료, Runtime ON 사전 점검 전
+- 적용 기준: Source Git `65c326496477953c05791fad73b05cf80d258445`, Terraform 적용 전 State serial 119·주소 249개
+- 적용 후 AWS 상태: State serial 120·주소 251개, ECS Service 8개와 ASG 0, Public ALB·Valkey·Runtime Alarm 0, 원본 RDS `stopped`
 
 ## 1. 범위
 
@@ -142,7 +142,7 @@ Foundation 적용 뒤 Runtime ON·전체 Smoke와 후속 Runtime OFF·RDS 정지
 - `terraform validate -no-color`: 통과
 - 전체 Terraform 계약 테스트: `38 passed, 0 failed`
 
-이 시점에는 아직 Member BFF Image를 게시·Promote하지 않았고 Terraform Saved Plan도 생성·적용하지 않았다. AWS 적용값은 기존 RDS Alarm 3개와 FreeableMemory 256 MiB이며 Runtime과 RDS는 OFF 기준을 유지해야 한다.
+구현·테스트 직후에는 아직 Member BFF Image를 게시·Promote하지 않았고 Terraform Saved Plan도 생성·적용하지 않았다. 당시 AWS 적용값은 기존 RDS Alarm 3개와 FreeableMemory 256 MiB였으며 Runtime과 RDS는 OFF 기준을 유지했다.
 
 ## 9. Build Once·ECR Promote·Foundation OFF Plan
 
@@ -174,6 +174,30 @@ Foundation 적용 뒤 Runtime ON·전체 Smoke와 후속 Runtime OFF·RDS 정지
 
 Plan 생성 후에도 ECS Service 8개 `0/0/0`, ASG `0/0/0`, RDS `stopped`, State serial 119를 유지했다. 임시 JSON 변수 파일은 삭제했고 Binary Saved Plan만 Git Ignore 상태로 보존한다.
 
-다음 적용 승인 문구:
+적용 승인 문구(완료):
 
 `RDS Alarm·Member BFF Foundation OFF Plan 147eb62ff0298e3fe0cb707bff32e7b432bcbb63cbf24f98cf13334549c73331 적용 승인`
+
+## 10. Foundation OFF Apply 결과
+
+2026-07-25 `02:29:26.395 KST`에 승인된 Binary Saved Plan의 Hash·Gate·State serial 119·Git clean·변경 주소 5개·AWS Runtime OFF를 재검증한 뒤 적용했다.
+
+- Apply 결과: `3 added, 2 changed, 1 destroyed`
+- Terraform State: serial `119 → 120`, 주소 `249 → 251`
+- Member BFF ECS Task Definition: revision `5`
+- Member BFF Image: ECR Digest `sha256:ee0d4cc6a4aa096ab4f48b4c45adf5d08f9f8f369100362df9b1d063cfdd7cc3`
+- Member BFF ECS Service: Desired/Running/Pending `0/0/0`
+- 영속 RDS Alarm: `3 → 5`
+- FreeableMemory: Minimum `<= 128 MiB`
+- SwapUsage: Maximum `>= 64 MiB`
+- DatabaseConnections: Maximum `>= 16`
+- 공통 계약: 300초, Evaluation/Datapoints `3/3`, `notBreaching`, SNS Alarm/OK Action 각 1개
+- 기존 CPU 80%·FreeStorage 5 GiB Alarm을 포함한 5개 모두 AWS 실제 계약과 일치하고 상태는 `OK`
+- 최종 경계: ECS 8개·ASG `0`, RDS `stopped`, ALB·Valkey·Runtime Alarm `0`, Watchdog Alarm 3개, `ALARM` 상태 0
+- 적용 당시 변수로 Terraform State 기준 `No changes`, 종료 코드 `0`
+
+`No changes` 첫 출력 캡처가 PowerShell native stderr 처리로 중단되며 현재 실행이 만든 S3 잠금이 남았다. Terraform 프로세스 0과 State serial 120을 확인하고 해당 잠금 ID만 `force-unlock`한 뒤, 변수 타입별 인코딩과 `-lock=false` 읽기 전용 Plan으로 `No changes`를 확정했다. AWS 리소스와 State 추가 변경은 없었다.
+
+다음 승인 문구:
+
+`RDS 시작 + RDS Alarm·Member BFF Runtime ON 사전 점검 + Saved Plan 생성 승인`
