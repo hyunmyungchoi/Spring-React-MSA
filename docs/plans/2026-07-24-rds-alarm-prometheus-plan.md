@@ -1,9 +1,9 @@
 # RDS Alarm·Member BFF Prometheus 교정 계획
 
 - 작성일: 2026-07-24
-- 상태: 코드·테스트, Member BFF Build Once·ECR Promote와 Foundation OFF 적용·검증, Runtime ON 사전 점검·Saved Plan 생성 완료, Apply 전
+- 상태: 코드·테스트, Member BFF Build Once·ECR Promote, Foundation OFF와 Runtime ON 적용·전체 Smoke 완료, 후속 Runtime OFF 준비
 - 적용 기준: Source Git `65c326496477953c05791fad73b05cf80d258445`, Terraform 적용 전 State serial 119·주소 249개
-- 현재 AWS 상태: State serial 120·주소 251개, ECS Service 8개와 ASG 0, Public ALB·Valkey·Runtime Alarm 0, 원본 RDS `available`
+- 현재 AWS 상태: State serial 125·주소 291개, ECS Service·Container Health 8/8, ASG `1/1/2`, Public ALB·Valkey·원본 RDS 가동, RDS Alarm 5/5·Runtime Alarm 29/29 `OK`
 
 ## 1. 범위
 
@@ -246,3 +246,22 @@ Plan 생성 후에도 State serial 120·주소 251개, ECS Service 8개 `0/0/0`,
 다음 승인 문구:
 
 `RDS Alarm·Member BFF Runtime ON Plan 679fa01852e67ce8b13137a545eba220605c78984fe7e07c9b6824e00abc9d89 적용 + ECS 수렴 + HTTPS/OAuth/Session/WebSocket/REST/Prometheus 200·404/SNS Alarm curl Smoke 승인`
+
+## 12. Runtime ON 적용·전체 Smoke
+
+2026-07-25 승인 Gate 안에서 Saved Plan Hash, State serial 120, Git clean, RDS `available`, Runtime OFF와 변경 `40 add, 10 change, 0 destroy`를 다시 확인했다. Secrets Manager의 Redis Password는 Apply 자식 프로세스 메모리에만 Ephemeral 변수로 주입했고 Plan·로그·문서에는 기록하지 않았다.
+
+- 적용 결과: `40 added, 10 changed, 0 destroyed`, stderr 0
+- 적용 후 State: serial 125·주소 291개
+- ASG: Min/Desired/Max `1/1/2`, Instance 1개 `InService`·`Healthy`
+- ECS: Service 8개 `1/1/0`, Rollout 8/8 `COMPLETED`, Task·Container 8/8 `HEALTHY`
+- Data/Edge: RDS·Valkey `available`, ALB `active`, Target 2/2 `healthy`, Cloud Map 8/8, `origin` DNS 정상
+- Alarm: 영속 RDS 5/5와 Runtime 29/29 `OK`
+
+공개 curl Smoke는 정적 6개와 Readiness·OIDC·BFF 6개가 모두 HTTP 200이었고 Root 308의 Path·Query 보존을 확인했다. 새 무작위 `ROLE_USER`의 Registration 201, Password Login·OAuth Authorization Code·인증 BFF Session·CSRF Heartbeat·보호 REST 200, 필수 Cookie 3종과 Logout 뒤 익명 Session을 검증했다. 임시 비밀번호와 Cookie 파일은 폐기했으며 Smoke 계정 1개는 감사 데이터로 남는다.
+
+같은 인증 Session의 WebSocket은 `CONNECTED`, `HISTORY`, `PONG`, 자체 `CHAT_MESSAGE`를 모두 수신했고 식별 메시지의 REST History 영속성도 HTTP 200으로 확인했다. `/bff/actuator/prometheus`는 HTTP 200·Prometheus Content-Type·JVM Metric을 반환했고 `hikaricp_connections_pending` 최대값은 0이었다. 임의 미존재 Actuator 경로는 HTTP 404 `application/json`으로 catch-all 500 교정을 입증했다.
+
+SNS Email 구독은 `Confirmed`이며 DatabaseConnections Alarm을 승인된 Smoke로 `ALARM → OK` 전환했다. 최근 1시간 지표는 `Published 45 → 47`, `Delivered 45 → 47`, `Failed 0 → 0`으로 실제 두 알림 전달을 확인했고 최종 전체 관련 Alarm은 `ALARM 0`, `INSUFFICIENT_DATA 0`이다. 승인 Saved Plan의 원래 입력과 새 Ephemeral Redis Password를 사용한 ON 재계획은 `DetailedExitCode 0`, `No changes`다.
+
+다음 단계는 별도 승인으로 Runtime OFF 사전 점검과 비용 종료 Saved Plan을 생성하는 것이다.
