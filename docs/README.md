@@ -1,6 +1,6 @@
 # Spring React MSA 문서
 
-이 디렉터리는 `C:\Portfolio` 저장소의 코드와 인프라를 기준으로 작성한 설계·운영 문서의 시작점이다. 문서의 기준일은 2026-07-23이며, 구현과 문서가 충돌하면 실행 가능한 코드와 배포 매니페스트를 우선 확인한다.
+이 디렉터리는 `C:\Portfolio` 저장소의 코드와 인프라를 기준으로 작성한 설계·운영 문서의 시작점이다. 문서의 기준일은 2026-07-24이며, 구현과 문서가 충돌하면 실행 가능한 코드와 배포 매니페스트를 우선 확인한다.
 
 ## 문서 읽는 순서
 
@@ -25,8 +25,8 @@
 | Data | PostgreSQL 16, Redis 7 |
 | Messaging | Kafka 3.7.0 |
 | Platform | Docker Compose, Kubernetes, ingress-nginx, GHCR, Argo CD |
-| AWS migration | Backup Restore·Cleanup과 원본 Full Smoke Runtime ON·curl 검증, 최종 Runtime OFF·RDS 정지·`No changes` 완료 |
-| Observability | Kubernetes Prometheus·Grafana·Loki; AWS SNS·Runtime 수명주기·2B 알림 전용 Watchdog 적용과 실알림 검증 완료 |
+| AWS migration | Backup Restore·Cleanup과 Hikari `5/1` 재측정, 최종 Runtime OFF·RDS 정지·`No changes` 완료; RDS Alarm·Member BFF Prometheus 후속 결정 완료 |
+| Observability | Kubernetes Prometheus·Grafana·Loki; AWS SNS·Runtime 수명주기·2B 알림 전용 Watchdog 적용 완료, RDS Alarm 5개 교정과 Member BFF Prometheus 구현 대기 |
 
 ## 문서 상태 표현
 
@@ -39,6 +39,7 @@
 - 채팅 이벤트는 트랜잭션 커밋 후 Kafka로 전송하지만 영속 Outbox 테이블과 relay는 아직 없다.
 - 커뮤니티 게시물은 프로세스 메모리에 저장되어 재시작 시 사라진다.
 - Argo CD Application에 자동 동기화가 설정되어 있지 않아 Git 변경 후 수동 Sync가 필요하다.
+- Backend 8개가 Actuator Prometheus 노출을 선언하지만 Registry는 Stock Service에만 있다. AWS 종결 범위는 Member BFF 500을 먼저 교정하고 나머지 서비스와 Kubernetes Target 표준화는 관측성 백로그로 유지한다.
 - Admin BFF의 관리자 가입 Controller는 설정 Flag로 제어하며 `prod` 기본값은 비활성이다. 로컬 Kubernetes만 명시적으로 활성화하고 AWS ECS는 비활성으로 고정한다. 최초 관리자 일회성 Bootstrap, User Service·Admin BFF Image Promote, AWS Admin 기본 화면 선택 배포, 관리자 생성·멱등 실행·OAuth·Session·공개 404와 Foundation Cleanup까지 완료했다.
 - Admin Session 조회 응답과 Frontend 타입에서 원본 `sessionId`를 제거하고 SHA-256 `sessionFingerprint`만 사용한다.
 - GHCR Build Once와 ECR Digest Promote Workflow는 구현됐고, Database Migration 대상 3개 Image에서 재빌드 없는 Promote와 Digest 일치를 실제 검증했다.
@@ -82,6 +83,7 @@
 - [Kubernetes↔AWS DR 계획](plans/2026-07-17-k8s-aws-dr-plan.md)
 - [AWS RDS Backup Restore 계획](plans/2026-07-23-backup-restore-plan.md)
 - [AWS RDS 메모리·연결 풀 교정 계획](plans/2026-07-23-rds-memory-plan.md)
+- [AWS RDS Alarm·Member BFF Prometheus 교정 계획](plans/2026-07-24-rds-alarm-prometheus-plan.md)
 
 ### Runbooks
 
@@ -120,6 +122,6 @@
 | [AWS Foundation](aws-migration/04-aws-foundation-design.md) | VPC/subnet/SG 설계 | Foundation 유지, Runtime ON 검증 후 현재 OFF |
 | [ECR/OIDC 설계](aws-migration/05-ecr-github-oidc-design.md) | SHA 이미지와 GitHub OIDC | Apply·GitHub 변수·Backend 8개 게시 완료 |
 | [ECR/OIDC 구현 계획](aws-migration/06-ecr-github-oidc-implementation-plan.md) | 구현·승인 gate 실행 기록 | Task 6·단일/중복/전체 게시 검증 완료 |
-| [Learning Runtime 결정](aws-migration/07-learning-runtime-design.md) | NAT, State, ECS, RDS, Frontend, Secret, DNS 결정 | Restore Drill·원본 Full Smoke 완료, RDS Memory Alarm 확인·최종 OFF 대기 |
+| [Learning Runtime 결정](aws-migration/07-learning-runtime-design.md) | NAT, State, ECS, RDS, Frontend, Secret, DNS 결정 | Hikari 재측정·최종 OFF 완료, RDS Alarm·Member BFF Prometheus 결정 완료·구현 대기 |
 
 AWS 적용 여부는 Git만으로 확정할 수 없으므로 문서의 `저장소 상태`와 `AWS 적용 상태`를 구분한다. Terraform state, 저장 plan, 계정 식별자와 secret은 문서나 Git에 추가하지 않는다.

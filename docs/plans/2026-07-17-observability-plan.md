@@ -5,7 +5,7 @@
 
 ## 현재 기준선
 
-- Spring Actuator health/info/prometheus 노출
+- Backend 8개 설정은 Spring Actuator health/info/prometheus 노출을 선언하지만 Prometheus Registry는 Stock Service에만 포함
 - kube-prometheus-stack 87.16.1
 - Loki 18.5.0 monolithic + MinIO
 - Promtail 6.17.1
@@ -81,6 +81,8 @@ Dashboard JSON은 Git에서 version 관리한다.
 - Grafana dashboard에서 배포 전후 SHA와 지표 비교
 - 로그 redaction 자동 테스트
 
+2026-07-24 진단에서 Member BFF의 `/actuator/prometheus` 500은 Registry 누락과 `NoResourceFoundException` catch-all 500 변환이 함께 만든 결과로 확정했다. AWS 종결 범위에서는 관측된 Member BFF만 Registry·200 계약과 미존재 Resource 404를 교정한다. 나머지 7개 서비스의 Registry와 Kubernetes ServiceMonitor·Target 전수 표준화는 이 계획의 1단계 백로그로 유지한다. 상세 근거와 승인 경계는 [RDS Alarm·Member BFF Prometheus 교정 계획](2026-07-24-rds-alarm-prometheus-plan.md)을 따른다.
+
 ## AWS Learning 적용 단계
 
 Kubernetes 관측성 계획과 별도로 AWS Learning 환경은 비용이 낮고 Runtime OFF에서도 유효한 기반부터 적용한다.
@@ -95,6 +97,8 @@ Kubernetes 관측성 계획과 별도로 AWS Learning 환경은 비용이 낮고
 - RDS 정지 중 지표 누락은 정상으로 취급한다.
 
 첫 Runtime OFF Plan Apply는 SNS Topic 1개 생성 뒤 wildcard Topic Policy가 AWS에서 거부돼 부분 실패했다. 정책을 `sns:Publish` 전용으로 교정하고 전체 mock 테스트 `26 passed, 0 failed`와 부분 state 기준 복구 Plan을 검증한 뒤 `6 added, 0 changed, 0 destroyed`로 적용했다. 실상태는 Topic/Policy/Email Subscription/Event Subscription 각 1개, RDS Alarm 3개이며 재계획은 `No changes`다. 2026-07-21에 SNS Email Subscription이 `Confirmed`인지 확인하고 Topic 직접 발행, AWS 전달 지표 `Delivered 3`·`Failed 0`, Gmail 실제 수신까지 검증해 1단계를 완료했다. 상세 절차는 [AWS 관측성 Foundation 런북](../runbooks/aws-observability.md)을 따른다.
+
+현재 AWS 적용값은 위 3개 Alarm과 FreeableMemory 256 MiB를 그대로 유지한다. Hikari `5/1` 재측정 뒤 `db.t4g.micro` 유지, FreeableMemory 128 MiB, SwapUsage 64 MiB, DatabaseConnections 16을 포함한 영속 Alarm 5개로 교정하기로 결정했으며 구현·Saved Plan·Apply는 후속 단계다.
 
 ### 2단계: Runtime 수명주기 관측
 
