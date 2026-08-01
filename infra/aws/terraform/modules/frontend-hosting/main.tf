@@ -235,7 +235,7 @@ resource "aws_cloudfront_distribution" "site" {
   retain_on_delete    = false
   wait_for_deployment = true
   aliases = var.enable_public_domain_routing ? (
-    each.key == "member" ? [var.root_domain, "app.${var.root_domain}"] : ["admin.${var.root_domain}"]
+    each.key == "member" ? ["app.${var.root_domain}"] : ["admin.${var.root_domain}"]
   ) : []
 
   dynamic "origin" {
@@ -344,10 +344,6 @@ resource "aws_cloudfront_distribution" "site" {
 
 locals {
   public_records = var.enable_public_domain_routing ? {
-    root = {
-      name         = var.root_domain
-      distribution = "member"
-    }
     member = {
       name         = "app.${var.root_domain}"
       distribution = "member"

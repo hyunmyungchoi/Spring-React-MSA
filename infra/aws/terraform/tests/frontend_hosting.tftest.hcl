@@ -140,7 +140,6 @@ run "public_domains_and_api_origin_contract" {
   assert {
     condition = (
       toset(aws_cloudfront_distribution.site["member"].aliases) == toset([
-        "hyuncloudlab.com",
         "app.hyuncloudlab.com",
       ]) &&
       toset(aws_cloudfront_distribution.site["admin"].aliases) == toset(["admin.hyuncloudlab.com"]) &&
@@ -188,9 +187,9 @@ run "public_domains_and_api_origin_contract" {
 
   assert {
     condition = (
-      toset(keys(aws_route53_record.frontend_ipv4)) == toset(["root", "member", "admin"]) &&
-      toset(keys(aws_route53_record.frontend_ipv6)) == toset(["root", "member", "admin"])
+      toset(keys(aws_route53_record.frontend_ipv4)) == toset(["member", "admin"]) &&
+      toset(keys(aws_route53_record.frontend_ipv6)) == toset(["member", "admin"])
     )
-    error_message = "Root, Member, and Admin must each have persistent Route 53 A and AAAA aliases."
+    error_message = "Member and Admin must each have persistent Route 53 A and AAAA aliases."
   }
 }
