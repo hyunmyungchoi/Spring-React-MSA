@@ -298,7 +298,7 @@ output "frontend_cloudfront_domain_names" {
 }
 
 output "frontend_public_domains" {
-  description = "Root, Member, Admin, and origin hostname contract, or an empty map when frontend hosting is disabled."
+  description = "Member, Admin, and origin hostname contract, or an empty map when frontend hosting is disabled."
   value       = try(module.frontend_hosting[0].public_domains, {})
 }
 

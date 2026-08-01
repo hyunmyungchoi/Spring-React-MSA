@@ -50,7 +50,7 @@ variable "enable_public_domain_routing" {
 }
 
 variable "root_domain" {
-  description = "Approved root domain; the Member distribution redirects this hostname to app."
+  description = "Root domain used to derive the Member, Admin, and API hostnames."
   type        = string
   default     = "hyuncloudlab.com"
 }

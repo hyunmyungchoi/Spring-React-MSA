@@ -14,9 +14,8 @@ output "distribution_domain_names" {
 }
 
 output "public_domains" {
-  description = "Approved Root, Member, Admin, and disposable origin hostname contract."
+  description = "Approved Member, Admin, and disposable origin hostname contract."
   value = {
-    root   = var.root_domain
     member = "app.${var.root_domain}"
     admin  = "admin.${var.root_domain}"
     origin = var.origin_domain
