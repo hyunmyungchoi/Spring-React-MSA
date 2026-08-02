@@ -62,23 +62,3 @@ spec:
     - name: metrics
       port: 9308
       targetPort: metrics
----
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: kafka-exporter
-  namespace: kafka
-  labels:
-    app: kafka-exporter
-spec:
-  namespaceSelector:
-    matchNames:
-      - kafka
-  selector:
-    matchLabels:
-      app: kafka-exporter
-  endpoints:
-    - port: metrics
-      path: /metrics
-      interval: 15s
-      scrapeTimeout: 10s

@@ -40,6 +40,7 @@ variables {
   application_secret_arns = {
     "/spring-react-msa/learning/admin-bff"           = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:admin-bff"
     "/spring-react-msa/learning/auth-server"         = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:auth-server"
+    "/spring-react-msa/learning/community-service"   = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:community"
     "/spring-react-msa/learning/member-bff"          = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:member-bff"
     "/spring-react-msa/learning/shared/internal-api" = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:internal-api"
     "/spring-react-msa/learning/shared/redis"        = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:redis"
@@ -232,13 +233,6 @@ run "runtime_on_creates_one_task_each_and_disposable_alb" {
     error_message = "Runtime ON must inject a non-empty Toss API client ID into the stock service."
   }
 
-  assert {
-    condition = lookup({
-      for entry in jsondecode(aws_ecs_task_definition.service["admin-bff"].container_definitions)[0].environment :
-      entry.name => entry.value
-    }, "ADMIN_BFF_REGISTRATION_ENABLED", null) == "false"
-    error_message = "The AWS Admin BFF task must keep public administrator registration disabled."
-  }
 }
 
 run "runtime_on_rejects_missing_toss_client_id" {

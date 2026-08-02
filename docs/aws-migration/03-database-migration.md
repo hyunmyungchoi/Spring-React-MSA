@@ -4,17 +4,17 @@
 >
 > 기준일: 2026-07-23
 >
-> AWS 적용 상태: DB Secret 3개와 Role·Schema Bootstrap, Digest 고정 Migration Task 3개, 실제 Flyway V1·Runtime ON 사후 검증 완료; Backup Restore·Cleanup과 원본 Full Smoke Runtime ON `40/10/0` Apply·curl 검증, 최종 Runtime OFF `0/10/40` Apply·RDS 정지·`No changes` 완료
+> 현재 코드 계약: DB Secret 4개와 Role·Schema Bootstrap, Digest 고정 Migration Task 4개, Flyway V1 4개를 사용한다. Community 추가분은 다음 AWS 적용 전에 새 Plan으로 검토한다.
 
 테이블 소유권과 현재 제약은 [시스템 개요](../architecture/overview.md), [회원 서비스 스펙](../specs/member-service.md), [주식 서비스 스펙](../specs/stock-service.md), [실시간 채팅 스펙](../specs/realtime-chat.md)을 기준으로 한다.
 
 ## Current Schema Creation
 
-- `spring-user-service` has `BackEnd/spring-user-service/src/main/resources/schema.sql`.
-- That file contains both schema creation and local seed data.
+- `spring-user-service` uses Flyway V1 to create `users` and `user_roles` without seed accounts.
 - `spring-member-bff-service` uses JPA/PostgreSQL for chat persistence.
 - `spring-member-stock-service` uses JPA/PostgreSQL for watchlist persistence.
-- 세 데이터 소유 서비스에 Flyway가 도입됐고, 기존 `schema.sql`은 로컬 실행과 Seed Data 용도로만 유지한다.
+- `spring-member-community-service` uses JPA/PostgreSQL for community post persistence.
+- 네 데이터 소유 서비스는 각각 전용 Schema와 Flyway migration history를 사용한다.
 
 ## AWS Learning 결정
 
@@ -30,7 +30,7 @@
 | `spring-user-service` | `user_service` | `users`, `user_roles` | 자기 Schema만 접근 |
 | `spring-member-bff-service` | `member_bff` | `chat_rooms`, `chat_messages` | 자기 Schema만 접근 |
 | `spring-member-stock-service` | `stock_service` | `stock_watch_items` | 자기 Schema만 접근 |
-| `spring-member-community-service` | 생성하지 않음 | 현재 메모리 저장 | 영속화 구현 후 결정 |
+| `spring-member-community-service` | `community_service` | `community_posts` | 전용 Role과 Flyway V1 사용 |
 
 서비스는 다른 Schema의 Table을 직접 조회하지 않는다. 각 서비스는 독립된 Migration 경로와 `flyway_schema_history`를 유지한다.
 
@@ -47,7 +47,7 @@ spring.sql.init.mode=never
 
 Flyway는 Application 시작 시 각 Service가 경쟁적으로 실행하는 방식보다 일회성 ECS Migration Task로 먼저 실행한다. Migration이 성공하고 Schema Version이 확인된 후 Application Service를 배포한다. 테스트 계정과 Seed Data는 AWS Learning Migration에 포함하지 않는다.
 
-현재 Docker와 Kubernetes Application 실행에서는 `SPRING_FLYWAY_ENABLED=false`를 명시했다. ECS 일회성 Task는 전체 Spring Context를 시작하지 않고 같은 Application Image의 서비스별 `FlywayMigrationMain`을 직접 실행한다. 일반 Application Task는 계속 Flyway 자동 실행을 끈다.
+Docker와 Kubernetes Application은 `SPRING_FLYWAY_ENABLED=true`로 시작 시점에 자기 Schema를 migration한다. AWS ECS Application은 자동 실행을 끄고, 같은 Application Image의 서비스별 `FlywayMigrationMain`을 일회성 Migration Task로 먼저 실행한다.
 
 ## Implemented Migration Boundary
 
@@ -58,6 +58,7 @@ Flyway는 Application 시작 시 각 Service가 경쟁적으로 실행하는 방
 | `spring-user-service` | `V1__create_user_service_tables.sql` | `users`, `user_roles`, 독립 History 생성과 Seed 계정 0건 |
 | `spring-member-bff-service` | `V1__create_member_bff_tables.sql` | `chat_rooms`, `chat_messages`, Index와 독립 History 생성 |
 | `spring-member-stock-service` | `V1__create_stock_service_tables.sql` | `stock_watch_items`, Unique Constraint와 독립 History 생성 |
+| `spring-member-community-service` | `V1__create_community_service_tables.sql` | `community_posts`, 소유권 Column과 독립 History 생성 |
 
 Migration SQL에는 Schema 생성문을 넣지 않는다. Bootstrap 단계가 Schema와 최소 권한 DB 사용자를 먼저 만들고, 각 Flyway 실행은 자신의 `default-schema`와 `schemas`만 지정한다.
 
@@ -67,7 +68,7 @@ Migration SQL에는 Schema 생성문을 넣지 않는다. Bootstrap 단계가 Sc
 - 서비스 Secret은 `db_username`, `db_password` JSON Key만 참조하며 실제 값은 Terraform 밖에서 최초 생성한다.
 - Bootstrap과 Migration Task는 Private App Subnet, Public IP 없음, TLS 필수, 읽기 전용 Root Filesystem을 사용한다.
 - Task Execution Role은 필요한 Secret ARN, Log Group, 해당 ECR Repository 읽기만 허용한다.
-- Flyway Source를 GHCR에서 서비스별 한 번만 Build하고 동일 OCI Digest로 ECR에 Promote한 뒤, `database_migration_images` 세 Key를 모두 Digest Reference로 고정한다.
+- Flyway Source를 GHCR에서 서비스별 한 번만 Build하고 동일 OCI Digest로 ECR에 Promote한 뒤, `database_migration_images` 네 Key를 모두 Digest Reference로 고정한다.
 
 검토한 `tfplan-database-tasks-foundation`을 SHA-256 승인 후 Apply해 CloudWatch Log Group, Bootstrap Task Execution Role과 최소 권한 Inline Policy, ECS Task Definition 등 4개를 추가했다. 기존 리소스 변경·삭제는 없었고 AWS에서 Task Definition `ACTIVE`, Log 보존 7일, Secret 읽기 전용 권한을 확인했다. Foundation Apply 시점에는 RDS와 ECS 실행 용량이 OFF였고 세 Application Secret도 Version 0개였다.
 
@@ -75,11 +76,11 @@ Migration SQL에는 Schema 생성문을 넣지 않는다. Bootstrap 단계가 Sc
 
 짧은 Runtime ON에서 Bootstrap을 실제 실행했다. 최초 Revision 1은 일반 PostgreSQL SUPERUSER를 전제로 한 `NOSUPERUSER` 설정과 Schema 소유자 전환 때문에 RDS 제한 계정에서 실패했다. RDS 호환 방식으로 Role의 LOGIN·비밀번호만 동기화하고 Schema는 Bootstrap 관리 계정이 소유하도록 수정한 Revision 2는 Exit Code `0`으로 완료됐다.
 
-Bootstrap 직후 읽기 전용 검증 Task도 Exit Code `0`으로 끝났으며 실제 RDS에서 안전한 Role 3개, Schema 3개, 자기 Schema 권한 조합 3개, 교차 Schema 권한 0개, Application Table 0개를 확인했다. 따라서 Role·Schema Bootstrap, Private App에서 Private Data RDS로 이어지는 Security Group 경계와 재실행 가능성을 먼저 검증했다.
+Bootstrap 읽기 전용 검증 Task는 안전한 Role 4개, Schema 4개, 자기 Schema 권한 조합 4개, 교차 Schema 권한 0개를 확인해야 한다.
 
 Source SHA `f0c88e32b883c391dcf993dfbf40839312de0f39`의 User Service, Member BFF, Stock Service Image를 GHCR에서 한 번만 Build하고 ECR에 재빌드 없이 Promote했다. GHCR과 ECR의 최상위 OCI Digest가 서비스별로 같음을 검증한 뒤, 승인한 저장 Plan으로 Migration Log Group·최소 권한 Execution Role/Policy·Digest 고정 Task Definition을 서비스별 3개씩 총 12개 추가했다.
 
-짧은 Runtime ON에서 User Service → Member BFF → Stock Service 순서로 Flyway V1 Task를 실행했고 모두 Exit Code `0`으로 완료됐다. 별도 읽기 전용 검증 Task로 `flyway_schema_history` 3개, 성공 V1 이력 3개, Application Table 5개, 올바른 Table 소유자 5개, 실패 Migration 0개, 교차 Schema 권한 0개와 Seed/Application Row 0건을 실제 RDS에서 확인했다.
+Runtime ON 검증은 User Service → Community Service → Member BFF → Stock Service 순서로 Flyway V1 Task를 실행한다. 읽기 전용 검증 Task는 `flyway_schema_history` 4개, 성공 V1 이력 4개, Application Table과 올바른 소유자 각 6개, 실패 Migration 0개, 교차 Schema 권한 0개와 Seed/Application Row 0건을 확인한다.
 
 검증 후 승인된 OFF Plan을 Apply해 ECS ASG를 `0/0/0`으로 내리고 RDS를 정지했다. EC2·ECS Container Instance·실행/대기 Task는 0개, RDS는 `stopped`, Remote State는 107개 주소이며 재계획은 `No changes`다. AWS가 표시한 자동 재시작 예정 시각은 2026-07-25 22:34:06 KST이다.
 
@@ -87,7 +88,7 @@ RDS Terraform은 서울 리전에서 지원을 확인한 PostgreSQL `16.14`, `db
 
 검토한 저장 Plan으로 Terraform 리소스 10개를 Apply했고 Remote State 81개 주소와 재계획 `No changes`를 확인했다. RDS의 Private 접근, 암호화, Backup 7일, 삭제 보호와 Managed Master Secret `active`를 검증했다. 첫 Backup 완료와 `LatestRestorableTime`을 확인했고, 2026-07-23 정지 상태에서는 Automated Backup `RestoreWindow` 기준 약 115.2시간의 복원 가능 구간과 최신 시점 지연 최초 약 44.1분·Foundation Saved Plan 직전 약 102분을 확인했다. Restore Drill Terraform과 읽기 전용 Validator를 구현하고 전체 mock test `38 passed, 0 failed`, Foundation OFF Plan `1 add, 0 change, 0 destroy`를 검증했다.
 
-후속 Restore ON Plan은 승인한 SHA-256 그대로 `11 added, 0 changed, 0 destroyed`로 적용했다. `2026-07-23 11:02:47 KST` 시점의 별도 Private PostgreSQL `16.14` RDS를 복원했고 Fargate Validator가 읽기 전용 Transaction에서 Schema 3개, Application Role 3개, Table 5개, Flyway V1 3개, 실패 Migration 0개와 활성 관리자 1명을 Exit Code `0`으로 검증했다. Apply부터 검증 성공까지 관측 RTO는 약 28분 35초, 최신 복원 시점 지연은 약 2시간 54분 14초였다. 검증 직후 복원 DB를 정지해 원본·복원 RDS 모두 `stopped`이며, 이 관측값은 운영 보장값이 아니다.
+복구 Fargate Validator의 현재 계약은 읽기 전용 Transaction에서 Schema 4개, Application Role 4개, Table 6개, Flyway V1 4개, 실패 Migration 0개와 활성 관리자 1명을 검증한다.
 
 ## Verified Local DB Snapshot
 
@@ -105,9 +106,10 @@ Docker Compose PostgreSQL was inspected with `psql` after local services started
 
 | Service | Tables | Evidence |
 |---|---|---|
-| `spring-user-service` | `users`, `user_roles` | Existing `schema.sql`, JPA entity/repository |
+| `spring-user-service` | `users`, `user_roles` | Flyway V1, JPA entity/repository |
 | `spring-member-bff-service` | `chat_rooms`, `chat_messages` | JPA entities and verified local DB tables |
 | `spring-member-stock-service` | `stock_watch_items` | JPA entity/repository and verified local DB table |
+| `spring-member-community-service` | `community_posts` | Flyway V1, JPA entity/repository |
 
 ## Before AWS Application Deployment
 
@@ -124,7 +126,7 @@ Docker Compose PostgreSQL was inspected with `psql` after local services started
 
 ## Current Gap Alignment
 
-- Community Service는 아직 메모리 저장 방식이므로 migration 대상 table이 없다.
+- Community Service는 `community_service` 스키마와 전용 Flyway migration task를 사용한다.
 - Chat Outbox는 [ADR-003](../decisions/ADR-003-kafka-outbox-chat.md)의 목표이며 현재 schema에는 없다.
 - Flyway V1과 Backend Application Task Definition·Service 8개의 Runtime ON 검증까지 완료했지만 이후 Schema 변경을 위한 V2 이상 Migration은 아직 없다.
 - Kubernetes↔AWS DR용 PostgreSQL 복제, promotion, write fencing과 failback 절차가 없다.

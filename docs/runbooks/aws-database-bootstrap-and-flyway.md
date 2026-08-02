@@ -24,7 +24,7 @@ Terraform에는 실제 비밀번호를 넣지 않는다. Secret ARN과 JSON Key 
 ## 1. 정적 검증
 
 ```powershell
-cd C:\Portfolio\infra\aws\terraform
+cd C:\Project\SpringMSA\infra\aws\terraform
 terraform fmt -check -recursive
 terraform validate
 terraform test
@@ -33,13 +33,13 @@ terraform test
 세 백엔드의 Testcontainers Migration Test는 Docker Desktop이 실행 중일 때 별도로 수행한다.
 
 ```powershell
-cd C:\Portfolio\BackEnd\spring-user-service
+cd C:\Project\SpringMSA\BackEnd\spring-user-service
 .\gradlew.bat test --tests "*UserServiceMigrationTest" --no-daemon
 
-cd C:\Portfolio\BackEnd\spring-member-bff-service
+cd C:\Project\SpringMSA\BackEnd\spring-member-bff-service
 .\gradlew.bat test --tests "*MemberBffMigrationTest" --no-daemon
 
-cd C:\Portfolio\BackEnd\spring-member-stock-service
+cd C:\Project\SpringMSA\BackEnd\spring-member-stock-service
 .\gradlew.bat test --tests "*StockServiceMigrationTest" --no-daemon
 ```
 
@@ -55,7 +55,7 @@ database_migration_images        = {}
 learning_runtime_enabled         = false
 ```
 
-첫 Apply에서는 DB Bootstrap Task만 등록했다. 당시에는 Flyway Image Digest가 없었으므로 Migration Task를 생성하지 않았고 RDS와 ECS 실행 용량도 OFF로 유지했다. 이후 6~7절의 Build Once·Promote와 별도 저장 Plan으로 Migration Task 3개를 추가했다.
+첫 Apply에서는 DB Bootstrap Task만 등록했다. 당시에는 Flyway Image Digest가 없었으므로 Migration Task를 생성하지 않았고 RDS와 ECS 실행 용량도 OFF로 유지했다. 현재는 Community Service를 포함한 Migration Task 4개를 사용한다.
 
 저장 Plan을 만든 뒤 변경 개수, 교체·삭제 0개, Plan 파일 SHA-256을 검토하고 명시적으로 승인된 Plan만 Apply한다.
 
@@ -66,7 +66,7 @@ learning_runtime_enabled         = false
 Terraform Apply와 별도로 승인받은 뒤 다음 스크립트를 실행한다.
 
 ```powershell
-cd C:\Portfolio
+cd C:\Project\SpringMSA
 $expectedAccountId = "<승인된 12자리 AWS Account ID>"
 .\infra\aws\scripts\Initialize-LearningDatabaseSecrets.ps1 -ExpectedAccountId $expectedAccountId -WhatIf
 .\infra\aws\scripts\Initialize-LearningDatabaseSecrets.ps1 -ExpectedAccountId $expectedAccountId
@@ -98,7 +98,7 @@ RDS 시작·정지는 Terraform 리소스 생성/삭제가 아니라 운영 상�
 Private App Subnet, ECS Security Group, Public IP 없음으로 Task를 실행한다.
 
 ```powershell
-cd C:\Portfolio
+cd C:\Project\SpringMSA
 $taskFamily = terraform -chdir=infra/aws/terraform output -raw database_bootstrap_task_family
 .\infra\aws\scripts\Invoke-LearningDatabaseTask.ps1 -TaskDefinition $taskFamily -ExpectedAccountId $expectedAccountId
 ```
@@ -106,7 +106,7 @@ $taskFamily = terraform -chdir=infra/aws/terraform output -raw database_bootstra
 성공 기준은 ECS Container Exit Code `0`과 CloudWatch Log의 다음 완료 메시지다.
 
 ```text
-Database bootstrap completed for 3 service schemas.
+Database bootstrap completed for 4 service schemas.
 ```
 
 로그에는 사용자명과 Schema 이름만 남고 비밀번호는 남지 않아야 한다. Bootstrap은 Role이 없으면 생성하고, 있으면 Secret의 현재 비밀번호로 동기화하므로 재실행할 수 있다.
@@ -116,7 +116,7 @@ Database bootstrap completed for 3 service schemas.
 실제 DB 권한은 다음 읽기 전용 스크립트로 확인한다.
 
 ```powershell
-cd C:\Portfolio
+cd C:\Project\SpringMSA
 .\infra\aws\scripts\Test-LearningDatabaseBootstrap.ps1 -ExpectedAccountId $expectedAccountId
 ```
 
@@ -157,9 +157,9 @@ $tasks = terraform -chdir=infra/aws/terraform output -json database_migration_ta
 .\infra\aws\scripts\Test-LearningFlywayMigrations.ps1 -ExpectedAccountId $expectedAccountId
 ```
 
-검증은 서비스별 `flyway_schema_history` 3개와 V1 성공 이력 3개, 예상 Application Table 5개, Table 소유자, 교차 Schema 권한 0개, Seed Data 0건을 확인한다. 이 검증까지 통과해야 Migration 완료로 처리한다.
+검증은 서비스별 `flyway_schema_history` 4개와 V1 성공 이력 4개, 예상 Application Table 6개, Table 소유자, 교차 Schema 권한 0개, Seed Data 0건을 확인한다. 이 검증까지 통과해야 Migration 완료로 처리한다.
 
-> 실행 완료: 승인한 저장 Plan으로 Migration Log Group·최소 권한 Execution Role/Policy·Digest 고정 Task Definition을 서비스별 3개씩 총 12개 추가했다. Runtime ON과 RDS `available` 확인 후 User Service, Member BFF, Stock Service 순서로 실행해 모두 Exit Code `0`을 확인했다. `Test-LearningFlywayMigrations.ps1` 검증도 위의 모든 기대값으로 Exit Code `0`을 반환했다.
+> 현재 계약은 User Service, Community Service, Member BFF, Stock Service의 Migration Task 4개다. 각 Task는 전용 DB Secret과 Schema만 사용하며 모두 Exit Code `0`이어야 한다.
 
 ## 8. Runtime OFF
 

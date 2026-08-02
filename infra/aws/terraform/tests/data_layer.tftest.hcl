@@ -17,6 +17,7 @@ run "enabled_data_layer_contract" {
     application_secret_names = [
       "/spring-react-msa/learning/admin-bff",
       "/spring-react-msa/learning/auth-server",
+      "/spring-react-msa/learning/community-service",
       "/spring-react-msa/learning/member-bff",
       "/spring-react-msa/learning/shared/internal-api",
       "/spring-react-msa/learning/shared/redis",
@@ -82,7 +83,7 @@ run "enabled_data_layer_contract" {
 
   assert {
     condition = (
-      length(aws_secretsmanager_secret.application) == 7 &&
+      length(aws_secretsmanager_secret.application) == 8 &&
       toset(keys(aws_secretsmanager_secret.application)) == var.application_secret_names &&
       alltrue([for secret in values(aws_secretsmanager_secret.application) : secret.recovery_window_in_days == 7])
     )

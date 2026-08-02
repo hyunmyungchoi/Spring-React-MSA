@@ -3,6 +3,7 @@ export type CommunityPost = {
     title: string;
     content: string;
     author: string;
+    ownedByCurrentUser: boolean;
     createdAt: string;
     updatedAt: string;
 };

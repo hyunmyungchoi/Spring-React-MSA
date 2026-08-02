@@ -27,6 +27,7 @@ locals {
   application_secret_names = toset([
     "/spring-react-msa/learning/admin-bff",
     "/spring-react-msa/learning/auth-server",
+    "/spring-react-msa/learning/community-service",
     "/spring-react-msa/learning/member-bff",
     "/spring-react-msa/learning/shared/internal-api",
     "/spring-react-msa/learning/shared/redis",

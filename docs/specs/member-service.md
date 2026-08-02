@@ -55,9 +55,9 @@ SPA는 TTL보다 짧은 간격으로 heartbeat를 보내야 한다. tab 종료�
 | `PUT /bff/community/posts/{postId}` | 게시물 수정 | 수정 게시물 |
 | `DELETE /bff/community/posts/{postId}` | 게시물 삭제 | 200 envelope |
 
-게시물은 `id`, `title`, `content`, `author`, `createdAt`, `updatedAt`을 가진다. author는 JWT authentication name(`sub`)에서 정한다.
+게시물은 `id`, `title`, `content`, `author`, `createdAt`, `updatedAt`, `ownedByCurrentUser`를 가진다. `author`는 JWT의 `login_id` claim을 화면 표시값으로 사용하고, 변경 불가능한 `sub`를 PostgreSQL `community_service.community_posts.owner_sub`에 소유권 값으로 저장한다.
 
-**현재 제약:** Community Service는 `ConcurrentHashMap`에 게시물을 보관한다. 재기동·재배포 시 데이터가 사라지고 replicas 간 데이터가 일치하지 않는다. update/delete 작성자 검증과 request validation도 없다. 운영 전 PostgreSQL 영속화, 소유권 검사, pagination, title/content 검증이 필요하다.
+수정과 삭제는 `post_id + owner_sub`로 제한한다. title/content는 요청 validation을 거치고, 목록은 최신 100개까지 반환한다.
 
 ## 오류와 권한
 

@@ -18,7 +18,7 @@
 `FrontEnd` Workspace Root에서 실행한다.
 
 ```powershell
-Set-Location C:\Portfolio\FrontEnd
+Set-Location C:\Project\SpringMSA\FrontEnd
 pnpm install --frozen-lockfile
 pnpm --filter admin dev
 ```

@@ -44,6 +44,7 @@ $secretArns = $secretArnsJson | ConvertFrom-Json
 
 $databaseUsers = [ordered]@{
     "/spring-react-msa/learning/user-service"  = "user_service_app"
+    "/spring-react-msa/learning/community-service" = "community_service_app"
     "/spring-react-msa/learning/member-bff"    = "member_bff_app"
     "/spring-react-msa/learning/stock-service" = "stock_service_app"
 }

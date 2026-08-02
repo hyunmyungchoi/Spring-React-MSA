@@ -72,13 +72,15 @@ spec:
             - name: SPRING_SQL_INIT_MODE
               value: never
             - name: SPRING_FLYWAY_ENABLED
-              value: "false"
+              value: "true"
+            - name: SPRING_FLYWAY_CREATE_SCHEMAS
+              value: "true"
             - name: SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA
-              value: public
+              value: stock_service
             - name: SPRING_FLYWAY_DEFAULT_SCHEMA
-              value: public
+              value: stock_service
             - name: SPRING_FLYWAY_SCHEMAS
-              value: public
+              value: stock_service
             - name: MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED
               value: "true"
             - name: TOSS_API_BASE_URL

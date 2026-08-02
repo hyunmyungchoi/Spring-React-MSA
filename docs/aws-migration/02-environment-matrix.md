@@ -57,7 +57,6 @@ AWS root domain: `hyuncloudlab.com`
 | `PUBLIC_ORIGIN` | `localhost:5173` | 미사용 | 미사용 |
 | `GATEWAY_CORS_ALLOWED_ORIGIN` | `http://localhost:5173` | `http://user.localtest.me` | `https://app.hyuncloudlab.com` |
 | `ADMIN_GATEWAY_CORS_ALLOWED_ORIGIN` | `http://localhost:5176` | `http://admin.localtest.me` | `https://admin.hyuncloudlab.com` |
-| `ADMIN_BFF_REGISTRATION_ENABLED` | `true` | `true` 명시 | `false` 고정 |
 
 ## OAuth와 내부 Service URL
 
@@ -77,7 +76,6 @@ AWS 내부 통신은 Service Connect Sidecar 없이 Cloud Map Private DNS를 사
 | `BFF_API_COMMUNITY_API_BASE_URL` | `http://spring-member-community-service:8083` | 동일 | `http://community-service.learning.spring-react-msa.internal:8083` |
 | `BFF_API_STOCK_API_BASE_URL` | `http://spring-member-stock-service:8084` | 동일 | `http://stock-service.learning.spring-react-msa.internal:8084` |
 | `ADMIN_BFF_API_USER_API_BASE_URL` | `http://spring-member-gateway:8080` | `http://spring-user-service:8081` | `http://user-service.learning.spring-react-msa.internal:8081` |
-| `ADMIN_BFF_API_USER_INTERNAL_BASE_URL` | `http://spring-user-service:8081` | 동일 | `http://user-service.learning.spring-react-msa.internal:8081` |
 | `GATEWAY_BFF_URI` | `http://spring-member-bff-service:8079` | 동일 | `http://member-bff.learning.spring-react-msa.internal:8079` |
 | `GATEWAY_USER_SERVICE_URI` | `http://spring-user-service:8081` | 동일 | `http://user-service.learning.spring-react-msa.internal:8081` |
 | `GATEWAY_COMMUNITY_SERVICE_URI` | `http://spring-member-community-service:8083` | 동일 | `http://community-service.learning.spring-react-msa.internal:8083` |

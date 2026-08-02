@@ -14,7 +14,7 @@ NS/SOA 레코드, Registrar, 결제 및 연락처는 이 스택이 관리하지 
 최초 실행 전 Bootstrap State Role이 `global/dns/terraform.tfstate`와 Lockfile에 접근할 수 있어야 한다. 실제 `backend.s3.hcl`과 `terraform.tfvars`는 Git에 커밋하지 않는다.
 
 ```powershell
-Set-Location C:\Portfolio\infra\aws\global\dns
+Set-Location C:\Project\SpringMSA\infra\aws\global\dns
 terraform init -backend-config=backend.s3.hcl
 terraform fmt -check -recursive
 terraform validate

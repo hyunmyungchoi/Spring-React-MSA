@@ -1,131 +1,116 @@
-# Kubernetes 배포 런북
+# Rocky Linux 9 k3s 배포
 
-## 범위와 전제
+## 범위
 
-현재 `infra/k8s`는 `localtest.me` 기반 로컬 Kubernetes 환경용이다. AWS ECS 배포 소스가 아니다. Docker Desktop Kubernetes 같은 단일 로컬 cluster, ingress-nginx, 기본 `standard` StorageClass를 전제로 한다.
+이 문서는 VirtualBox의 Rocky Linux 9 Minimal 단일 노드 `k3s` 환경을 기준으로 한다.
+명령은 Windows Termius SSH에서 실행하고 저장소 경로는 `C:\Project\SpringMSA`다.
 
-## 1. Cluster 확인
+현재 기본 StorageClass는 k3s의 `local-path`를 그대로 사용한다. `standard` 별칭 생성은 별도 작업으로 보류한다.
 
-```powershell
-kubectl config current-context
-kubectl cluster-info
-kubectl get nodes
+## 1. 클러스터 확인
+
+```bash
+kubectl get nodes -o wide
 kubectl get storageclass
+kubectl get pods -A
 ```
 
-의도한 local context인지 확인하기 전에는 apply/delete를 실행하지 않는다.
+노드는 `Ready`, `local-path`는 기본 StorageClass여야 한다.
 
-## 2. ingress-nginx
+## 2. Secret 준비
+
+Windows 저장소에서 예제 파일을 Git 비추적 로컬 파일로 복사하고 모든 `change-me` 값을 교체한다.
 
 ```powershell
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.15.1/deploy/static/provider/cloud/deploy.yaml
-kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=180s
-kubectl get ingressclass
+Copy-Item C:\Project\SpringMSA\infra\k8s\spring-msa\examples\02-secrets.example.yaml `
+  C:\Project\SpringMSA\infra\k8s\spring-msa\02-secrets.local.yaml
 ```
 
-`nginx` IngressClass가 보여야 한다.
+관리자 비밀번호는 UTF-8 기준 20~72바이트여야 한다. `ADMIN_BOOTSTRAP_REQUEST_ID`는 실행마다 추적 가능한 고유값을 사용한다.
 
-## 3. Secret 준비
+## 3. 데이터 계층
 
-```powershell
-Copy-Item C:\Portfolio\infra\k8s\spring-msa\examples\02-secrets.example.yaml `
-  C:\Portfolio\infra\k8s\spring-msa\02-secrets.local.yaml
+```bash
+ROOT=/path/to/SpringMSA/infra/k8s/spring-msa
+kubectl apply -f "$ROOT/00-namespace.yaml"
+kubectl apply -f "$ROOT/01-configmap.yaml"
+kubectl apply -f "$ROOT/02-secrets.local.yaml"
+kubectl apply -f "$ROOT/03-00-postgres-pvc.yaml"
+kubectl apply -f "$ROOT/03-01-postgres-headless-service.yaml"
+kubectl apply -f "$ROOT/03-02-postgres-statefulset.yaml"
+kubectl apply -f "$ROOT/03-03-postgres-service.yaml"
+kubectl apply -f "$ROOT/03-50-redis-pvc.yaml"
+kubectl apply -f "$ROOT/04-redis.yaml"
+kubectl rollout status statefulset/postgres -n spring-msa --timeout=300s
+kubectl rollout status deployment/redis -n spring-msa --timeout=180s
 ```
 
-파일의 placeholder를 로컬 값으로 교체한다. 이 파일은 `.gitignore` 대상이다. 다음 항목이 서로 일치해야 한다.
+Redis는 AOF, 2Gi PVC, readiness/liveness probe, CPU/메모리 request와 limit를 사용한다.
 
-- BFF plain client secret과 Auth Server BCrypt client secret hash
-- issuer와 외부 Gateway URL
-- member/admin redirect 및 post-logout URL
-- internal API token
-- PostgreSQL/Redis/Toss 자격 증명
-- `ghcr-secret`의 GitHub 사용자명, package read 권한 token, `username:token` Base64 값
+## 4. PostgreSQL 스키마와 관리자 생성
 
-예제 파일은 `spring-msa-secret`, `spring-msa-oauth-secret`, `ghcr-secret` 세 Secret을 모두 포함한다. `change-me-*` placeholder가 하나라도 남은 상태로 Apply하지 않는다.
+네 데이터 서비스는 각각 `user_service`, `community_service`, `stock_service`, `member_bff` 스키마를 Flyway로 생성한다.
 
-```powershell
-kubectl apply -f C:\Portfolio\infra\k8s\spring-msa\00-namespace.yaml
-kubectl apply -f C:\Portfolio\infra\k8s\spring-msa\02-secrets.local.yaml
+```bash
+kubectl apply -f "$ROOT/10-user-service.yaml"
+kubectl apply -f "$ROOT/11-community-service.yaml"
+kubectl apply -f "$ROOT/12-stock-service.yaml"
+kubectl apply -f "$ROOT/20-member-bff-service.yaml"
+kubectl rollout status deployment/spring-user-service -n spring-msa --timeout=300s
+kubectl rollout status deployment/spring-member-community-service -n spring-msa --timeout=300s
 ```
 
-Secret은 Argo CD가 추적하는 Git 경로에 포함되지 않으므로 cluster에 별도로 유지해야 한다.
+최초 관리자만 수동 Job으로 한 번 생성한다. 예제의 User Service image digest를 배포 버전과 맞춘 뒤 적용한다.
 
-## 4. Kafka
+```bash
+kubectl apply -f "$ROOT/examples/08-admin-bootstrap-job.example.yaml"
+kubectl logs -n spring-msa job/admin-bootstrap
+kubectl delete job admin-bootstrap -n spring-msa
+```
 
-```powershell
-kubectl apply -f C:\Portfolio\infra\k8s\kafka\00-namespace.yaml
-kubectl apply -f C:\Portfolio\infra\k8s\kafka\05-kafka.yaml
-kubectl apply -f C:\Portfolio\infra\k8s\kafka\10-kafka-exporter.yaml
+첫 실행 결과는 `created`, 동일한 자격증명 재실행은 `already_present`여야 한다. 공개 관리자 가입 API와 UI는 존재하지 않는다.
+
+## 5. Kafka
+
+```bash
+KAFKA=/path/to/SpringMSA/infra/k8s/kafka
+kubectl apply -f "$KAFKA/00-namespace.yaml"
+kubectl apply -f "$KAFKA/05-kafka.yaml"
+kubectl apply -f "$KAFKA/10-kafka-exporter.yaml"
 kubectl rollout status statefulset/kafka -n kafka --timeout=300s
 ```
 
-Kafka는 단일 broker/KRaft controller와 1Gi PVC인 로컬 구성이다.
+Kafka는 실행 중 외부 JAR을 다운로드하지 않는다. 메트릭은 digest 고정 Kafka exporter가 제공한다.
 
-## 5. Spring MSA 수동 apply
+## 6. 관측성과 ServiceMonitor
 
-Argo CD 없이 최초 확인할 때 다음 순서로 적용한다.
-
-```powershell
-$root = "C:\Portfolio\infra\k8s\spring-msa"
-kubectl apply -f "$root\00-namespace.yaml"
-kubectl apply -f "$root\01-configmap.yaml"
-kubectl apply -f "$root\02-secrets.local.yaml"
-kubectl apply -f "$root\03-00-postgres-pvc.yaml"
-kubectl apply -f "$root\03-01-postgres-headless-service.yaml"
-kubectl apply -f "$root\03-02-postgres-statefulset.yaml"
-kubectl apply -f "$root\03-03-postgres-service.yaml"
-kubectl apply -f "$root\04-redis.yaml"
-kubectl apply -f "$root\10-user-service.yaml"
-kubectl apply -f "$root\11-community-service.yaml"
-kubectl apply -f "$root\12-stock-service.yaml"
-kubectl apply -f "$root\13-auth-server.yaml"
-kubectl apply -f "$root\20-member-bff-service.yaml"
-kubectl apply -f "$root\21-admin-bff-service.yaml"
-kubectl apply -f "$root\30-member-gateway.yaml"
-kubectl apply -f "$root\31-admin-gateway.yaml"
-kubectl apply -f "$root\40-web.yaml"
-kubectl apply -f "$root\50-ingress.yaml"
-```
-
-## 6. 상태 확인
+Windows PowerShell에서 실행한다.
 
 ```powershell
-kubectl get pods,svc,ingress,pvc -n spring-msa
-kubectl rollout status statefulset/postgres -n spring-msa --timeout=300s
-kubectl rollout status deployment/spring-member-bff-service -n spring-msa --timeout=300s
-kubectl rollout status deployment/spring-admin-bff-service -n spring-msa --timeout=300s
-```
-
-실패 pod:
-
-```powershell
-kubectl describe pod <pod-name> -n spring-msa
-kubectl logs <pod-name> -n spring-msa --all-containers --tail=200
-```
-
-접속 확인:
-
-```powershell
-Invoke-WebRequest http://user.localtest.me
-Invoke-WebRequest http://admin.localtest.me
-```
-
-## 7. 관측성
-
-```powershell
-Set-Location C:\Portfolio\infra\k8s\observability
+Set-Location C:\Project\SpringMSA\infra\k8s\observability
 .\scripts\install-observability.ps1
 .\scripts\check-observability.ps1
+kubectl apply -f C:\Project\SpringMSA\infra\k8s\kafka\20-servicemonitors.yaml
 ```
 
-chart version은 설치 스크립트에 고정돼 있다.
+Prometheus Operator가 설치된 뒤에만 `20-servicemonitors.yaml`을 적용한다. 로그 수집기는 Promtail이 아니라 Grafana Alloy다.
 
-## 배포 중단 기준
+## 7. 나머지 애플리케이션
 
-- ImagePullBackOff 또는 readiness 실패가 지속됨
-- OAuth issuer/redirect 불일치
-- PostgreSQL migration/validation 실패
-- Member BFF 2 replicas 중 하나라도 반복 재시작
-- Kafka topic/DLT 또는 Redis 연결 실패로 핵심 기능이 예상과 다름
+```bash
+kubectl apply -f "$ROOT/13-auth-server.yaml"
+kubectl apply -f "$ROOT/21-admin-bff-service.yaml"
+kubectl apply -f "$ROOT/30-member-gateway.yaml"
+kubectl apply -f "$ROOT/31-admin-gateway.yaml"
+kubectl apply -f "$ROOT/40-web.yaml"
+kubectl apply -f "$ROOT/50-ingress.yaml"
+kubectl get pods,svc,ingress,pvc -n spring-msa
+```
 
-중단 시 새 변경을 더 적용하지 말고 [rollback.md](rollback.md)를 따른다.
+실패 시 다음 순서로 확인한다.
+
+```bash
+kubectl describe pod POD_NAME -n spring-msa
+kubectl logs POD_NAME -n spring-msa --all-containers --tail=200
+kubectl get events -n spring-msa --sort-by=.lastTimestamp
+```

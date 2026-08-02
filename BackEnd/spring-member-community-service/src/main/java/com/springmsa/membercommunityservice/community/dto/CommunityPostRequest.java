@@ -1,4 +1,10 @@
 package com.springmsa.membercommunityservice.community.dto;
 
-public record CommunityPostRequest(String title, String content) {
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
+public record CommunityPostRequest(
+        @NotBlank @Size(max = 200) String title,
+        @NotBlank @Size(max = 5000) String content
+) {
 }

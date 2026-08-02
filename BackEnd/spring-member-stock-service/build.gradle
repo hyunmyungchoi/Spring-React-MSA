@@ -39,7 +39,6 @@ dependencies {
     testImplementation 'org.testcontainers:testcontainers-postgresql'
     testCompileOnly 'org.projectlombok:lombok'
     testAnnotationProcessor 'org.projectlombok:lombok'
-    testRuntimeOnly 'com.h2database:h2'
 }
 
 ext {

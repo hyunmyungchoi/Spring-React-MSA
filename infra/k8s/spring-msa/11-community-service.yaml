@@ -38,6 +38,32 @@ spec:
               value: ""
             - name: SERVER_TOMCAT_ACCESSLOG_BUFFERED
               value: "false"
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://postgres:5432/msa
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: spring-msa-config
+                  key: POSTGRES_USER
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: spring-msa-secret
+                  key: POSTGRES_PASSWORD
+            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+              value: validate
+            - name: SPRING_SQL_INIT_MODE
+              value: never
+            - name: SPRING_FLYWAY_ENABLED
+              value: "true"
+            - name: SPRING_FLYWAY_CREATE_SCHEMAS
+              value: "true"
+            - name: SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA
+              value: community_service
+            - name: SPRING_FLYWAY_DEFAULT_SCHEMA
+              value: community_service
+            - name: SPRING_FLYWAY_SCHEMAS
+              value: community_service
             - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI
               value: http://user.localtest.me
             - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI

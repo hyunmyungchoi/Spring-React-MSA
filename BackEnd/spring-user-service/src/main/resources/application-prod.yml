@@ -20,7 +20,7 @@ spring:
     enabled: ${SPRING_FLYWAY_ENABLED}
     default-schema: ${SPRING_FLYWAY_DEFAULT_SCHEMA}
     schemas: ${SPRING_FLYWAY_SCHEMAS}
-    create-schemas: false
+    create-schemas: ${SPRING_FLYWAY_CREATE_SCHEMAS:false}
     clean-disabled: true
 
   sql:

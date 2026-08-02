@@ -78,11 +78,11 @@ Task는 PostgreSQL `16.14` Public ECR Image를 OCI Digest로 고정하고 읽기
 
 Foundation Apply 결과는 `4 added, 0 changed, 0 destroyed`다. 최초 Task Definition Revision 1은 RDS 제한 계정에서 `NOSUPERUSER`와 Schema 소유자 전환을 요구해 Bootstrap 실행에 실패했다. RDS 호환 방식으로 Role의 LOGIN·비밀번호만 동기화하고 Schema는 Bootstrap 관리 계정이 소유하도록 수정한 뒤, 불변 Task Definition을 Revision 2로 교체했다.
 
-별도 SHA-256 승인으로 User Service, Member BFF, Stock Service Secret에 최초 `AWSCURRENT` Version을 생성했다. 각 값은 승인된 사용자명과 AWS가 생성한 40자 무작위 비밀번호만 포함하며 화면, Git, Terraform State에 저장하지 않았다. 재실행 시 기존 정상 Version 세 개를 모두 Skip했다.
+User Service, Community Service, Member BFF, Stock Service Secret은 각각 전용 DB 사용자명과 무작위 비밀번호를 가진다. 값은 화면, Git, Terraform State에 저장하지 않으며 재실행 시 기존 정상 Version을 건너뛴다.
 
-짧은 Runtime ON에서 Revision 2 Bootstrap Task가 Exit Code `0`으로 완료됐다. Bootstrap 직후 읽기 전용 검증 Task도 Exit Code `0`이었으며 안전한 Role 3개, Schema 3개, 자기 Schema 권한 조합 3개, 교차 Schema 권한 0개, Application Table 0개를 실제 RDS에서 확인했다. 이후 Digest 고정 Migration Task 3개를 적용·실행하고 Flyway V1 사후 검증까지 완료했다.
+DB Bootstrap 검증은 안전한 Role 4개, Schema 4개, 자기 Schema 권한 조합 4개, 교차 Schema 권한 0개를 확인한다. 이후 Digest 고정 Migration Task 4개와 Flyway V1 사후 검증을 실행한다.
 
-DB Migration 검증 후에는 승인된 OFF Plan으로 ASG `0/0/0`과 RDS 정지를 확인했고 당시 Remote State는 107개 주소였다. 이후 Application Foundation과 Runtime ON을 적용해 ASG `1/1/2`, EC2·Container Instance 1대, ECS Service 8개 `1/1/0`, RDS·Valkey `available`, Public ALB Target 2/2 `healthy`를 검증했다. 당시 최종 Runtime OFF 뒤 ASG·EC2·Container Instance·Task는 0이고 RDS는 `stopped`였다. Bootstrap Revision 2와 Migration Revision 1 세 개는 계속 `ACTIVE`다. 현재 상태는 문서 상단의 2026-07-22 관측성 수명주기 완료 후 Runtime OFF 기준이며 동일 입력 재계획은 `No changes`다.
+Community Service PostgreSQL 전환으로 현재 코드의 Migration Task 계약은 4개다. 기존 AWS State에 있던 3개 Task에서 확장할 때는 새 Saved Plan을 생성하고 Runtime OFF 상태에서 변경 범위를 검토한다.
 
 ### 현재 AWS에 아직 생성하지 않은 대상
 
@@ -132,7 +132,7 @@ Terraform에는 `aws_secretsmanager_secret_version`이 없으므로 실제 비�
 - PITR API가 원본 Backup Retention 7일을 상속하므로 복원 DB도 7일로 추적한다. Cleanup은 Automated Backup을 삭제하고 Final Snapshot을 생략한다.
 - Fargate Validator는 Private App Subnet·Public IP 없음, OCI Digest 고정 PostgreSQL 16 Client, Read-only Root, UID `70`, Linux Capability `ALL` 제거, Task Role 없음으로 실행한다. Fargate가 지원하지 않는 `tmpfs`는 사용하지 않는다.
 - Validator는 원본 RDS Managed Master Secret을 Execution Role로 읽는다. PostgreSQL PITR은 복원 시 새 RDS Managed Master Secret을 만들 수 없고 복원 DB가 원본 Master Credential을 유지하기 때문이다. Terraform은 새 Secret이나 Secret Version을 만들지 않는다.
-- 고정 SQL은 `BEGIN TRANSACTION READ ONLY`와 TLS를 강제하고 Schema 3개, Application Role 3개, Table `2/2/1` 총 5개, Flyway V1 3개, 교차 권한 0개, 활성 관리자 1명을 검증한다. Log에는 개수와 SHA-256 Fingerprint만 남긴다.
+- 고정 SQL은 `BEGIN TRANSACTION READ ONLY`와 TLS를 강제하고 Schema 4개, Application Role 4개, Application Table 6개, Flyway V1 4개, 교차 권한 0개, 활성 관리자 1명을 검증한다. Log에는 개수와 SHA-256 Fingerprint만 남긴다.
 - 복원 DB를 Cloud Map·ALB·Route 53·SSM Runtime Parameter·Application Secret에 게시하지 않는다.
 
 `terraform fmt -recursive`, `terraform validate`, 전체 mock test 결과는 `38 passed, 0 failed`다. Digest 고정 PostgreSQL Image에서 Validator Script의 `sh -n` 문법 검사도 통과했다. AWS Provider의 기존 Cloud Map `failure_threshold` deprecation 경고 외 오류는 없다.
@@ -143,7 +143,7 @@ Terraform에는 `aws_secretsmanager_secret_version`이 없으므로 실제 비�
 
 Saved Plan `tfplan-rds-restore-drill-on`은 225,896 bytes, SHA-256 `77e48d5d8a37c5d5495b8478b68a0b8c8fd6de124495525a1022afbec5a2feb7`, 만료 `2026-07-23T06:32:31Z`다. 정확히 임시 RDS 1, Security Group 2, SG Rule 5, Validator Execution Role·Policy 각 1, Fargate Task Definition 1만 `11 add, 0 change, 0 destroy`로 포함했고, Apply 결과도 `11 added, 0 changed, 0 destroyed`였다. 적용 완료 후 같은 SHA-256을 재검증하고 Plan 파일을 삭제했다.
 
-복원 시점은 `2026-07-23 11:02:47 KST`다. 복원 DB는 PostgreSQL `16.14`, `db.t4g.micro`, 암호화, Private, Single-AZ, 20 GiB gp3, 원본에서 상속된 Backup Retention 7일과 전용 Security Group 하나를 사용했다. 최초 코드의 0일 계약은 Provider State와 AWS 실상태 7일에 맞춰 교정했다. Private Fargate Validator는 Exit Code `0`으로 Schema 3개, Application Role 3개, Application Table 5개, Flyway V1 3개, 실패 Migration 0개와 활성 관리자 1명을 확인했다. Apply부터 검증 성공까지 관측 RTO는 약 28분 35초, 복원 시점 지연은 약 2시간 54분 14초였다. 검증 직후 정지를 요청해 복원 DB는 `2026-07-23 14:34:21 KST`에 `stopped`가 됐고 원본 RDS도 계속 `stopped`다. ECS 8개 Service는 `0/0/0`, 실행 Task는 0이며 Restore Drill State 주소 12개 중 감사 Log 1개와 임시 리소스 11개가 Cleanup 승인을 기다린다.
+현재 Private Fargate 복구 Validator 계약은 Schema 4개, Application Role 4개, Application Table 6개, Flyway V1 4개, 실패 Migration 0개와 활성 관리자 1명을 검증한다.
 
 Cleanup Saved Plan `tfplan-rds-restore-drill-cleanup`은 242,611 bytes, SHA-256 `f01c5588a23810ae038f6e12128c9bd51181179e89616aa4553f4c95c22bc875`, 생성 기준 State serial 93이다. 정확히 복원 RDS 1, Security Group 2, SG Rule 5, Validator Execution Role·Policy 각 1, Fargate Task Definition 1만 `0 add, 0 change, 11 destroy`로 포함했다. 승인 적용 결과도 `0 added, 0 changed, 11 destroyed`다. 복원 RDS·SG·IAM·활성 Validator Task Definition·Automated Backup은 모두 0이고 감사 Log는 `STANDARD`·보존 7일로 유지한다. State는 serial 95·249개 주소이며 Restore Drill 주소는 감사 Log 하나뿐이다. 동일 입력은 `No changes`이고 적용 Plan은 Hash 재검증 후 삭제했다.
 
@@ -285,7 +285,7 @@ Access Key가 필요한 예외 상황에서도 키를 코드, `terraform.tfvars`
 ## 초기화와 공통 검증
 
 ```powershell
-Set-Location C:\Portfolio\infra\aws\terraform
+Set-Location C:\Project\SpringMSA\infra\aws\terraform
 
 terraform init
 terraform fmt -check -recursive
@@ -318,18 +318,19 @@ Database Task Foundation의 현재 입력은 다음과 같다.
 ```hcl
 enable_database_tasks_foundation = true
 database_migration_images = {
-  user-service  = "<ECR URL>@sha256:<verified digest>"
-  member-bff    = "<ECR URL>@sha256:<verified digest>"
-  stock-service = "<ECR URL>@sha256:<verified digest>"
+  user-service      = "<ECR URL>@sha256:<verified digest>"
+  community-service = "<ECR URL>@sha256:<verified digest>"
+  member-bff        = "<ECR URL>@sha256:<verified digest>"
+  stock-service     = "<ECR URL>@sha256:<verified digest>"
 }
 ```
 
-첫 값으로 DB Role/Schema Bootstrap Task Definition과 최소 권한 IAM/7일 Log Group을 적용했고, Secret 초기화와 실제 RDS Bootstrap 검증까지 완료했다. 두 번째 Map은 Git에서 제외된 `terraform.tfvars`에만 실제 ECR Digest Reference를 저장하며 세 Key 전체가 있어야 한다. 승인한 저장 Plan으로 Flyway Migration Task Definition 3개와 서비스별 IAM/Log Group을 적용하고 실제 Migration까지 검증했다. Secret Version 생성과 Task 실행은 Terraform Apply와 별도의 승인 단계이며 [DB Bootstrap·Flyway Runbook](../../../docs/runbooks/aws-database-bootstrap-and-flyway.md)을 따른다.
+두 번째 Map은 Git에서 제외된 `terraform.tfvars`에만 실제 ECR Digest Reference를 저장하며 네 Key 전체가 있어야 한다. Flyway Migration Task Definition 4개와 서비스별 IAM/Log Group을 적용한다. Secret Version 생성과 Task 실행은 Terraform Apply와 별도의 승인 단계이며 [DB Bootstrap·Flyway Runbook](../../../docs/runbooks/aws-database-bootstrap-and-flyway.md)을 따른다.
 
 ## 검토 완료·적용된 Flyway Build Once·Migration 기록
 
 - Source SHA: `f0c88e32b883c391dcf993dfbf40839312de0f39`
-- GHCR Build Once: GitHub Actions Run `29642831008`, 서비스 3개 Test·Build·Digest 검증 성공
+- GHCR Build Once 대상: User, Community, Member BFF, Stock 서비스 4개
 - ECR Promote: GitHub Actions Run `29643089643`, 재빌드 없이 복사하고 GHCR·ECR Digest 일치 확인
 - Migration Foundation Plan SHA-256: `aefce55a1598c6aef45eeadc7753be9876362293e051584d4d125af030eac959`
 - Migration Foundation Apply: `12 added, 0 changed, 0 destroyed`
@@ -354,9 +355,9 @@ database_migration_images = {
 Apply 승인 요청 전과 승인 직후 Apply 직전에 모두 정확한 경로, Hash, Plan 내용을 다시 확인한다.
 
 ```powershell
-Set-Location C:\Portfolio
+Set-Location C:\Project\SpringMSA
 
-$planPath = "C:\Portfolio\infra\aws\terraform\tfplan.ecr"
+$planPath = "C:\Project\SpringMSA\infra\aws\terraform\tfplan.ecr"
 $expectedSha256 = "2c149a0c3215b6acaeba6a99883eca4fcc10fb6d6fa09f620368c78bb2c24603"
 $actualSha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $planPath).Hash.ToLowerInvariant()
 
@@ -364,7 +365,7 @@ if ($actualSha256 -ne $expectedSha256) {
   throw "tfplan.ecr SHA-256 mismatch; do not apply."
 }
 
-Set-Location C:\Portfolio\infra\aws\terraform
+Set-Location C:\Project\SpringMSA\infra\aws\terraform
 terraform show -no-color tfplan.ecr
 ```
 
@@ -394,7 +395,7 @@ terraform apply tfplan.ecr
 이 절은 현재의 `tfplan.ecr` Gate와 별개다. 현재 Plan이 Apply된 뒤 새로운 변경을 검토하거나, 코드·State·입력 변수·자격 증명·저장 Plan 중 하나가 변경되어 현재 Gate가 무효가 됐을 때 사용한다.
 
 ```powershell
-Set-Location C:\Portfolio\infra\aws\terraform
+Set-Location C:\Project\SpringMSA\infra\aws\terraform
 
 terraform plan -out=tfplan.<purpose>
 terraform show -no-color tfplan.<purpose>
@@ -406,7 +407,7 @@ Add/Change/Destroy 수, 예상 리소스, IAM 범위, 비용, 교체와 삭제�
 
 > 이 절은 2026-07-18에 검토·승인·Apply한 기록이다. State와 코드가 이미 변경됐으므로 이 저장 Plan을 다시 Apply하지 않는다.
 
-- 절대 경로: `C:\Portfolio\infra\aws\terraform\tfplan-ecs-compute-foundation`
+- 절대 경로: `C:\Project\SpringMSA\infra\aws\terraform\tfplan-ecs-compute-foundation`
 - 크기: 62,407 bytes
 - SHA-256: `c749c7e114ac68a1a0ae4fbc3ecb6b8a7cd3e8e4479d046b40d2ccad408e6fec`
 - 요약: `9 added, 0 changed, 0 destroyed`
@@ -426,7 +427,7 @@ Apply 과정에서 ECS는 Capacity Provider가 관리하는 ASG에 필수 `Amazo
 Apply 직전 다음 검사를 실행했다.
 
 ```powershell
-Set-Location C:\Portfolio\infra\aws\terraform
+Set-Location C:\Project\SpringMSA\infra\aws\terraform
 
 aws sts get-caller-identity
 aws configure get region
@@ -464,7 +465,7 @@ Plan 내용 자체는 Cluster, Capacity Provider 연결, Launch Template, ASG, E
 
 > 이 절은 2026-07-18에 검토·승인·Apply한 기록이다. State가 변경됐으므로 이 저장 Plan을 다시 Apply하지 않는다.
 
-- 절대 경로: `C:\Portfolio\infra\aws\terraform\tfplan-data-layer`
+- 절대 경로: `C:\Project\SpringMSA\infra\aws\terraform\tfplan-data-layer`
 - 크기: 50,570 bytes
 - SHA-256: `2829c5adf181d1017bc4d0e2135f543a410fe22ac7a06d8a4088d0c6a43b4987`
 - 적용 결과: `10 added, 0 changed, 0 destroyed`
@@ -475,7 +476,7 @@ Plan 내용 자체는 Cluster, Capacity Provider 연결, Launch Template, ASG, E
 Apply 전 호출 주체, Region, Plan Hash와 내용을 다음과 같이 확인했다.
 
 ```powershell
-Set-Location C:\Portfolio\infra\aws\terraform
+Set-Location C:\Project\SpringMSA\infra\aws\terraform
 
 aws sts get-caller-identity
 aws configure get region
@@ -497,10 +498,10 @@ terraform show -no-color .\tfplan-data-layer
 검토된 `tfplan.ecr` Apply, Role ARN의 GitHub Repository Variable 등록, Workflow의 `master` 반영과 Backend 8개 게시까지 완료됐다. 아래 명령은 등록과 수동 게시 절차의 기록이다.
 
 ```powershell
-Set-Location C:\Portfolio\infra\aws\terraform
+Set-Location C:\Project\SpringMSA\infra\aws\terraform
 $roleArn = terraform output -raw github_actions_ecr_role_arn
 
-Set-Location C:\Portfolio
+Set-Location C:\Project\SpringMSA
 gh variable set AWS_ECR_PUSH_ROLE_ARN `
   --repo hyunmyungchoi/Spring-React-MSA `
   --body $roleArn

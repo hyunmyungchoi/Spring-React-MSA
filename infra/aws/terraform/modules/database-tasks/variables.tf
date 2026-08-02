@@ -43,11 +43,12 @@ variable "application_secret_arns" {
     condition = alltrue([
       for name in [
         "/spring-react-msa/learning/user-service",
+        "/spring-react-msa/learning/community-service",
         "/spring-react-msa/learning/member-bff",
         "/spring-react-msa/learning/stock-service",
       ] : contains(keys(var.application_secret_arns), name)
     ])
-    error_message = "application_secret_arns must contain the user-service, member-bff, and stock-service secrets."
+    error_message = "application_secret_arns must contain the user-service, community-service, member-bff, and stock-service secrets."
   }
 }
 
@@ -57,22 +58,23 @@ variable "ecr_repository_arns" {
 }
 
 variable "migration_images" {
-  description = "Immutable ECR image URIs keyed by user-service, member-bff, and stock-service. Empty creates no migration task definitions."
+  description = "Immutable ECR image URIs keyed by user-service, community-service, member-bff, and stock-service. Empty creates no migration task definitions."
   type        = map(string)
   default     = {}
 
   validation {
     condition = length(var.migration_images) == 0 || (
-      length(var.migration_images) == 3 &&
+      length(var.migration_images) == 4 &&
       alltrue([
         for key in [
           "user-service",
+          "community-service",
           "member-bff",
           "stock-service",
         ] : contains(keys(var.migration_images), key)
       ])
     )
-    error_message = "migration_images must be empty or contain all three keys: user-service, member-bff, and stock-service."
+    error_message = "migration_images must be empty or contain all four keys: user-service, community-service, member-bff, and stock-service."
   }
 
   validation {

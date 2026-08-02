@@ -56,11 +56,11 @@ export PGUSER="$DB_MASTER_USERNAME"
 export PGPASSWORD="$DB_MASTER_PASSWORD"
 export PGSSLMODE=require
 psql --no-password --tuples-only --no-align --set=ON_ERROR_STOP=1 <<'SQL'
-SELECT 'SAFE_ROLES=' || count(*) FROM pg_roles WHERE rolname IN ('user_service_app','member_bff_app','stock_service_app') AND NOT rolsuper AND NOT rolcreatedb AND NOT rolcreaterole AND NOT rolreplication AND NOT rolbypassrls;
-SELECT 'SCHEMAS=' || count(*) FROM information_schema.schemata WHERE schema_name IN ('user_service','member_bff','stock_service');
-SELECT 'OWN_PRIVILEGE_PAIRS=' || count(*) FROM (VALUES ('user_service_app','user_service'),('member_bff_app','member_bff'),('stock_service_app','stock_service')) AS expected(role_name,schema_name) WHERE has_schema_privilege(role_name,schema_name,'USAGE') AND has_schema_privilege(role_name,schema_name,'CREATE');
-SELECT 'CROSS_PRIVILEGES=' || count(*) FROM (VALUES ('user_service_app'),('member_bff_app'),('stock_service_app')) AS roles(role_name) CROSS JOIN (VALUES ('user_service'),('member_bff'),('stock_service')) AS schemas(schema_name) WHERE replace(role_name,'_app','') <> schema_name AND (has_schema_privilege(role_name,schema_name,'USAGE') OR has_schema_privilege(role_name,schema_name,'CREATE'));
-SELECT 'APPLICATION_TABLES=' || count(*) FROM information_schema.tables WHERE table_schema IN ('user_service','member_bff','stock_service');
+SELECT 'SAFE_ROLES=' || count(*) FROM pg_roles WHERE rolname IN ('user_service_app','community_service_app','member_bff_app','stock_service_app') AND NOT rolsuper AND NOT rolcreatedb AND NOT rolcreaterole AND NOT rolreplication AND NOT rolbypassrls;
+SELECT 'SCHEMAS=' || count(*) FROM information_schema.schemata WHERE schema_name IN ('user_service','community_service','member_bff','stock_service');
+SELECT 'OWN_PRIVILEGE_PAIRS=' || count(*) FROM (VALUES ('user_service_app','user_service'),('community_service_app','community_service'),('member_bff_app','member_bff'),('stock_service_app','stock_service')) AS expected(role_name,schema_name) WHERE has_schema_privilege(role_name,schema_name,'USAGE') AND has_schema_privilege(role_name,schema_name,'CREATE');
+SELECT 'CROSS_PRIVILEGES=' || count(*) FROM (VALUES ('user_service_app'),('community_service_app'),('member_bff_app'),('stock_service_app')) AS roles(role_name) CROSS JOIN (VALUES ('user_service'),('community_service'),('member_bff'),('stock_service')) AS schemas(schema_name) WHERE replace(role_name,'_app','') <> schema_name AND (has_schema_privilege(role_name,schema_name,'USAGE') OR has_schema_privilege(role_name,schema_name,'CREATE'));
+SELECT 'APPLICATION_TABLES=' || count(*) FROM information_schema.tables WHERE table_schema IN ('user_service','community_service','member_bff','stock_service');
 SQL
 '@
 
@@ -156,9 +156,9 @@ for ($attempt = 0; $attempt -lt 10 -and $messages.Count -lt 5; $attempt++) {
 }
 
 $expectedMessages = @(
-    "SAFE_ROLES=3",
-    "SCHEMAS=3",
-    "OWN_PRIVILEGE_PAIRS=3",
+    "SAFE_ROLES=4",
+    "SCHEMAS=4",
+    "OWN_PRIVILEGE_PAIRS=4",
     "CROSS_PRIVILEGES=0",
     "APPLICATION_TABLES=0"
 )

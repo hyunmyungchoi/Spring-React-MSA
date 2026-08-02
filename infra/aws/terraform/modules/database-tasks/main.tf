@@ -3,6 +3,7 @@ locals {
 
   db_secret_names = {
     user_service  = "/spring-react-msa/learning/user-service"
+    community     = "/spring-react-msa/learning/community-service"
     member_bff    = "/spring-react-msa/learning/member-bff"
     stock_service = "/spring-react-msa/learning/stock-service"
   }
@@ -17,6 +18,8 @@ locals {
     test -n "$DB_MASTER_PASSWORD"
     test -n "$USER_SERVICE_DB_USERNAME"
     test -n "$USER_SERVICE_DB_PASSWORD"
+    test -n "$COMMUNITY_SERVICE_DB_USERNAME"
+    test -n "$COMMUNITY_SERVICE_DB_PASSWORD"
     test -n "$MEMBER_BFF_DB_USERNAME"
     test -n "$MEMBER_BFF_DB_PASSWORD"
     test -n "$STOCK_SERVICE_DB_USERNAME"
@@ -68,10 +71,11 @@ locals {
     SQL
 
     bootstrap_role "$USER_SERVICE_DB_USERNAME" "$USER_SERVICE_DB_PASSWORD" "user_service"
+    bootstrap_role "$COMMUNITY_SERVICE_DB_USERNAME" "$COMMUNITY_SERVICE_DB_PASSWORD" "community_service"
     bootstrap_role "$MEMBER_BFF_DB_USERNAME" "$MEMBER_BFF_DB_PASSWORD" "member_bff"
     bootstrap_role "$STOCK_SERVICE_DB_USERNAME" "$STOCK_SERVICE_DB_PASSWORD" "stock_service"
 
-    printf 'Database bootstrap completed for 3 service schemas.\n'
+    printf 'Database bootstrap completed for 4 service schemas.\n'
   SCRIPT
 
   bootstrap_secrets = [
@@ -90,6 +94,14 @@ locals {
     {
       name      = "USER_SERVICE_DB_PASSWORD"
       valueFrom = "${var.application_secret_arns[local.db_secret_names.user_service]}:db_password::"
+    },
+    {
+      name      = "COMMUNITY_SERVICE_DB_USERNAME"
+      valueFrom = "${var.application_secret_arns[local.db_secret_names.community]}:db_username::"
+    },
+    {
+      name      = "COMMUNITY_SERVICE_DB_PASSWORD"
+      valueFrom = "${var.application_secret_arns[local.db_secret_names.community]}:db_password::"
     },
     {
       name      = "MEMBER_BFF_DB_USERNAME"
@@ -115,6 +127,12 @@ locals {
       schema             = "user_service"
       secret_name        = local.db_secret_names.user_service
       runner_class       = "com.springmsa.userservice.migration.FlywayMigrationMain"
+    }
+    community-service = {
+      repository_service = "spring-member-community-service"
+      schema             = "community_service"
+      secret_name        = local.db_secret_names.community
+      runner_class       = "com.springmsa.membercommunityservice.migration.FlywayMigrationMain"
     }
     member-bff = {
       repository_service = "spring-member-bff-service"

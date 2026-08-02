@@ -17,7 +17,7 @@ import java.util.Set;
 @Service
 public class InternalUserCreateService {
 
-    private static final Set<String> ALLOWED_ROLES = Set.of("ROLE_USER", "ROLE_ADMIN");
+    private static final Set<String> ALLOWED_ROLES = Set.of("ROLE_USER");
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;

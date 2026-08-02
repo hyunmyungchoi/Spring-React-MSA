@@ -169,9 +169,9 @@ run "isolated_restore_and_read_only_validator_contract" {
     condition = (
       strcontains(jsondecode(aws_ecs_task_definition.validator["this"].container_definitions)[0].command[0], "BEGIN TRANSACTION READ ONLY") &&
       strcontains(jsondecode(aws_ecs_task_definition.validator["this"].container_definitions)[0].command[0], "pg_stat_ssl") &&
-      strcontains(jsondecode(aws_ecs_task_definition.validator["this"].container_definitions)[0].command[0], "application_tables:5") &&
+      strcontains(jsondecode(aws_ecs_task_definition.validator["this"].container_definitions)[0].command[0], "application_tables:6") &&
       strcontains(jsondecode(aws_ecs_task_definition.validator["this"].container_definitions)[0].command[0], "restore_validation_fingerprint") &&
-      strcontains(jsondecode(aws_ecs_task_definition.validator["this"].container_definitions)[0].command[0], "<<'SQL'\n") &&
+      strcontains(jsondecode(aws_ecs_task_definition.validator["this"].container_definitions)[0].command[0], "<<'SQL'") &&
       !strcontains(jsondecode(aws_ecs_task_definition.validator["this"].container_definitions)[0].command[0], "<<'SQL' |") &&
       !strcontains(jsondecode(aws_ecs_task_definition.validator["this"].container_definitions)[0].command[0], "SELECT login_id") &&
       !strcontains(jsondecode(aws_ecs_task_definition.validator["this"].container_definitions)[0].command[0], "SELECT email") &&

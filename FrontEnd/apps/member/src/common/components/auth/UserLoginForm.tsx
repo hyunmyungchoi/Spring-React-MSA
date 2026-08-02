@@ -14,7 +14,7 @@ type UserLoginFormProps = {
 function UserLoginForm({ defaultLoginId, pending, onPendingChange, onMessageChange }: UserLoginFormProps) {
     const { loginWithPassword } = useUserLogin();
     const [loginId, setLoginId] = useState(defaultLoginId);
-    const [password, setPassword] = useState("password");
+    const [password, setPassword] = useState("");
 
     const handlePasswordLogin = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();

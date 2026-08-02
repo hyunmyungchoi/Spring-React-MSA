@@ -1,0 +1,69 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: admin-bootstrap
+  namespace: spring-msa
+spec:
+  backoffLimit: 1
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        app: admin-bootstrap
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: admin-bootstrap
+          image: ghcr.io/hyunmyungchoi/spring-user-service@sha256:6a606f319a253caaac9d05a0cdc54c74537bf9157d2cf90d176b91a4f1316451
+          imagePullPolicy: Always
+          command:
+            - /bin/sh
+            - -ec
+            - exec java -Dloader.main=com.springmsa.userservice.bootstrap.AdminBootstrapMain -cp /app/app.jar org.springframework.boot.loader.launch.PropertiesLauncher
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: prod
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://postgres:5432/msa
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: spring-msa-config
+                  key: POSTGRES_USER
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: spring-msa-secret
+                  key: POSTGRES_PASSWORD
+            - name: ADMIN_BOOTSTRAP_LOGIN_ID
+              valueFrom:
+                secretKeyRef:
+                  name: spring-msa-secret
+                  key: ADMIN_BOOTSTRAP_LOGIN_ID
+            - name: ADMIN_BOOTSTRAP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: spring-msa-secret
+                  key: ADMIN_BOOTSTRAP_PASSWORD
+            - name: ADMIN_BOOTSTRAP_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: spring-msa-secret
+                  key: ADMIN_BOOTSTRAP_USERNAME
+            - name: ADMIN_BOOTSTRAP_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: spring-msa-secret
+                  key: ADMIN_BOOTSTRAP_EMAIL
+            - name: ADMIN_BOOTSTRAP_AUDIT_ACTOR
+              valueFrom:
+                secretKeyRef:
+                  name: spring-msa-secret
+                  key: ADMIN_BOOTSTRAP_AUDIT_ACTOR
+            - name: ADMIN_BOOTSTRAP_REQUEST_ID
+              valueFrom:
+                secretKeyRef:
+                  name: spring-msa-secret
+                  key: ADMIN_BOOTSTRAP_REQUEST_ID

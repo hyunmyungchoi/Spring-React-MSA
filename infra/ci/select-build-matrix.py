@@ -81,6 +81,7 @@ FRONTEND_IMAGES: list[dict[str, str]] = [
 ZERO_SHA = "0" * 40
 DATABASE_MIGRATION_IMAGES = [
     "spring-user-service",
+    "spring-member-community-service",
     "spring-member-stock-service",
     "spring-member-bff-service",
 ]

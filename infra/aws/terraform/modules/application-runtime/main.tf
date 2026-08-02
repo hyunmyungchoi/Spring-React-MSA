@@ -4,6 +4,7 @@ locals {
   secret_names = {
     admin_bff    = "/spring-react-msa/learning/admin-bff"
     auth_server  = "/spring-react-msa/learning/auth-server"
+    community    = "/spring-react-msa/learning/community-service"
     member_bff   = "/spring-react-msa/learning/member-bff"
     internal_api = "/spring-react-msa/learning/shared/internal-api"
     redis        = "/spring-react-msa/learning/shared/redis"
@@ -145,10 +146,21 @@ locals {
       cpu                = 512
       memory             = 768
       public_host        = null
-      environment        = merge(local.common_environment, local.jwt_environment)
-      secrets            = []
-      secret_arns        = []
-      parameter_arns     = []
+      environment = merge(local.common_environment, local.jwt_environment, local.database_pool_environment, {
+        SPRING_DATASOURCE_URL                          = "jdbc:postgresql://${var.db_address}:${var.db_port}/${var.db_name}?currentSchema=community_service&sslmode=require"
+        SPRING_JPA_HIBERNATE_DDL_AUTO                  = "validate"
+        SPRING_SQL_INIT_MODE                           = "never"
+        SPRING_FLYWAY_ENABLED                          = "false"
+        SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA = "community_service"
+        SPRING_FLYWAY_DEFAULT_SCHEMA                   = "community_service"
+        SPRING_FLYWAY_SCHEMAS                          = "community_service"
+      })
+      secrets = [
+        { name = "SPRING_DATASOURCE_USERNAME", valueFrom = "${var.application_secret_arns[local.secret_names.community]}:db_username::" },
+        { name = "SPRING_DATASOURCE_PASSWORD", valueFrom = "${var.application_secret_arns[local.secret_names.community]}:db_password::" },
+      ]
+      secret_arns    = [var.application_secret_arns[local.secret_names.community]]
+      parameter_arns = []
     }
 
     stock-service = {
@@ -246,7 +258,6 @@ locals {
         SPRING_DATA_REDIS_PORT                   = "6379"
         SPRING_DATA_REDIS_USERNAME               = "spring-msa"
         SPRING_DATA_REDIS_SSL_ENABLED            = "true"
-        ADMIN_BFF_REGISTRATION_ENABLED           = "false"
         ADMIN_BFF_CLIENT_ID                      = var.admin_bff_client_id
         ADMIN_BFF_FRONTEND_REDIRECT_URI          = var.admin_public_origin
         ADMIN_BFF_OAUTH2_AUTHORIZATION_URI       = "${var.admin_public_origin}/oauth2/authorize"
@@ -259,17 +270,14 @@ locals {
         ADMIN_BFF_OAUTH2_END_SESSION_URI         = "${var.admin_public_origin}/connect/logout"
         ADMIN_BFF_OAUTH2_LOGOUT_URI              = "${var.admin_public_origin}/logout"
         ADMIN_BFF_API_USER_API_BASE_URL          = "http://${local.service_dns.user_service}:8081"
-        ADMIN_BFF_API_USER_INTERNAL_BASE_URL     = "http://${local.service_dns.user_service}:8081"
       })
       secrets = [
         { name = "SPRING_DATA_REDIS_HOST", valueFrom = var.redis_host_parameter_arn },
         { name = "SPRING_DATA_REDIS_PASSWORD", valueFrom = "${var.application_secret_arns[local.secret_names.redis]}:redis_password::" },
-        { name = "SPRING_MSA_INTERNAL_API_TOKEN", valueFrom = "${var.application_secret_arns[local.secret_names.internal_api]}:internal_api_token::" },
         { name = "ADMIN_BFF_CLIENT_SECRET", valueFrom = "${var.application_secret_arns[local.secret_names.admin_bff]}:admin_bff_client_secret::" },
       ]
       secret_arns = [
         var.application_secret_arns[local.secret_names.redis],
-        var.application_secret_arns[local.secret_names.internal_api],
         var.application_secret_arns[local.secret_names.admin_bff],
       ]
       parameter_arns = [var.redis_host_parameter_arn]

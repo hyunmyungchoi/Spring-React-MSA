@@ -3,7 +3,7 @@
 ## 빠른 분류
 
 ```powershell
-docker compose --env-file C:\Portfolio\infra\docker\.env.local ps
+docker compose --env-file C:\Project\SpringMSA\infra\docker\.env.local ps
 kubectl get pods -A
 kubectl get events -n spring-msa --sort-by=.lastTimestamp
 ```
@@ -101,7 +101,7 @@ kubectl get secret ghcr-secret -n spring-msa
 
 ## 커뮤니티 글이 재시작 후 사라짐
 
-현재 구현은 메모리 저장이므로 예상된 제약이다. 복구할 영속 데이터가 없다. 운영 사용 전 PostgreSQL repository와 migration을 구현한다.
+커뮤니티 게시물은 PostgreSQL `community_service.community_posts`에 저장된다. 재시작 후 사라지면 datasource, Flyway 이력, PVC 상태를 확인한다.
 
 ## Toss 시세 429/503
 
@@ -112,9 +112,9 @@ kubectl get secret ghcr-secret -n spring-msa
 
 ## 비활성 또는 존재하지 않는 API가 500을 반환함
 
-기존 AWS Runtime ON Smoke에서는 `ADMIN_BFF_REGISTRATION_ENABLED=false`와 조건부 Controller 비등록을 확인했지만 배포 Image가 Spring의 `NoResourceFoundException`을 일반 `INTERNAL_SERVER_ERROR`로 변환해 빈 `POST /admin-bff/registration/admin`이 500을 반환했다. 저장소의 Admin BFF 처리기는 이를 404 `RESOURCE_NOT_FOUND`로 교정했고 단위 테스트를 추가했다. 새 Admin BFF Image 적용 전 AWS에서는 기존 500이 계속 보일 수 있으며 이는 Controller 활성화를 의미하지 않는다.
+관리자 가입 Controller와 프론트 가입 UI는 삭제됐다. 최초 관리자 생성은 `AdminBootstrapMain` Job 또는 ECS Task 로그의 `created`/`already_present` 결과로 확인한다.
 
-- 실제 Task Definition의 `ADMIN_BFF_REGISTRATION_ENABLED=false`를 먼저 확인한다.
+- 배포 이미지가 현재 User Service digest인지와 Bootstrap Secret 입력 이름을 확인한다.
 - `AdminBffRegistrationControllerConditionTest`로 비활성 환경에서 Bean이 없는지 확인한다.
 - 새 Admin BFF Source SHA, GHCR↔ECR Digest와 ECS Task Definition Revision이 교정 Image를 가리키는지 확인한다.
 - CSRF Cookie/Header와 빈 JSON을 사용해 공개 경로가 404 `RESOURCE_NOT_FOUND`인지 재검증한다. 유효한 가입 데이터는 보내지 않는다.
@@ -124,7 +124,7 @@ kubectl get secret ghcr-secret -n spring-msa
 ```powershell
 node --version
 corepack enable
-Set-Location C:\Portfolio\FrontEnd
+Set-Location C:\Project\SpringMSA\FrontEnd
 corepack install
 pnpm --version
 pnpm install --frozen-lockfile

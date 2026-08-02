@@ -14,7 +14,7 @@
 ## 1. Gate A — Global DNS State 권한
 
 ```powershell
-Set-Location C:\Portfolio\infra\aws\bootstrap\terraform-state
+Set-Location C:\Project\SpringMSA\infra\aws\bootstrap\terraform-state
 terraform fmt -check -recursive
 terraform validate
 terraform test
@@ -34,7 +34,7 @@ Gate A Saved Plan `tfplan-global-dns-state-access`, 12,777 bytes, SHA-256 `ec3f8
 `infra/aws/global/dns/backend.s3.hcl.example`과 `terraform.tfvars.example`을 Git 제외 파일로 복사한다. Zone ID, State Role ARN과 Bucket 이름은 화면·문서·Git에 기록하지 않는다.
 
 ```powershell
-Set-Location C:\Portfolio\infra\aws\global\dns
+Set-Location C:\Project\SpringMSA\infra\aws\global\dns
 terraform init -backend-config=backend.s3.hcl
 terraform fmt -check -recursive
 terraform validate
@@ -53,7 +53,7 @@ Gate B Saved Plan `tfplan-global-dns`, 8,483 bytes, SHA-256 `ce6c35edd8f4a156c6e
 기존 Runtime 입력과 8개 ECR Digest를 그대로 유지하고 `enable_public_domain_routing=true`만 추가한다. Runtime은 OFF 상태를 유지한다.
 
 ```powershell
-Set-Location C:\Portfolio\infra\aws\terraform
+Set-Location C:\Project\SpringMSA\infra\aws\terraform
 terraform fmt -check -recursive
 terraform validate
 terraform test

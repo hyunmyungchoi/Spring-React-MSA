@@ -23,7 +23,7 @@
 ## 1. 로컬 검증
 
 ```powershell
-cd C:\Portfolio
+cd C:\Project\SpringMSA
 python -m unittest `
   infra/ci/test_select_build_matrix.py `
   infra/ci/test_update_k8s_image_tags.py `
@@ -31,7 +31,7 @@ python -m unittest `
   infra/ci/test_ghcr_build_push_workflow.py `
   infra/ci/test_ecr_build_push_workflow.py
 
-cd C:\Portfolio\infra\aws\terraform
+cd C:\Project\SpringMSA\infra\aws\terraform
 terraform fmt -check -recursive
 terraform validate
 terraform test
@@ -87,7 +87,7 @@ ref           = master
 Promote가 성공한 뒤 로그인된 로컬 터미널에서 읽기 전용 Helper를 실행한다.
 
 ```powershell
-cd C:\Portfolio
+cd C:\Project\SpringMSA
 $expectedAccountId = "<승인된 12자리 AWS Account ID>"
 .\infra\aws\scripts\Get-LearningMigrationImageMap.ps1 `
   -SourceSha <전체 40자 Git SHA> `
@@ -104,7 +104,7 @@ database_migration_images = {
 }
 ```
 
-세 Key가 모두 없으면 Terraform은 Migration Task Definition을 만들지 않는다. 일부 Key만 입력하는 것도 검증 오류로 거부한다.
+네 Key가 모두 없으면 Terraform은 Migration Task Definition을 만들지 않는다. 일부 Key만 입력하는 것도 검증 오류로 거부한다.
 
 ## 5. 다음 승인 Gate
 
