@@ -11,11 +11,11 @@ Prometheus          Metrics storage and scrape engine
 kube-state-metrics  Kubernetes object metrics
 node-exporter       Node metrics
 Loki                Log storage
-Promtail            Log collector DaemonSet
+Grafana Alloy       Kubernetes log collector
 ```
 
 Loki is configured for local development with auth disabled.
-Promtail currently collects logs from these namespaces only:
+Grafana Alloy currently collects logs from these namespaces only:
 
 ```text
 spring-msa
@@ -28,8 +28,8 @@ ingress-nginx
 ```text
 Spring/Redis/Postgres/Ingress pods
   -> stdout/stderr
-  -> node container log files
-  -> Promtail DaemonSet
+  -> Kubernetes pod log API
+  -> Grafana Alloy
   -> Loki
   -> Grafana
 ```
@@ -68,7 +68,7 @@ The script installs:
 
 ```text
 loki                    grafana-community/loki
-promtail                grafana/promtail
+alloy                   grafana/alloy
 kube-prometheus-stack   prometheus-community/kube-prometheus-stack
 ```
 

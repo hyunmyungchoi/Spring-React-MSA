@@ -64,13 +64,15 @@ spec:
             - name: SPRING_SQL_INIT_MODE
               value: never
             - name: SPRING_FLYWAY_ENABLED
-              value: "false"
+              value: "true"
+            - name: SPRING_FLYWAY_CREATE_SCHEMAS
+              value: "true"
             - name: SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA
-              value: public
+              value: user_service
             - name: SPRING_FLYWAY_DEFAULT_SCHEMA
-              value: public
+              value: user_service
             - name: SPRING_FLYWAY_SCHEMAS
-              value: public
+              value: user_service
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness

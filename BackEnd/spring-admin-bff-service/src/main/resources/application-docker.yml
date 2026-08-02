@@ -40,8 +40,3 @@ admin-bff:
 
   api:
     user-api-base-url: ${ADMIN_BFF_API_USER_API_BASE_URL}
-    user-internal-base-url: ${ADMIN_BFF_API_USER_INTERNAL_BASE_URL}
-
-springmsa:
-  internal-api:
-    token: ${SPRING_MSA_INTERNAL_API_TOKEN}

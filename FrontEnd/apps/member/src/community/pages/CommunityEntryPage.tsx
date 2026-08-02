@@ -118,14 +118,16 @@ function CommunityEntryPage() {
                         <span>{post.author}</span>
                         <strong>{post.title}</strong>
                         <p className="entry-copy">{post.content}</p>
-                        <div className="user-nav">
-                            <button type="button" onClick={() => handleEdit(post)}>
-                                Edit
-                            </button>
-                            <button type="button" onClick={() => void handleDelete(post.id)}>
-                                Delete
-                            </button>
-                        </div>
+                        {post.ownedByCurrentUser && (
+                            <div className="user-nav">
+                                <button type="button" onClick={() => handleEdit(post)}>
+                                    Edit
+                                </button>
+                                <button type="button" onClick={() => void handleDelete(post.id)}>
+                                    Delete
+                                </button>
+                            </div>
+                        )}
                     </article>
                 ))}
             </div>

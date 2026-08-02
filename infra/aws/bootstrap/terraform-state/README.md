@@ -23,7 +23,7 @@ DynamoDB Lock Table과 KMS Key는 만들지 않는다. Terraform S3 Native Lockf
 ## 검증과 Plan
 
 ```powershell
-Set-Location C:\Portfolio\infra\aws\bootstrap\terraform-state
+Set-Location C:\Project\SpringMSA\infra\aws\bootstrap\terraform-state
 terraform init -backend=false
 terraform fmt -check -recursive
 terraform validate

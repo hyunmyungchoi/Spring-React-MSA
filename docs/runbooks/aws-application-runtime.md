@@ -47,13 +47,13 @@ RDS는 Terraform이 삭제·재생성하지 않는다. 별도 명령으로 시�
 로컬 Docker의 OAuth/Toss Secret Pair를 읽고 AWS Secret JSON Key를 초기화하는 스크립트의 SHA-256을 먼저 검토한다.
 
 ```powershell
-Get-FileHash C:\Portfolio\infra\aws\scripts\Initialize-LearningRuntimeSecrets.ps1 -Algorithm SHA256
+Get-FileHash C:\Project\SpringMSA\infra\aws\scripts\Initialize-LearningRuntimeSecrets.ps1 -Algorithm SHA256
 ```
 
 명시적으로 승인한 뒤에만 실행한다.
 
 ```powershell
-& C:\Portfolio\infra\aws\scripts\Initialize-LearningRuntimeSecrets.ps1 `
+& C:\Project\SpringMSA\infra\aws\scripts\Initialize-LearningRuntimeSecrets.ps1 `
   -ExpectedAccountId <12자리 Account ID> `
   -Confirm
 ```
@@ -142,12 +142,12 @@ EC2 1대 기준 합계는 EBS, Secret, Storage, LCU, Data 처리와 전송을 �
 - Admin Session 응답과 Frontend에 원본 `sessionId`가 없음
 - Kafka가 비활성이고 Toss API 미구성 시 내부 Health가 불필요하게 실패하지 않음
 
-> Smoke 완료: 아래 여섯 curl은 모두 HTTP 200이었다. Admin 익명 `/auth/me` 응답에는 원본 `sessionId`가 없고 AWS Task의 `ADMIN_BFF_REGISTRATION_ENABLED=false`도 확인했다. 당시 배포 Image에서는 비등록 `/registration/admin`의 `NoResourceFoundException`이 500으로 잘못 매핑됐지만 Controller 실행이나 데이터 생성은 없었다. 저장소에는 404 `RESOURCE_NOT_FOUND` 교정과 테스트를 추가했으며 새 Admin BFF Image 적용 뒤 [최초 관리자 Bootstrap Runbook](aws-admin-bootstrap.md)의 Public Domain curl로 재검증한다.
+> Admin 익명 `/auth/me` 응답에는 원본 `sessionId`가 없어야 한다. 관리자 가입 API는 코드에서 삭제됐으며 최초 계정은 [최초 관리자 Bootstrap Runbook](aws-admin-bootstrap.md)의 Private ECS Task로만 생성한다.
 
 Runtime ON Apply와 AWS 상태 검증을 마친 뒤 아래 `curl.exe` 명령으로 실제 ALB 경로를 확인한다. 두 Host Header는 DNS 적용 전에도 ALB Listener Rule을 정확히 선택하기 위해 필요하다.
 
 ```powershell
-$AlbDns = terraform -chdir=C:\Portfolio\infra\aws\terraform output -raw public_alb_dns_name
+$AlbDns = terraform -chdir=C:\Project\SpringMSA\infra\aws\terraform output -raw public_alb_dns_name
 if ([string]::IsNullOrWhiteSpace($AlbDns)) {
   throw "public_alb_dns_name Terraform Output이 비어 있습니다."
 }

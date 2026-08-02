@@ -81,7 +81,7 @@
 
 - [ ] **Step 1: Confirm the exact untracked baseline and ignored sensitive files**
 
-Run from `C:\Portfolio`:
+Run from `C:\Project\SpringMSA`:
 
 ```powershell
 git status --short --untracked-files=all
@@ -127,7 +127,7 @@ Add this line to the root `.gitignore`:
 Verify it before creating any worktree:
 
 ```powershell
-Set-Location C:\Portfolio
+Set-Location C:\Project\SpringMSA
 git check-ignore -v .worktrees
 ```
 
@@ -139,7 +139,7 @@ Expected: the root `.gitignore` rule for `.worktrees/` is reported.
 $env:AWS_PROFILE = "spring-react-msa-learning-iam"
 $env:AWS_REGION = "ap-northeast-2"
 
-Set-Location C:\Portfolio\infra\aws\terraform
+Set-Location C:\Project\SpringMSA\infra\aws\terraform
 terraform fmt -check -recursive
 terraform validate
 terraform test
@@ -155,7 +155,7 @@ Expected: formatting, validation, and tests pass; Plan prints `No changes` and r
 - [ ] **Step 5: Stage only the approved Foundation baseline and worktree ignore rule**
 
 ```powershell
-Set-Location C:\Portfolio
+Set-Location C:\Project\SpringMSA
 git add -- `
   .gitignore `
   docs/aws-migration/04-aws-foundation-design.md `
@@ -316,7 +316,7 @@ run "root_ecr_inventory" {
 - [ ] **Step 2: Run the ECR test and verify the RED state**
 
 ```powershell
-Set-Location C:\Portfolio\infra\aws\terraform
+Set-Location C:\Project\SpringMSA\infra\aws\terraform
 terraform test -filter=tests/ecr.tftest.hcl
 ```
 
@@ -500,7 +500,7 @@ output "ecr_repository_urls" {
 - [ ] **Step 7: Run the ECR test and verify the GREEN state**
 
 ```powershell
-Set-Location C:\Portfolio\infra\aws\terraform
+Set-Location C:\Project\SpringMSA\infra\aws\terraform
 terraform fmt -recursive
 terraform test -filter=tests/ecr.tftest.hcl
 ```
@@ -510,7 +510,7 @@ Expected: both `ecr_module_contract` and `root_ecr_inventory` pass.
 - [ ] **Step 8: Commit the ECR module**
 
 ```powershell
-Set-Location C:\Portfolio
+Set-Location C:\Project\SpringMSA
 git add -- `
   infra/aws/terraform/tests/ecr.tftest.hcl `
   infra/aws/terraform/modules/ecr/variables.tf `
@@ -632,7 +632,7 @@ run "github_actions_ecr_module_contract" {
 - [ ] **Step 2: Run the IAM test and verify the RED state**
 
 ```powershell
-Set-Location C:\Portfolio\infra\aws\terraform
+Set-Location C:\Project\SpringMSA\infra\aws\terraform
 terraform test -filter=tests/github_actions_ecr.tftest.hcl
 ```
 
@@ -823,7 +823,7 @@ Inside each existing `mock_provider "aws"` block in `infra/aws/terraform/tests/f
 - [ ] **Step 8: Run focused and full Terraform tests**
 
 ```powershell
-Set-Location C:\Portfolio\infra\aws\terraform
+Set-Location C:\Project\SpringMSA\infra\aws\terraform
 terraform fmt -recursive
 terraform test -filter=tests/github_actions_ecr.tftest.hcl
 terraform test
@@ -834,7 +834,7 @@ Expected: the focused IAM test and all Foundation/ECR tests pass.
 - [ ] **Step 9: Commit the OIDC/IAM module**
 
 ```powershell
-Set-Location C:\Portfolio
+Set-Location C:\Project\SpringMSA
 git add -- `
   infra/aws/terraform/tests/github_actions_ecr.tftest.hcl `
   infra/aws/terraform/modules/github-actions-ecr/variables.tf `
@@ -1062,7 +1062,7 @@ jobs:
 - [ ] **Step 3: Validate the reused selector and workflow syntax**
 
 ```powershell
-Set-Location C:\Portfolio
+Set-Location C:\Project\SpringMSA
 python -m unittest infra/ci/test_select_build_matrix.py
 docker run --rm `
   -v "${PWD}:/repo" `
@@ -1101,10 +1101,10 @@ The ECR repositories use immutable full-commit-SHA tags. Each repository retains
 After an approved Terraform Apply, register the role ARN as a GitHub repository variable:
 
 ```powershell
-Set-Location C:\Portfolio\infra\aws\terraform
+Set-Location C:\Project\SpringMSA\infra\aws\terraform
 $roleArn = terraform output -raw github_actions_ecr_role_arn
 
-Set-Location C:\Portfolio
+Set-Location C:\Project\SpringMSA
 gh variable set AWS_ECR_PUSH_ROLE_ARN `
   --repo hyunmyungchoi/Spring-React-MSA `
   --body $roleArn
@@ -1131,7 +1131,7 @@ Do not publish `all` until the single-service run, SHA tag, digest, and scan res
 - [ ] **Step 6: Commit the workflow and operator documentation**
 
 ```powershell
-Set-Location C:\Portfolio
+Set-Location C:\Project\SpringMSA
 git add -- `
   .github/workflows/ecr-build-push.yml `
   infra/aws/terraform/README.md
@@ -1157,12 +1157,12 @@ Expected: the new workflow and Terraform README are committed; `ghcr-build-push.
 - [ ] **Step 1: Run formatting, validation, Terraform tests, Python tests, and workflow lint**
 
 ```powershell
-Set-Location C:\Portfolio\infra\aws\terraform
+Set-Location C:\Project\SpringMSA\infra\aws\terraform
 terraform fmt -check -recursive
 terraform validate
 terraform test
 
-Set-Location C:\Portfolio
+Set-Location C:\Project\SpringMSA
 python -m unittest infra/ci/test_select_build_matrix.py
 docker run --rm `
   -v "${PWD}:/repo" `
@@ -1188,7 +1188,7 @@ Expected: the IAM principal ends in `user/hyun-terraform-admin`; the intended Re
 - [ ] **Step 3: Create an exact saved Terraform plan**
 
 ```powershell
-Set-Location C:\Portfolio\infra\aws\terraform
+Set-Location C:\Project\SpringMSA\infra\aws\terraform
 terraform plan -out=tfplan.ecr
 terraform show -no-color tfplan.ecr
 ```
@@ -1228,7 +1228,7 @@ Expected: every invariant is visible in the saved plan.
 - [ ] **Step 5: Confirm the repository is clean and the saved plan is ignored**
 
 ```powershell
-Set-Location C:\Portfolio
+Set-Location C:\Project\SpringMSA
 git status --short
 git check-ignore -v infra/aws/terraform/tfplan.ecr
 ```
@@ -1267,10 +1267,10 @@ Do not continue to Task 6 until the user explicitly approves the saved plan Appl
 Immediately before Apply:
 
 ```powershell
-Set-Location C:\Portfolio
+Set-Location C:\Project\SpringMSA
 git status --short
 
-Set-Location C:\Portfolio\infra\aws\terraform
+Set-Location C:\Project\SpringMSA\infra\aws\terraform
 terraform show -no-color tfplan.ecr | Select-String "Plan:"
 ```
 
@@ -1282,7 +1282,7 @@ Expected: clean Git status and `Plan: 18 to add, 0 to change, 0 to destroy.` If 
 $env:AWS_PROFILE = "spring-react-msa-learning-iam"
 $env:AWS_REGION = "ap-northeast-2"
 
-Set-Location C:\Portfolio\infra\aws\terraform
+Set-Location C:\Project\SpringMSA\infra\aws\terraform
 terraform apply tfplan.ecr
 ```
 

@@ -184,7 +184,7 @@ spring.sql.init.mode=never
 
 테스트 계정과 Seed Data는 AWS Learning Migration에 포함하지 않는다. Flyway는 Private App Subnet에서 실행하는 일회성 ECS Migration Task로 수행하고 성공 후 Application Service를 배포한다.
 
-세 서비스의 Flyway V1 SQL, PostgreSQL 16 Testcontainers 검증과 전용 `FlywayMigrationMain`을 구현했다. 서비스별 DB 사용자·Schema·Grant를 만드는 Bootstrap Task Definition과 최소 권한 IAM/Log Group을 AWS에 적용하고, Secret 3개 초기화와 실제 RDS Bootstrap을 완료했다. RDS 호환 Revision 2와 읽기 전용 검증 Task로 안전한 Role 3개, Schema 3개, 자기 Schema 권한 조합 3개, 교차 Schema 권한 0개를 확인했다. 이후 Build Once·Digest Promote한 ECR Image를 사용하는 Migration Task Definition 3개를 적용하고 실제 Flyway V1을 순차 실행했다. 사후 검증에서 History 3개, V1 성공 3개, Application Table과 올바른 소유자 각 5개, 실패 Migration·교차 권한·Seed Data 0개를 확인했다.
+User, Community, Member BFF, Stock 네 서비스는 Flyway V1 SQL, PostgreSQL 16 Testcontainers 검증과 전용 `FlywayMigrationMain`을 가진다. 서비스별 DB 사용자·Schema·Grant를 만드는 Bootstrap Task와 최소 권한 IAM/Log Group을 사용하며 Secret 4개를 초기화한다. 읽기 전용 검증은 안전한 Role·Schema·자기 Schema 권한 조합 각 4개, 교차 Schema 권한 0개를 확인한다. Migration Task Definition도 4개이며 사후 검증은 History와 V1 성공 각 4개, Application Table과 올바른 소유자 각 6개를 확인한다.
 
 검토한 저장 Plan으로 RDS, DB Subnet Group, Parameter Group과 빈 Secret Container 7개를 AWS에 적용했다. RDS 보안·Backup 설정과 Managed Master Secret을 검증한 뒤 비용 통제를 위해 RDS를 정지했다. 2026-07-23 Automated Backup `RestoreWindow`로 약 115.2시간의 복원 가능 구간, 최신 시점 지연 최초 약 44.1분·Foundation Saved Plan 직전 약 102분, Backup 1개·Snapshot 4개와 복원 대상 가용성을 확인했다. 격리 PITR·읽기 전용 Fargate Validator Terraform과 전체 계약 테스트 38개를 구현했고 감사 Foundation을 `1 added, 0 changed, 0 destroyed`로 적용했다. 후속 Restore ON Plan은 `11 added, 0 changed, 0 destroyed`로 적용했고 `2026-07-23 11:02:47 KST` 시점의 별도 Private RDS를 복원했다. Fargate Validator가 Schema·Role·Flyway·Table·활성 관리자 계약을 Exit Code `0`으로 검증했으며, 검증 직후 복원 DB를 정지했다.
 

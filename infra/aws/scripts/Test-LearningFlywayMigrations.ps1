@@ -60,32 +60,32 @@ export PGUSER="$DB_MASTER_USERNAME"
 export PGPASSWORD="$DB_MASTER_PASSWORD"
 export PGSSLMODE=require
 psql --no-password --tuples-only --no-align --set=ON_ERROR_STOP=1 <<'SQL'
-SELECT 'SAFE_ROLES=' || count(*) FROM pg_roles WHERE rolname IN ('user_service_app','member_bff_app','stock_service_app') AND NOT rolsuper AND NOT rolcreatedb AND NOT rolcreaterole AND NOT rolreplication AND NOT rolbypassrls;
-SELECT 'SCHEMAS=' || count(*) FROM information_schema.schemata WHERE schema_name IN ('user_service','member_bff','stock_service');
-SELECT 'OWN_PRIVILEGE_PAIRS=' || count(*) FROM (VALUES ('user_service_app','user_service'),('member_bff_app','member_bff'),('stock_service_app','stock_service')) AS expected(role_name,schema_name) WHERE has_schema_privilege(role_name,schema_name,'USAGE') AND has_schema_privilege(role_name,schema_name,'CREATE');
-SELECT 'CROSS_PRIVILEGES=' || count(*) FROM (VALUES ('user_service_app'),('member_bff_app'),('stock_service_app')) AS roles(role_name) CROSS JOIN (VALUES ('user_service'),('member_bff'),('stock_service')) AS schemas(schema_name) WHERE replace(role_name,'_app','') <> schema_name AND (has_schema_privilege(role_name,schema_name,'USAGE') OR has_schema_privilege(role_name,schema_name,'CREATE'));
-SELECT 'MIGRATION_HISTORIES=' || count(*) FROM (VALUES ('user_service.flyway_schema_history'),('member_bff.flyway_schema_history'),('stock_service.flyway_schema_history')) AS expected(table_name) WHERE to_regclass(table_name) IS NOT NULL;
-SELECT 'EXPECTED_TABLES=' || count(*) FROM (VALUES ('user_service.users'),('user_service.user_roles'),('member_bff.chat_rooms'),('member_bff.chat_messages'),('stock_service.stock_watch_items')) AS expected(table_name) WHERE to_regclass(table_name) IS NOT NULL;
-SELECT 'APPLICATION_TABLES=' || count(*) FROM information_schema.tables WHERE table_schema IN ('user_service','member_bff','stock_service') AND table_name <> 'flyway_schema_history';
-SELECT 'EXPECTED_TABLE_OWNERS=' || count(*) FROM (VALUES ('user_service','users','user_service_app'),('user_service','user_roles','user_service_app'),('member_bff','chat_rooms','member_bff_app'),('member_bff','chat_messages','member_bff_app'),('stock_service','stock_watch_items','stock_service_app')) AS expected(schema_name,table_name,owner_name) JOIN pg_tables actual ON actual.schemaname=expected.schema_name AND actual.tablename=expected.table_name AND actual.tableowner=expected.owner_name;
-SELECT 'MIGRATION_ROWS=' || count(*) FROM (SELECT version,success FROM user_service.flyway_schema_history UNION ALL SELECT version,success FROM member_bff.flyway_schema_history UNION ALL SELECT version,success FROM stock_service.flyway_schema_history) AS migrations;
-SELECT 'SUCCESSFUL_V1_MIGRATIONS=' || count(*) FROM (SELECT version,success FROM user_service.flyway_schema_history UNION ALL SELECT version,success FROM member_bff.flyway_schema_history UNION ALL SELECT version,success FROM stock_service.flyway_schema_history) AS migrations WHERE version='1' AND success;
-SELECT 'FAILED_MIGRATIONS=' || count(*) FROM (SELECT success FROM user_service.flyway_schema_history UNION ALL SELECT success FROM member_bff.flyway_schema_history UNION ALL SELECT success FROM stock_service.flyway_schema_history) AS migrations WHERE NOT success;
-SELECT 'APPLICATION_ROWS=' || ((SELECT count(*) FROM user_service.users) + (SELECT count(*) FROM user_service.user_roles) + (SELECT count(*) FROM member_bff.chat_rooms) + (SELECT count(*) FROM member_bff.chat_messages) + (SELECT count(*) FROM stock_service.stock_watch_items));
+SELECT 'SAFE_ROLES=' || count(*) FROM pg_roles WHERE rolname IN ('user_service_app','community_service_app','member_bff_app','stock_service_app') AND NOT rolsuper AND NOT rolcreatedb AND NOT rolcreaterole AND NOT rolreplication AND NOT rolbypassrls;
+SELECT 'SCHEMAS=' || count(*) FROM information_schema.schemata WHERE schema_name IN ('user_service','community_service','member_bff','stock_service');
+SELECT 'OWN_PRIVILEGE_PAIRS=' || count(*) FROM (VALUES ('user_service_app','user_service'),('community_service_app','community_service'),('member_bff_app','member_bff'),('stock_service_app','stock_service')) AS expected(role_name,schema_name) WHERE has_schema_privilege(role_name,schema_name,'USAGE') AND has_schema_privilege(role_name,schema_name,'CREATE');
+SELECT 'CROSS_PRIVILEGES=' || count(*) FROM (VALUES ('user_service_app'),('community_service_app'),('member_bff_app'),('stock_service_app')) AS roles(role_name) CROSS JOIN (VALUES ('user_service'),('community_service'),('member_bff'),('stock_service')) AS schemas(schema_name) WHERE replace(role_name,'_app','') <> schema_name AND (has_schema_privilege(role_name,schema_name,'USAGE') OR has_schema_privilege(role_name,schema_name,'CREATE'));
+SELECT 'MIGRATION_HISTORIES=' || count(*) FROM (VALUES ('user_service.flyway_schema_history'),('community_service.flyway_schema_history'),('member_bff.flyway_schema_history'),('stock_service.flyway_schema_history')) AS expected(table_name) WHERE to_regclass(table_name) IS NOT NULL;
+SELECT 'EXPECTED_TABLES=' || count(*) FROM (VALUES ('user_service.users'),('user_service.user_roles'),('community_service.community_posts'),('member_bff.chat_rooms'),('member_bff.chat_messages'),('stock_service.stock_watch_items')) AS expected(table_name) WHERE to_regclass(table_name) IS NOT NULL;
+SELECT 'APPLICATION_TABLES=' || count(*) FROM information_schema.tables WHERE table_schema IN ('user_service','community_service','member_bff','stock_service') AND table_name <> 'flyway_schema_history';
+SELECT 'EXPECTED_TABLE_OWNERS=' || count(*) FROM (VALUES ('user_service','users','user_service_app'),('user_service','user_roles','user_service_app'),('community_service','community_posts','community_service_app'),('member_bff','chat_rooms','member_bff_app'),('member_bff','chat_messages','member_bff_app'),('stock_service','stock_watch_items','stock_service_app')) AS expected(schema_name,table_name,owner_name) JOIN pg_tables actual ON actual.schemaname=expected.schema_name AND actual.tablename=expected.table_name AND actual.tableowner=expected.owner_name;
+SELECT 'MIGRATION_ROWS=' || count(*) FROM (SELECT version,success FROM user_service.flyway_schema_history UNION ALL SELECT version,success FROM community_service.flyway_schema_history UNION ALL SELECT version,success FROM member_bff.flyway_schema_history UNION ALL SELECT version,success FROM stock_service.flyway_schema_history) AS migrations;
+SELECT 'SUCCESSFUL_V1_MIGRATIONS=' || count(*) FROM (SELECT version,success FROM user_service.flyway_schema_history UNION ALL SELECT version,success FROM community_service.flyway_schema_history UNION ALL SELECT version,success FROM member_bff.flyway_schema_history UNION ALL SELECT version,success FROM stock_service.flyway_schema_history) AS migrations WHERE version='1' AND success;
+SELECT 'FAILED_MIGRATIONS=' || count(*) FROM (SELECT success FROM user_service.flyway_schema_history UNION ALL SELECT success FROM community_service.flyway_schema_history UNION ALL SELECT success FROM member_bff.flyway_schema_history UNION ALL SELECT success FROM stock_service.flyway_schema_history) AS migrations WHERE NOT success;
+SELECT 'APPLICATION_ROWS=' || ((SELECT count(*) FROM user_service.users) + (SELECT count(*) FROM user_service.user_roles) + (SELECT count(*) FROM community_service.community_posts) + (SELECT count(*) FROM member_bff.chat_rooms) + (SELECT count(*) FROM member_bff.chat_messages) + (SELECT count(*) FROM stock_service.stock_watch_items));
 SQL
 '@
 
 $expectedMessages = @(
-    "SAFE_ROLES=3",
-    "SCHEMAS=3",
-    "OWN_PRIVILEGE_PAIRS=3",
+    "SAFE_ROLES=4",
+    "SCHEMAS=4",
+    "OWN_PRIVILEGE_PAIRS=4",
     "CROSS_PRIVILEGES=0",
-    "MIGRATION_HISTORIES=3",
-    "EXPECTED_TABLES=5",
-    "APPLICATION_TABLES=5",
-    "EXPECTED_TABLE_OWNERS=5",
-    "MIGRATION_ROWS=3",
-    "SUCCESSFUL_V1_MIGRATIONS=3",
+    "MIGRATION_HISTORIES=4",
+    "EXPECTED_TABLES=6",
+    "APPLICATION_TABLES=6",
+    "EXPECTED_TABLE_OWNERS=6",
+    "MIGRATION_ROWS=4",
+    "SUCCESSFUL_V1_MIGRATIONS=4",
     "FAILED_MIGRATIONS=0",
     "APPLICATION_ROWS=0"
 )

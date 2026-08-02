@@ -25,7 +25,7 @@ Require-Command kubectl
 Require-Command helm
 
 Run-BestEffort @("helm", "uninstall", "kube-prometheus-stack", "-n", "observability")
-Run-BestEffort @("helm", "uninstall", "promtail", "-n", "observability")
+Run-BestEffort @("helm", "uninstall", "alloy", "-n", "observability")
 Run-BestEffort @("helm", "uninstall", "loki", "-n", "observability")
 
 if ($DeleteNamespace) {

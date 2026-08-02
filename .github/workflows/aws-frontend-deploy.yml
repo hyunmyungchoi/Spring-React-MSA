@@ -101,11 +101,11 @@ jobs:
       - name: Install, lint, and build only the selected unit
         shell: bash
         env:
-          VITE_ADMIN_REGISTRATION_ENABLED: "false"
         run: |
           cd FrontEnd
           pnpm install --frozen-lockfile
           pnpm --filter "${{ matrix.workspace }}" run lint
+          pnpm --filter "${{ matrix.workspace }}" run test
           pnpm --filter "${{ matrix.workspace }}" run "${{ matrix.build_script }}"
 
           artifact="${GITHUB_WORKSPACE}/${{ matrix.output_dir }}"

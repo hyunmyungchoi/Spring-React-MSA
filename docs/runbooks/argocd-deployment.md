@@ -7,13 +7,13 @@ Argo CD Application `spring-msa`는 GitHub `master` branch의 `infra/k8s/spring-
 ## 설치
 
 ```powershell
-kubectl apply -f C:\Portfolio\infra\k8s\argocd\00-namespace.yaml
+kubectl apply -f C:\Project\SpringMSA\infra\k8s\argocd\00-namespace.yaml
 kubectl apply -n argocd --server-side --force-conflicts -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
-kubectl patch configmap argocd-cmd-params-cm -n argocd --type merge --patch-file C:\Portfolio\infra\k8s\argocd\10-cmd-params-patch.json
+kubectl patch configmap argocd-cmd-params-cm -n argocd --type merge --patch-file C:\Project\SpringMSA\infra\k8s\argocd\10-cmd-params-patch.json
 kubectl rollout restart deployment/argocd-server -n argocd
 kubectl rollout status deployment/argocd-server -n argocd
-kubectl apply -f C:\Portfolio\infra\k8s\argocd\20-ingress.yaml
-kubectl apply -f C:\Portfolio\infra\k8s\argocd\30-spring-msa-application.yaml
+kubectl apply -f C:\Project\SpringMSA\infra\k8s\argocd\20-ingress.yaml
+kubectl apply -f C:\Project\SpringMSA\infra\k8s\argocd\30-spring-msa-application.yaml
 ```
 
 `stable` 원격 URL은 시간이 지나면 내용이 변한다. 재현 가능한 운영 설치에서는 검증된 Argo CD release version URL 또는 Helm chart version으로 고정한다.

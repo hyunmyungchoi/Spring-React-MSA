@@ -2,65 +2,58 @@ package com.springmsa.membercommunityservice.community.service;
 
 import com.springmsa.membercommunityservice.community.dto.CommunityPostRequest;
 import com.springmsa.membercommunityservice.community.dto.CommunityPostResponse;
+import com.springmsa.membercommunityservice.community.domain.CommunityPost;
+import com.springmsa.membercommunityservice.community.repository.CommunityPostRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.Instant;
-import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 public class CommunityPostService {
 
-    private final AtomicLong sequence = new AtomicLong(0);
-    private final ConcurrentHashMap<Long, CommunityPostResponse> posts = new ConcurrentHashMap<>();
+    private final CommunityPostRepository repository;
 
-    public List<CommunityPostResponse> findAll() {
-        return posts.values().stream()
-                .sorted(Comparator.comparing(CommunityPostResponse::id))
+    public CommunityPostService(CommunityPostRepository repository) {
+        this.repository = repository;
+    }
+
+    @Transactional(readOnly = true)
+    public List<CommunityPostResponse> findAll(String ownerSub) {
+        return repository.findTop100ByOrderByCreatedAtDesc().stream()
+                .map(post -> toResponse(post, ownerSub))
                 .toList();
     }
 
-    public CommunityPostResponse create(CommunityPostRequest request, String author) {
-        Long id = sequence.incrementAndGet();
-        Instant now = Instant.now();
-        CommunityPostResponse response = new CommunityPostResponse(
-                id,
-                request.title(),
-                request.content(),
-                author,
-                now,
-                now
-        );
-        posts.put(id, response);
-        return response;
+    @Transactional
+    public CommunityPostResponse create(CommunityPostRequest request, String ownerSub, String author) {
+        CommunityPost post = CommunityPost.create(ownerSub, author, request.title(), request.content());
+        return toResponse(repository.save(post), ownerSub);
     }
 
-    public CommunityPostResponse update(Long postId, CommunityPostRequest request) {
-        CommunityPostResponse current = posts.get(postId);
-
-        if (current == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Community post not found");
-        }
-
-        CommunityPostResponse updated = new CommunityPostResponse(
-                current.id(),
-                request.title(),
-                request.content(),
-                current.author(),
-                current.createdAt(),
-                Instant.now()
-        );
-        posts.put(postId, updated);
-        return updated;
+    @Transactional
+    public CommunityPostResponse update(Long postId, CommunityPostRequest request, String ownerSub) {
+        CommunityPost post = ownedPost(postId, ownerSub);
+        post.update(request.title(), request.content());
+        return toResponse(post, ownerSub);
     }
 
-    public void delete(Long postId) {
-        if (posts.remove(postId) == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Community post not found");
-        }
+    @Transactional
+    public void delete(Long postId, String ownerSub) {
+        repository.delete(ownedPost(postId, ownerSub));
+    }
+
+    private CommunityPost ownedPost(Long postId, String ownerSub) {
+        return repository.findByIdAndOwnerSub(postId, ownerSub)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Community post not found"));
+    }
+
+    private CommunityPostResponse toResponse(CommunityPost post, String ownerSub) {
+        return new CommunityPostResponse(
+                post.getId(), post.getTitle(), post.getContent(), post.getAuthor(),
+                post.getOwnerSub().equals(ownerSub), post.getCreatedAt(), post.getUpdatedAt()
+        );
     }
 }

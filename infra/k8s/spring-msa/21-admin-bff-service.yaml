@@ -24,8 +24,6 @@ spec:
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: prod
-            - name: ADMIN_BFF_REGISTRATION_ENABLED
-              value: "true"
             - name: JAVA_TOOL_OPTIONS
               value: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=70 -XX:InitialRAMPercentage=30"
             - name: SERVER_TOMCAT_ACCESSLOG_ENABLED
@@ -49,11 +47,6 @@ spec:
                 secretKeyRef:
                   name: spring-msa-secret
                   key: REDIS_PASSWORD
-            - name: SPRING_MSA_INTERNAL_API_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: spring-msa-secret
-                  key: SPRING_MSA_INTERNAL_API_TOKEN
             - name: ADMIN_BFF_FRONTEND_REDIRECT_URI
               value: http://admin.localtest.me
             - name: ADMIN_BFF_OAUTH2_AUTHORIZATION_URI
@@ -81,8 +74,6 @@ spec:
             - name: ADMIN_BFF_OAUTH2_LOGOUT_URI
               value: http://admin.localtest.me/logout
             - name: ADMIN_BFF_API_USER_API_BASE_URL
-              value: http://spring-user-service:8081
-            - name: ADMIN_BFF_API_USER_INTERNAL_BASE_URL
               value: http://spring-user-service:8081
           readinessProbe:
             httpGet:

@@ -11,9 +11,16 @@ spring:
   jpa:
     hibernate:
       ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
+    properties:
+      hibernate:
+        default_schema: ${SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA}
 
   flyway:
     enabled: ${SPRING_FLYWAY_ENABLED}
+    default-schema: ${SPRING_FLYWAY_DEFAULT_SCHEMA}
+    schemas: ${SPRING_FLYWAY_SCHEMAS}
+    create-schemas: ${SPRING_FLYWAY_CREATE_SCHEMAS:false}
+    clean-disabled: true
 
   sql:
     init:

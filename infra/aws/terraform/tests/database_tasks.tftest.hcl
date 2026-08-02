@@ -15,9 +15,10 @@ run "bootstrap_only_contract" {
     db_name           = "spring_msa"
     master_secret_arn = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:rds!db-master"
     application_secret_arns = {
-      "/spring-react-msa/learning/user-service"  = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:user"
-      "/spring-react-msa/learning/member-bff"    = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:member"
-      "/spring-react-msa/learning/stock-service" = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:stock"
+      "/spring-react-msa/learning/user-service"      = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:user"
+      "/spring-react-msa/learning/community-service" = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:community"
+      "/spring-react-msa/learning/member-bff"        = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:member"
+      "/spring-react-msa/learning/stock-service"     = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:stock"
     }
     ecr_repository_arns = {}
     migration_images    = {}
@@ -42,7 +43,7 @@ run "bootstrap_only_contract" {
     condition = (
       jsondecode(aws_ecs_task_definition.db_bootstrap.container_definitions)[0].image == "public.ecr.aws/docker/library/postgres@sha256:7a396fd264a2067788b6551122b50f162bf6136312c7fc9d74381cb92c648382" &&
       jsondecode(aws_ecs_task_definition.db_bootstrap.container_definitions)[0].readonlyRootFilesystem == true &&
-      length(jsondecode(aws_ecs_task_definition.db_bootstrap.container_definitions)[0].secrets) == 8 &&
+      length(jsondecode(aws_ecs_task_definition.db_bootstrap.container_definitions)[0].secrets) == 10 &&
       strcontains(jsondecode(aws_ecs_task_definition.db_bootstrap.container_definitions)[0].command[0], "ALTER ROLE %I WITH LOGIN PASSWORD %L") &&
       !strcontains(jsondecode(aws_ecs_task_definition.db_bootstrap.container_definitions)[0].command[0], "NOSUPERUSER") &&
       !strcontains(jsondecode(aws_ecs_task_definition.db_bootstrap.container_definitions)[0].command[0], "NOREPLICATION") &&
@@ -100,9 +101,10 @@ run "admin_bootstrap_contract" {
     db_name           = "spring_msa"
     master_secret_arn = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:rds!db-master"
     application_secret_arns = {
-      "/spring-react-msa/learning/user-service"  = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:user"
-      "/spring-react-msa/learning/member-bff"    = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:member"
-      "/spring-react-msa/learning/stock-service" = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:stock"
+      "/spring-react-msa/learning/user-service"      = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:user"
+      "/spring-react-msa/learning/community-service" = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:community"
+      "/spring-react-msa/learning/member-bff"        = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:member"
+      "/spring-react-msa/learning/stock-service"     = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:stock"
     }
     ecr_repository_arns = {
       "spring-user-service" = "arn:aws:ecr:ap-northeast-2:123456789012:repository/user"
@@ -184,9 +186,10 @@ run "admin_bootstrap_requires_digest_image" {
     db_address        = "learning.cluster.local"
     master_secret_arn = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:rds!db-master"
     application_secret_arns = {
-      "/spring-react-msa/learning/user-service"  = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:user"
-      "/spring-react-msa/learning/member-bff"    = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:member"
-      "/spring-react-msa/learning/stock-service" = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:stock"
+      "/spring-react-msa/learning/user-service"      = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:user"
+      "/spring-react-msa/learning/community-service" = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:community"
+      "/spring-react-msa/learning/member-bff"        = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:member"
+      "/spring-react-msa/learning/stock-service"     = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:stock"
     }
     ecr_repository_arns = {
       "spring-user-service" = "arn:aws:ecr:ap-northeast-2:123456789012:repository/user"
@@ -198,7 +201,7 @@ run "admin_bootstrap_requires_digest_image" {
   expect_failures = [var.admin_bootstrap_image]
 }
 
-run "three_flyway_tasks_contract" {
+run "four_flyway_tasks_contract" {
   command = plan
 
   module {
@@ -213,29 +216,32 @@ run "three_flyway_tasks_contract" {
     db_name           = "spring_msa"
     master_secret_arn = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:rds!db-master"
     application_secret_arns = {
-      "/spring-react-msa/learning/user-service"  = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:user"
-      "/spring-react-msa/learning/member-bff"    = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:member"
-      "/spring-react-msa/learning/stock-service" = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:stock"
+      "/spring-react-msa/learning/user-service"      = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:user"
+      "/spring-react-msa/learning/community-service" = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:community"
+      "/spring-react-msa/learning/member-bff"        = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:member"
+      "/spring-react-msa/learning/stock-service"     = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:stock"
     }
     ecr_repository_arns = {
-      "spring-user-service"         = "arn:aws:ecr:ap-northeast-2:123456789012:repository/user"
-      "spring-member-bff-service"   = "arn:aws:ecr:ap-northeast-2:123456789012:repository/member"
-      "spring-member-stock-service" = "arn:aws:ecr:ap-northeast-2:123456789012:repository/stock"
+      "spring-user-service"             = "arn:aws:ecr:ap-northeast-2:123456789012:repository/user"
+      "spring-member-community-service" = "arn:aws:ecr:ap-northeast-2:123456789012:repository/community"
+      "spring-member-bff-service"       = "arn:aws:ecr:ap-northeast-2:123456789012:repository/member"
+      "spring-member-stock-service"     = "arn:aws:ecr:ap-northeast-2:123456789012:repository/stock"
     }
     migration_images = {
-      user-service  = "123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/spring-react-msa-learning-spring-user-service@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-      member-bff    = "123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/spring-react-msa-learning-spring-member-bff-service@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
-      stock-service = "123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/spring-react-msa-learning-spring-member-stock-service@sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      user-service      = "123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/spring-react-msa-learning-spring-user-service@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      community-service = "123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/spring-react-msa-learning-spring-member-community-service@sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+      member-bff        = "123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/spring-react-msa-learning-spring-member-bff-service@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      stock-service     = "123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/spring-react-msa-learning-spring-member-stock-service@sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
     }
   }
 
   assert {
     condition = (
-      length(aws_ecs_task_definition.migration) == 3 &&
-      length(aws_iam_role.migration_execution) == 3 &&
-      length(aws_cloudwatch_log_group.migration) == 3
+      length(aws_ecs_task_definition.migration) == 4 &&
+      length(aws_iam_role.migration_execution) == 4 &&
+      length(aws_cloudwatch_log_group.migration) == 4
     )
-    error_message = "Exactly three service-owned Flyway task definitions, roles, and log groups must be created."
+    error_message = "Exactly four service-owned Flyway task definitions, roles, and log groups must be created."
   }
 
   assert {
@@ -272,9 +278,10 @@ run "partial_flyway_image_set_is_rejected" {
     db_address        = "learning.cluster.local"
     master_secret_arn = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:rds!db-master"
     application_secret_arns = {
-      "/spring-react-msa/learning/user-service"  = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:user"
-      "/spring-react-msa/learning/member-bff"    = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:member"
-      "/spring-react-msa/learning/stock-service" = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:stock"
+      "/spring-react-msa/learning/user-service"      = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:user"
+      "/spring-react-msa/learning/community-service" = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:community"
+      "/spring-react-msa/learning/member-bff"        = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:member"
+      "/spring-react-msa/learning/stock-service"     = "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:stock"
     }
     ecr_repository_arns = {
       "spring-user-service" = "arn:aws:ecr:ap-northeast-2:123456789012:repository/user"

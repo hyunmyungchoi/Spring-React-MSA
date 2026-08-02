@@ -7,6 +7,7 @@ public record CommunityPostResponse(
         String title,
         String content,
         String author,
+        boolean ownedByCurrentUser,
         Instant createdAt,
         Instant updatedAt
 ) {

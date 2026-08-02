@@ -29,7 +29,7 @@ $env:STOCK_SYMBOLS = "005930,000660,035420,051910,207940"
 $env:BFF_COOKIE = "BFFSESSIONID=<test-session>"
 $env:PROMETHEUS_URL = "http://localhost:9090"
 $env:STOCK_TOSS_MAX_REQUESTS = "80"
-Set-Location C:\Portfolio\infra\load-tests
+Set-Location C:\Project\SpringMSA\infra\load-tests
 k6 run .\stock-market-data.js
 ```
 
@@ -51,7 +51,7 @@ k6 run .\stock-market-data.js
 의존성 설치:
 
 ```powershell
-Set-Location C:\Portfolio\infra\load-tests
+Set-Location C:\Project\SpringMSA\infra\load-tests
 corepack prepare pnpm@10.0.0 --activate
 pnpm install
 ```

@@ -4,18 +4,23 @@ spring:
       on-profile: test
 
   datasource:
-    url: jdbc:h2:mem:stock-service-test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    url: ${SPRING_DATASOURCE_URL}
+    driver-class-name: org.postgresql.Driver
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
 
   flyway:
-    enabled: false
+    enabled: ${SPRING_FLYWAY_ENABLED:true}
+    schemas: stock_service
+    default-schema: stock_service
 
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: validate
     open-in-view: false
+    properties:
+      hibernate:
+        default_schema: stock_service
 
 toss:
   api:

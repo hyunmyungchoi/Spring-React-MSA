@@ -15,6 +15,7 @@ $ErrorActionPreference = 'Stop'
 $expectedRegion = 'ap-northeast-2'
 $services = [ordered]@{
     'user-service'  = 'spring-user-service'
+    'community-service' = 'spring-member-community-service'
     'member-bff'    = 'spring-member-bff-service'
     'stock-service' = 'spring-member-stock-service'
 }

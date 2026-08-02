@@ -3,8 +3,10 @@ package com.springmsa.membercommunityservice.community.controller;
 import com.springmsa.membercommunityservice.community.dto.CommunityPostRequest;
 import com.springmsa.membercommunityservice.community.dto.CommunityPostResponse;
 import com.springmsa.membercommunityservice.community.service.CommunityPostService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,24 +30,35 @@ public class CommunityPostController {
     }
 
     @GetMapping
-    public List<CommunityPostResponse> findAll() {
-        return communityPostService.findAll();
+    public List<CommunityPostResponse> findAll(Authentication authentication) {
+        return communityPostService.findAll(authentication.getName());
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public CommunityPostResponse create(@RequestBody CommunityPostRequest request, Authentication authentication) {
-        return communityPostService.create(request, authentication.getName());
+    public CommunityPostResponse create(@Valid @RequestBody CommunityPostRequest request, Authentication authentication) {
+        return communityPostService.create(request, authentication.getName(), author(authentication));
     }
 
     @PutMapping("/{postId}")
-    public CommunityPostResponse update(@PathVariable Long postId, @RequestBody CommunityPostRequest request) {
-        return communityPostService.update(postId, request);
+    public CommunityPostResponse update(@PathVariable Long postId, @Valid @RequestBody CommunityPostRequest request,
+                                        Authentication authentication) {
+        return communityPostService.update(postId, request, authentication.getName());
     }
 
     @DeleteMapping("/{postId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable Long postId) {
-        communityPostService.delete(postId);
+    public void delete(@PathVariable Long postId, Authentication authentication) {
+        communityPostService.delete(postId, authentication.getName());
+    }
+
+    private String author(Authentication authentication) {
+        if (authentication instanceof JwtAuthenticationToken jwtAuthentication) {
+            String loginId = jwtAuthentication.getToken().getClaimAsString("login_id");
+            if (loginId != null && !loginId.isBlank()) {
+                return loginId;
+            }
+        }
+        return authentication.getName();
     }
 }

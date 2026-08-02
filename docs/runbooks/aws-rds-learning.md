@@ -137,7 +137,7 @@ aws rds describe-db-instance-automated-backups `
 5. Private App Subnet의 임시 Fargate Validator만 5432로 접근해 고정 SQL을 읽기 전용 Transaction에서 실행한다.
 6. Validator는 Read-only Root, UID `70`, Linux Capability `ALL` 제거를 사용한다. Fargate가 지원하지 않는 `tmpfs`는 사용하지 않는다.
 7. PostgreSQL PITR은 복원 시 새 RDS Managed Master Secret을 만들 수 없으므로 RDS 소유(`OwningService=rds`) 원본 Managed Master Secret을 읽기 전용으로 재사용한다. 새 Secret Version은 만들지 않는다.
-8. Schema·Role·Flyway·Application Table 5개와 활성 관리자 1명만 검증하고 PII·행 내용·Secret은 출력하지 않는다.
+8. Schema 4개·Role 4개·Flyway V1 4개·Application Table 6개와 활성 관리자 1명만 검증하고 PII·행 내용·Secret은 출력하지 않는다.
 9. 복원 성공 시간과 검증 결과를 관측값으로 기록한다. 측정 전에는 RTO/RPO 보장값을 쓰지 않는다.
 10. 성공·실패와 관계없이 복원 DB를 먼저 정지하고, 임시 리소스 삭제는 별도 Cleanup Saved Plan 승인 뒤 실행한다.
 
@@ -151,7 +151,7 @@ PITR Restore API는 원본의 Backup Retention 7일을 복원본에 상속한다
 - 적용 완료 후 같은 SHA-256을 다시 확인하고 Saved Plan 파일을 삭제했다.
 - Restore Apply `13:57:00.557 KST`부터 Validator 성공 `14:25:35.801 KST`까지 관측 RTO는 약 28분 35초다.
 - Fargate Validator는 Private Subnet·Public IP 없음으로 실행됐고 Exit Code `0`이었다.
-- 결과는 Schema 3, Application Role 3, Application Table 5, Flyway V1 3, 실패 Migration 0, 활성 관리자 1이다.
+- 결과는 Schema 4, Application Role 4, Application Table 6, Flyway V1 4, 실패 Migration 0, 활성 관리자 1이어야 한다.
 - 결과 Fingerprint는 `9c0f611a1bcd68ab83d7dd918e0bef4264e6d005aa471612bfe767d61cac872e`이며 PII·행 내용·Secret은 출력하지 않았다.
 - Validator 종료 23초 뒤 정지를 요청했고 복원 DB는 `14:34:21.436 KST`에 `stopped`가 됐다.
 - 원본 RDS도 `stopped`, ECS 8개 Service는 `0/0/0`, 실행 Task는 0이다.

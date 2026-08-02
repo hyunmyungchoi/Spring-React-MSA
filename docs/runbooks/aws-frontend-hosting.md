@@ -22,7 +22,7 @@ S3 Bucket은 여섯 개이며 모두 Private, `BucketOwnerEnforced`, Public Acce
 ## 1. 로컬 계약 검증
 
 ```powershell
-Set-Location C:\Portfolio\FrontEnd
+Set-Location C:\Project\SpringMSA\FrontEnd
 corepack prepare pnpm@10.0.0 --activate
 pnpm install --frozen-lockfile
 
@@ -36,12 +36,12 @@ pnpm --filter admin run build:prod
 pnpm --filter admin run build:users
 pnpm --filter admin run build:logs
 
-Set-Location C:\Portfolio
+Set-Location C:\Project\SpringMSA
 python -m unittest `
   infra/ci/test_select_frontend_deploy_matrix.py `
   infra/ci/test_aws_frontend_deploy_workflow.py
 
-Set-Location C:\Portfolio\infra\aws\terraform
+Set-Location C:\Project\SpringMSA\infra\aws\terraform
 terraform fmt -check -recursive
 terraform validate
 terraform test
@@ -49,14 +49,14 @@ terraform test
 
 `FrontEnd/pnpm-lock.yaml`이 바뀌면 검증을 중단한다. 산출물은 여섯 Entry 문서가 모두 남아 있어야 한다.
 
-AWS Workflow는 Admin Build에 `VITE_ADMIN_REGISTRATION_ENABLED=false`를 고정한다. 이 값은 가입 탭을 표시하지 않게 하지만 실제 보안 경계는 AWS Admin BFF의 조건부 Controller 비등록이다. 최초 관리자 Bootstrap 변경 뒤 `spring-admin-web`을 다시 배포하고 화면 비노출과 Backend 404를 함께 검증한다.
+Admin Frontend에는 가입 화면과 관련 Build 환경변수가 없다. 최초 관리자는 별도 Bootstrap Task로 생성하고 프론트 배포에서는 로그인 화면만 검증한다.
 
 ## 2. Saved Plan Gate
 
 현재 `terraform.tfvars`와 메모리 입력의 기존 Application Digest·Client ID를 그대로 유지한 상태에서 Frontend Flag만 활성화한다.
 
 ```powershell
-Set-Location C:\Portfolio\infra\aws\terraform
+Set-Location C:\Project\SpringMSA\infra\aws\terraform
 terraform plan `
   -var="enable_frontend_hosting=true" `
   -out=tfplan-frontend-hosting-foundation
@@ -76,7 +76,7 @@ Plan 파일의 정확한 SHA-256을 별도 승인받은 뒤 해당 파일만 App
 
 검토 완료한 Saved Plan은 다음과 같다.
 
-- 경로: `C:\Portfolio\infra\aws\terraform\tfplan-frontend-hosting-foundation`
+- 경로: `C:\Project\SpringMSA\infra\aws\terraform\tfplan-frontend-hosting-foundation`
 - 크기: 143,862 bytes
 - SHA-256: `f49031685f65ff8ed8274316e34e1c195431a3d1912ac279114b14b23f0aa5e8`
 - 요약: `49 to add, 0 to change, 0 to destroy`
@@ -90,7 +90,7 @@ Plan 파일의 정확한 SHA-256을 별도 승인받은 뒤 해당 파일만 App
 Apply 뒤 Output을 사용해 세 Repository Variable을 등록한다. Account ID, Bucket 이름과 Distribution ID를 문서나 Git에 기록하지 않는다.
 
 ```powershell
-Set-Location C:\Portfolio\infra\aws\terraform
+Set-Location C:\Project\SpringMSA\infra\aws\terraform
 $roleArn = terraform output -raw github_actions_frontend_role_arn
 $distributionIds = terraform output -json frontend_cloudfront_distribution_ids | ConvertFrom-Json
 
@@ -135,7 +135,7 @@ gh workflow run aws-frontend-deploy.yml `
 첫 전체 배포 뒤 CloudFront 기본 Domain으로 여섯 정적 진입점을 확인한다.
 
 ```powershell
-Set-Location C:\Portfolio\infra\aws\terraform
+Set-Location C:\Project\SpringMSA\infra\aws\terraform
 $domains = terraform output -json frontend_cloudfront_domain_names | ConvertFrom-Json
 
 curl.exe --fail --silent --show-error --location --head "https://$($domains.member)/"

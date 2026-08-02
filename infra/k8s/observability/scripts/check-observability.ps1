@@ -19,7 +19,7 @@ kubectl get pods,svc,ingress,pvc -n observability
 
 Write-Host ""
 Write-Host "== Log collector =="
-kubectl get daemonset,pods -n observability -l app.kubernetes.io/name=promtail
+kubectl get deployment,pods -n observability -l app.kubernetes.io/name=alloy
 
 Write-Host ""
 Write-Host "== Spring MSA workload =="

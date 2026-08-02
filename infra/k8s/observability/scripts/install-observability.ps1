@@ -6,7 +6,7 @@ $Root = Split-Path -Parent $PSScriptRoot
 $ValuesDir = Join-Path $Root "values"
 $NamespaceManifest = Join-Path $Root "00-namespace.yaml"
 $LokiChartVersion = "18.5.0"
-$PromtailChartVersion = "6.17.1"
+$AlloyChartVersion = "1.11.0"
 $KubePrometheusStackChartVersion = "87.16.1"
 
 function Require-Command {
@@ -49,10 +49,10 @@ Run @(
 )
 
 Run @(
-    "helm", "upgrade", "--install", "promtail", "grafana/promtail",
-    "--version", $PromtailChartVersion,
+    "helm", "upgrade", "--install", "alloy", "grafana/alloy",
+    "--version", $AlloyChartVersion,
     "--namespace", "observability",
-    "--values", (Join-Path $ValuesDir "promtail-values.yaml"),
+    "--values", (Join-Path $ValuesDir "alloy-values.yaml"),
     "--wait",
     "--timeout", "10m"
 )

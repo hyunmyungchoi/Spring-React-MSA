@@ -15,7 +15,7 @@ Gradle은 각 프로젝트의 Wrapper 9.3.0을 사용한다. 시스템 Gradle을
 저장소 루트에서 다음을 실행한다.
 
 ```powershell
-Copy-Item C:\Portfolio\infra\docker\.env.example C:\Portfolio\infra\docker\.env.local
+Copy-Item C:\Project\SpringMSA\infra\docker\.env.example C:\Project\SpringMSA\infra\docker\.env.local
 ```
 
 `.env.local`에서 최소 다음 값을 설정한다.
@@ -31,7 +31,7 @@ Copy-Item C:\Portfolio\infra\docker\.env.example C:\Portfolio\infra\docker\.env.
 ## 전체 Docker Compose 실행
 
 ```powershell
-Set-Location C:\Portfolio\infra\docker
+Set-Location C:\Project\SpringMSA\infra\docker
 docker compose --env-file .env.local config --quiet
 docker compose --env-file .env.local up -d --build
 docker compose --env-file .env.local ps
@@ -64,14 +64,14 @@ docker compose --env-file .env.local down
 PostgreSQL과 Redis만 먼저 실행할 수 있다.
 
 ```powershell
-Set-Location C:\Portfolio\infra\docker
+Set-Location C:\Project\SpringMSA\infra\docker
 docker compose --env-file .env.local up -d postgres redis
 ```
 
 그다음 각 서비스 디렉터리에서 필요한 환경 변수를 주입하고 실행한다.
 
 ```powershell
-Set-Location C:\Portfolio\BackEnd\spring-user-service
+Set-Location C:\Project\SpringMSA\BackEnd\spring-user-service
 $env:SPRING_PROFILES_ACTIVE = "local"
 .\gradlew.bat bootRun
 ```
@@ -81,7 +81,7 @@ $env:SPRING_PROFILES_ACTIVE = "local"
 Backend 전체 테스트:
 
 ```powershell
-Get-ChildItem C:\Portfolio\BackEnd -Directory | Where-Object {
+Get-ChildItem C:\Project\SpringMSA\BackEnd -Directory | Where-Object {
     Test-Path (Join-Path $_.FullName "gradlew.bat")
 } | ForEach-Object {
     Push-Location $_.FullName
@@ -93,7 +93,7 @@ Get-ChildItem C:\Portfolio\BackEnd -Directory | Where-Object {
 ## Frontend 직접 실행
 
 ```powershell
-Set-Location C:\Portfolio\FrontEnd
+Set-Location C:\Project\SpringMSA\FrontEnd
 corepack enable
 corepack install
 pnpm --version
@@ -104,7 +104,7 @@ pnpm --filter member dev
 별도 터미널에서 Admin을 실행한다.
 
 ```powershell
-Set-Location C:\Portfolio\FrontEnd
+Set-Location C:\Project\SpringMSA\FrontEnd
 pnpm --filter admin dev
 ```
 

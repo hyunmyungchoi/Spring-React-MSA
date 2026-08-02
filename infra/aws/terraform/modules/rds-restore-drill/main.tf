@@ -33,6 +33,7 @@ locals {
       VALUES
         ('user_service', 'users'),
         ('user_service', 'user_roles'),
+        ('community_service', 'community_posts'),
         ('member_bff', 'chat_rooms'),
         ('member_bff', 'chat_messages'),
         ('stock_service', 'stock_watch_items')
@@ -64,6 +65,8 @@ locals {
     flyway_rows AS (
       SELECT version, success FROM user_service.flyway_schema_history
       UNION ALL
+      SELECT version, success FROM community_service.flyway_schema_history
+      UNION ALL
       SELECT version, success FROM member_bff.flyway_schema_history
       UNION ALL
       SELECT version, success FROM stock_service.flyway_schema_history
@@ -86,12 +89,12 @@ locals {
         (
           SELECT count(*)
           FROM pg_namespace
-          WHERE nspname IN ('user_service', 'member_bff', 'stock_service')
+          WHERE nspname IN ('user_service', 'community_service', 'member_bff', 'stock_service')
         ) AS schema_count,
         (
           SELECT count(*)
           FROM pg_namespace
-          WHERE nspname IN ('user_service', 'member_bff', 'stock_service')
+          WHERE nspname IN ('user_service', 'community_service', 'member_bff', 'stock_service')
             AND pg_get_userbyid(nspowner) = current_user
         ) AS bootstrap_owned_schema_count,
         (SELECT count(DISTINCT owner_name) FROM table_state) AS application_role_count,
@@ -101,7 +104,7 @@ locals {
           FROM pg_class relation
           JOIN pg_namespace namespace
             ON namespace.oid = relation.relnamespace
-          WHERE namespace.nspname IN ('user_service', 'member_bff', 'stock_service')
+          WHERE namespace.nspname IN ('user_service', 'community_service', 'member_bff', 'stock_service')
             AND relation.relkind IN ('r', 'p')
             AND relation.relname <> 'flyway_schema_history'
         ) AS application_table_count,
@@ -125,7 +128,7 @@ locals {
           SELECT count(*)
           FROM schema_roles role
           CROSS JOIN (
-            VALUES ('user_service'), ('member_bff'), ('stock_service')
+            VALUES ('user_service'), ('community_service'), ('member_bff'), ('stock_service')
           ) target(schema_name)
           WHERE role.schema_name <> target.schema_name
             AND (
@@ -136,7 +139,7 @@ locals {
         (
           SELECT count(*)
           FROM information_schema.tables
-          WHERE table_schema IN ('user_service', 'member_bff', 'stock_service')
+          WHERE table_schema IN ('user_service', 'community_service', 'member_bff', 'stock_service')
             AND table_name = 'flyway_schema_history'
         ) AS flyway_table_count,
         (SELECT count(*) FROM flyway_rows WHERE version = '1' AND success) AS flyway_v1_success_count,
@@ -171,7 +174,7 @@ locals {
     SQL
     )"
 
-    expected="on|t|3|3|3|5|5|3|3|3|0|3|3|0|1|1|1"
+    expected="on|t|4|4|4|6|6|4|4|4|0|4|4|0|1|1|1"
 
     if [ "$observed" != "$expected" ]; then
       printf 'restore_validation_passed=false\n' >&2
@@ -182,7 +185,7 @@ locals {
 
     fingerprint="$(printf '%s' "$observed" | sha256sum | cut -d ' ' -f1)"
     printf 'restore_validation_passed=true\n'
-    printf 'restore_validation_counts=schemas:3,application_roles:3,application_tables:5,flyway_v1:3,failed_migrations:0,admins:1\n'
+    printf 'restore_validation_counts=schemas:4,application_roles:4,application_tables:6,flyway_v1:4,failed_migrations:0,admins:1\n'
     printf 'restore_validation_fingerprint=%s\n' "$fingerprint"
   SCRIPT
 }

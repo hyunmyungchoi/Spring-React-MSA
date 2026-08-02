@@ -34,7 +34,7 @@ RDS 정지 중에는 지표가 없으므로 세 Alarm 모두 `treat_missing_data
 ## 적용 전 검증
 
 ```powershell
-Set-Location C:\Portfolio\infra\aws\terraform
+Set-Location C:\Project\SpringMSA\infra\aws\terraform
 
 terraform fmt -check -recursive
 terraform validate -no-color
@@ -77,7 +77,7 @@ terraform show -no-color tfplan-observability-foundation-off
 
 첫 Plan은 부분 적용 state와 정책 코드가 달라졌으므로 폐기하며 다시 적용하지 않는다. 검증한 Runtime OFF 복구 Plan은 다음과 같다.
 
-- 경로: `C:\Portfolio\infra\aws\terraform\tfplan-observability-foundation-off-policy-recovery`
+- 경로: `C:\Project\SpringMSA\infra\aws\terraform\tfplan-observability-foundation-off-policy-recovery`
 - 크기: 190,225 bytes
 - SHA-256: `fb8beee57f39b463268d11b0341953dc3340216c7c182076067ab21ae5546de8`
 - 요약: `6 to add, 0 to change, 0 to destroy`
@@ -148,7 +148,7 @@ aws rds describe-event-subscriptions `
 Runtime OFF에서 기능 계약만 고정하는 Plan은 다음처럼 만든다.
 
 ```powershell
-Set-Location C:\Portfolio\infra\aws\terraform
+Set-Location C:\Project\SpringMSA\infra\aws\terraform
 
 $env:TF_VAR_application_images = <현재 적용된 Task Definition 8개의 ECR digest JSON>
 $env:TF_VAR_toss_api_client_id = <현재 적용된 Stock Client ID>
