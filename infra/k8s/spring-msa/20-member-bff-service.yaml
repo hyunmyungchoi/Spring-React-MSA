@@ -17,7 +17,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: spring-member-bff-service
-          image: ghcr.io/hyunmyungchoi/spring-member-bff-service@sha256:1c32c6126bd1d4489a097a348c6b5a26c4df922e700fe98084a3a58613503712
+          image: ghcr.io/hyunmyungchoi/spring-member-bff-service@sha256:bb625106b71ef6b17dbf540f361f77d615d553e645c808cac2741f7c49c969b9
           imagePullPolicy: Always
           ports:
             - containerPort: 8079
