@@ -10,15 +10,15 @@ importers:
 
   apps/admin:
     dependencies:
+      '@hyunmyungchoi/admin-common':
+        specifier: 0.1.0
+        version: link:../../packages/admin-common
+      '@hyunmyungchoi/api-contract':
+        specifier: 0.1.0
+        version: link:../../packages/api-contract
       '@reduxjs/toolkit':
         specifier: 2.11.2
         version: 2.11.2(react-redux@9.3.0(@types/react@19.2.14)(react@19.2.6)(redux@5.0.1))(react@19.2.6)
-      '@springmsa/admin-common':
-        specifier: workspace:*
-        version: link:../../packages/admin-common
-      '@springmsa/api-contract':
-        specifier: workspace:*
-        version: link:../../packages/api-contract
       react:
         specifier: 19.2.6
         version: 19.2.6
@@ -83,12 +83,12 @@ importers:
 
   apps/admin-logs:
     dependencies:
+      '@hyunmyungchoi/admin-common':
+        specifier: 0.1.0
+        version: link:../../packages/admin-common
       '@reduxjs/toolkit':
         specifier: 2.11.2
         version: 2.11.2(react-redux@9.3.0(@types/react@19.2.14)(react@19.2.6)(redux@5.0.1))(react@19.2.6)
-      '@springmsa/admin-common':
-        specifier: workspace:*
-        version: link:../../packages/admin-common
       react:
         specifier: 19.2.6
         version: 19.2.6
@@ -153,85 +153,12 @@ importers:
 
   apps/admin-users:
     dependencies:
-      '@reduxjs/toolkit':
-        specifier: 2.11.2
-        version: 2.11.2(react-redux@9.3.0(@types/react@19.2.14)(react@19.2.6)(redux@5.0.1))(react@19.2.6)
-      '@springmsa/admin-common':
-        specifier: workspace:*
+      '@hyunmyungchoi/admin-common':
+        specifier: 0.1.0
         version: link:../../packages/admin-common
-      react:
-        specifier: 19.2.6
-        version: 19.2.6
-      react-dom:
-        specifier: 19.2.6
-        version: 19.2.6(react@19.2.6)
-      react-redux:
-        specifier: 9.3.0
-        version: 9.3.0(@types/react@19.2.14)(react@19.2.6)(redux@5.0.1)
-      react-router-dom:
-        specifier: 7.18.2
-        version: 7.18.2(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
-    devDependencies:
-      '@eslint/js':
-        specifier: 10.0.1
-        version: 10.0.1(eslint@10.3.0(jiti@2.7.0))
-      '@testing-library/jest-dom':
-        specifier: 6.6.3
-        version: 6.6.3
-      '@testing-library/react':
-        specifier: 16.3.0
-        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
-      '@types/node':
-        specifier: 24.12.3
-        version: 24.12.3
-      '@types/react':
-        specifier: 19.2.14
-        version: 19.2.14
-      '@types/react-dom':
-        specifier: 19.2.3
-        version: 19.2.3(@types/react@19.2.14)
-      '@vitejs/plugin-react':
-        specifier: 6.0.2
-        version: 6.0.2(vite@8.0.13(@types/node@24.12.3)(esbuild@0.28.1)(jiti@2.7.0))
-      eslint:
-        specifier: 10.3.0
-        version: 10.3.0(jiti@2.7.0)
-      eslint-plugin-react-hooks:
-        specifier: 7.1.1
-        version: 7.1.1(eslint@10.3.0(jiti@2.7.0))
-      eslint-plugin-react-refresh:
-        specifier: 0.5.2
-        version: 0.5.2(eslint@10.3.0(jiti@2.7.0))
-      globals:
-        specifier: 17.6.0
-        version: 17.6.0
-      jsdom:
-        specifier: 26.1.0
-        version: 26.1.0
-      typescript:
-        specifier: 6.0.3
-        version: 6.0.3
-      typescript-eslint:
-        specifier: 8.59.2
-        version: 8.59.2(eslint@10.3.0(jiti@2.7.0))(typescript@6.0.3)
-      vite:
-        specifier: 8.0.13
-        version: 8.0.13(@types/node@24.12.3)(esbuild@0.28.1)(jiti@2.7.0)
-      vitest:
-        specifier: 3.2.4
-        version: 3.2.4(@types/node@24.12.3)(jiti@2.7.0)(jsdom@26.1.0)(lightningcss@1.32.0)
-
-  apps/member-community:
-    dependencies:
       '@reduxjs/toolkit':
         specifier: 2.11.2
         version: 2.11.2(react-redux@9.3.0(@types/react@19.2.14)(react@19.2.6)(redux@5.0.1))(react@19.2.6)
-      '@springmsa/member-common':
-        specifier: workspace:*
-        version: link:../../packages/member-common
-      axios:
-        specifier: 1.18.0
-        version: 1.18.0
       react:
         specifier: 19.2.6
         version: 19.2.6
@@ -248,9 +175,6 @@ importers:
       '@eslint/js':
         specifier: 10.0.1
         version: 10.0.1(eslint@10.3.0(jiti@2.7.0))
-      '@tailwindcss/vite':
-        specifier: 4.3.0
-        version: 4.3.0(vite@8.0.13(@types/node@24.12.3)(esbuild@0.28.1)(jiti@2.7.0))
       '@testing-library/jest-dom':
         specifier: 6.6.3
         version: 6.6.3
@@ -284,9 +208,6 @@ importers:
       jsdom:
         specifier: 26.1.0
         version: 26.1.0
-      tailwindcss:
-        specifier: 4.3.0
-        version: 4.3.0
       typescript:
         specifier: 6.0.3
         version: 6.0.3
@@ -302,15 +223,15 @@ importers:
 
   apps/member:
     dependencies:
+      '@hyunmyungchoi/api-contract':
+        specifier: 0.1.0
+        version: link:../../packages/api-contract
+      '@hyunmyungchoi/member-common':
+        specifier: 0.1.0
+        version: link:../../packages/member-common
       '@reduxjs/toolkit':
         specifier: 2.11.2
         version: 2.11.2(react-redux@9.3.0(@types/react@19.2.14)(react@19.2.6)(redux@5.0.1))(react@19.2.6)
-      '@springmsa/api-contract':
-        specifier: workspace:*
-        version: link:../../packages/api-contract
-      '@springmsa/member-common':
-        specifier: workspace:*
-        version: link:../../packages/member-common
       axios:
         specifier: 1.18.0
         version: 1.18.0
@@ -385,14 +306,93 @@ importers:
         specifier: 3.2.4
         version: 3.2.4(@types/node@24.12.3)(jiti@2.7.0)(jsdom@26.1.0)(lightningcss@1.32.0)
 
-  apps/member-stock:
+  apps/member-community:
     dependencies:
+      '@hyunmyungchoi/member-common':
+        specifier: 0.1.0
+        version: link:../../packages/member-common
       '@reduxjs/toolkit':
         specifier: 2.11.2
         version: 2.11.2(react-redux@9.3.0(@types/react@19.2.14)(react@19.2.6)(redux@5.0.1))(react@19.2.6)
-      '@springmsa/member-common':
-        specifier: workspace:*
+      axios:
+        specifier: 1.18.0
+        version: 1.18.0
+      react:
+        specifier: 19.2.6
+        version: 19.2.6
+      react-dom:
+        specifier: 19.2.6
+        version: 19.2.6(react@19.2.6)
+      react-redux:
+        specifier: 9.3.0
+        version: 9.3.0(@types/react@19.2.14)(react@19.2.6)(redux@5.0.1)
+      react-router-dom:
+        specifier: 7.18.2
+        version: 7.18.2(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+    devDependencies:
+      '@eslint/js':
+        specifier: 10.0.1
+        version: 10.0.1(eslint@10.3.0(jiti@2.7.0))
+      '@tailwindcss/vite':
+        specifier: 4.3.0
+        version: 4.3.0(vite@8.0.13(@types/node@24.12.3)(esbuild@0.28.1)(jiti@2.7.0))
+      '@testing-library/jest-dom':
+        specifier: 6.6.3
+        version: 6.6.3
+      '@testing-library/react':
+        specifier: 16.3.0
+        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      '@types/node':
+        specifier: 24.12.3
+        version: 24.12.3
+      '@types/react':
+        specifier: 19.2.14
+        version: 19.2.14
+      '@types/react-dom':
+        specifier: 19.2.3
+        version: 19.2.3(@types/react@19.2.14)
+      '@vitejs/plugin-react':
+        specifier: 6.0.2
+        version: 6.0.2(vite@8.0.13(@types/node@24.12.3)(esbuild@0.28.1)(jiti@2.7.0))
+      eslint:
+        specifier: 10.3.0
+        version: 10.3.0(jiti@2.7.0)
+      eslint-plugin-react-hooks:
+        specifier: 7.1.1
+        version: 7.1.1(eslint@10.3.0(jiti@2.7.0))
+      eslint-plugin-react-refresh:
+        specifier: 0.5.2
+        version: 0.5.2(eslint@10.3.0(jiti@2.7.0))
+      globals:
+        specifier: 17.6.0
+        version: 17.6.0
+      jsdom:
+        specifier: 26.1.0
+        version: 26.1.0
+      tailwindcss:
+        specifier: 4.3.0
+        version: 4.3.0
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      typescript-eslint:
+        specifier: 8.59.2
+        version: 8.59.2(eslint@10.3.0(jiti@2.7.0))(typescript@6.0.3)
+      vite:
+        specifier: 8.0.13
+        version: 8.0.13(@types/node@24.12.3)(esbuild@0.28.1)(jiti@2.7.0)
+      vitest:
+        specifier: 3.2.4
+        version: 3.2.4(@types/node@24.12.3)(jiti@2.7.0)(jsdom@26.1.0)(lightningcss@1.32.0)
+
+  apps/member-stock:
+    dependencies:
+      '@hyunmyungchoi/member-common':
+        specifier: 0.1.0
         version: link:../../packages/member-common
+      '@reduxjs/toolkit':
+        specifier: 2.11.2
+        version: 2.11.2(react-redux@9.3.0(@types/react@19.2.14)(react@19.2.6)(redux@5.0.1))(react@19.2.6)
       axios:
         specifier: 1.18.0
         version: 1.18.0
@@ -466,12 +466,12 @@ importers:
 
   packages/admin-common:
     dependencies:
+      '@hyunmyungchoi/api-contract':
+        specifier: 0.1.0
+        version: link:../api-contract
       '@reduxjs/toolkit':
         specifier: 2.11.2
         version: 2.11.2(react-redux@9.3.0(@types/react@19.2.14)(react@19.2.6)(redux@5.0.1))(react@19.2.6)
-      '@springmsa/api-contract':
-        specifier: workspace:*
-        version: link:../api-contract
       react:
         specifier: 19.2.6
         version: 19.2.6
@@ -497,12 +497,12 @@ importers:
 
   packages/member-common:
     dependencies:
+      '@hyunmyungchoi/api-contract':
+        specifier: 0.1.0
+        version: link:../api-contract
       '@reduxjs/toolkit':
         specifier: 2.11.2
         version: 2.11.2(react-redux@9.3.0(@types/react@19.2.14)(react@19.2.6)(redux@5.0.1))(react@19.2.6)
-      '@springmsa/api-contract':
-        specifier: workspace:*
-        version: link:../api-contract
       axios:
         specifier: 1.18.0
         version: 1.18.0

@@ -48,6 +48,7 @@ New-Item -ItemType Directory -Force -Path $logDirectory | Out-Null
 $processes = @()
 $handler = $null
 $client = $null
+$webSocket = $null
 $communityId = $null
 $stockId = $null
 
@@ -237,6 +238,28 @@ try {
             Write-Output "USER_REGISTER_BODY=$($registration.Content.ReadAsStringAsync().GetAwaiter().GetResult())"
             throw "User registration failed"
         }
+
+        $webSocket = [Net.WebSockets.ClientWebSocket]::new()
+        $webSocket.Options.Cookies = $handler.CookieContainer
+        $webSocket.Options.SetRequestHeader("Origin", "http://localhost:5173")
+        $webSocket.ConnectAsync(
+            [Uri]"ws://localhost:8080/bff/chat/ws?roomId=codex-kafka-e2e",
+            [Threading.CancellationToken]::None
+        ).GetAwaiter().GetResult()
+        $chatPayload = @{ type = "CHAT_MESSAGE"; content = "Codex Kafka $stamp" } |
+            ConvertTo-Json -Compress
+        $chatBytes = [Text.Encoding]::UTF8.GetBytes($chatPayload)
+        $webSocket.SendAsync(
+            [ArraySegment[byte]]::new($chatBytes),
+            [Net.WebSockets.WebSocketMessageType]::Text,
+            $true,
+            [Threading.CancellationToken]::None
+        ).GetAwaiter().GetResult()
+        Write-Output "CHAT_WEBSOCKET_SEND=OK"
+        Start-Sleep -Seconds 1
+        $webSocket.Abort()
+        $webSocket.Dispose()
+        $webSocket = $null
     }
 
     $create = Send-Json "POST" ([Uri]::new($gateway, "/bff/community/posts")) @{
@@ -342,6 +365,10 @@ try {
         throw "Member logout did not clear BFF session"
     }
 } finally {
+    if ($webSocket) {
+        $webSocket.Abort()
+        $webSocket.Dispose()
+    }
     if ($client -and $handler) {
         try {
             $cookie = $handler.CookieContainer.GetCookies([Uri]"http://localhost:8080")["MEMBER-XSRF-TOKEN"]

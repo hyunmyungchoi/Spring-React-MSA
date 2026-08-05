@@ -1,0 +1,68 @@
+[submodule "BackEnd/spring-user-service"]
+	path = BackEnd/spring-user-service
+	url = https://github.com/hyunmyungchoi/spring-msa-user-service.git
+	branch = main
+[submodule "BackEnd/spring-security-authorization-server"]
+	path = BackEnd/spring-security-authorization-server
+	url = https://github.com/hyunmyungchoi/spring-msa-authorization-server.git
+	branch = main
+[submodule "BackEnd/spring-member-gateway"]
+	path = BackEnd/spring-member-gateway
+	url = https://github.com/hyunmyungchoi/spring-msa-member-gateway.git
+	branch = main
+[submodule "BackEnd/spring-member-bff-service"]
+	path = BackEnd/spring-member-bff-service
+	url = https://github.com/hyunmyungchoi/spring-msa-member-bff.git
+	branch = main
+[submodule "BackEnd/spring-member-community-service"]
+	path = BackEnd/spring-member-community-service
+	url = https://github.com/hyunmyungchoi/spring-msa-member-community-service.git
+	branch = main
+[submodule "BackEnd/spring-member-stock-service"]
+	path = BackEnd/spring-member-stock-service
+	url = https://github.com/hyunmyungchoi/spring-msa-member-stock-service.git
+	branch = main
+[submodule "BackEnd/spring-admin-gateway"]
+	path = BackEnd/spring-admin-gateway
+	url = https://github.com/hyunmyungchoi/spring-msa-admin-gateway.git
+	branch = main
+[submodule "BackEnd/spring-admin-bff-service"]
+	path = BackEnd/spring-admin-bff-service
+	url = https://github.com/hyunmyungchoi/spring-msa-admin-bff.git
+	branch = main
+[submodule "BackEnd/spring-msa-common-web"]
+	path = BackEnd/spring-msa-common-web
+	url = https://github.com/hyunmyungchoi/spring-msa-common-web.git
+	branch = main
+[submodule "BackEnd/spring-msa-common-kafka"]
+	path = BackEnd/spring-msa-common-kafka
+	url = https://github.com/hyunmyungchoi/spring-msa-common-kafka.git
+	branch = main
+[submodule "FrontEnd/apps/member"]
+	path = FrontEnd/apps/member
+	url = https://github.com/hyunmyungchoi/spring-msa-member-web.git
+	branch = main
+[submodule "FrontEnd/apps/member-community"]
+	path = FrontEnd/apps/member-community
+	url = https://github.com/hyunmyungchoi/spring-msa-member-community-web.git
+	branch = main
+[submodule "FrontEnd/apps/member-stock"]
+	path = FrontEnd/apps/member-stock
+	url = https://github.com/hyunmyungchoi/spring-msa-member-stock-web.git
+	branch = main
+[submodule "FrontEnd/apps/admin"]
+	path = FrontEnd/apps/admin
+	url = https://github.com/hyunmyungchoi/spring-msa-admin-web.git
+	branch = main
+[submodule "FrontEnd/apps/admin-users"]
+	path = FrontEnd/apps/admin-users
+	url = https://github.com/hyunmyungchoi/spring-msa-admin-users-web.git
+	branch = main
+[submodule "FrontEnd/apps/admin-logs"]
+	path = FrontEnd/apps/admin-logs
+	url = https://github.com/hyunmyungchoi/spring-msa-admin-logs-web.git
+	branch = main
+[submodule "FrontEnd/packages"]
+	path = FrontEnd/packages
+	url = https://github.com/hyunmyungchoi/spring-msa-frontend-common.git
+	branch = main

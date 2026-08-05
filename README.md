@@ -1,261 +1,130 @@
 # Spring React MSA
 
-<img width="1672" height="941" alt="Spring React MSA" src="https://github.com/user-attachments/assets/82cc9f08-7028-4f07-9f5c-5f412788f2e5" />
+Spring Boot 기반 MSA 백엔드와 React 프런트엔드를 하나의 메타 저장소에서 관리하는 사이드 프로젝트입니다.
+각 서비스와 프런트 앱은 독립 Git 저장소이며, 이 저장소는 Git submodule로 정확한 조합을 고정합니다.
 
-## 媛쒕컻?먭? ?꾨땶 ?먭뎄?먯쓽 MSA 湲곕줉
+## 구성
 
-???꾨줈?앺듃???⑥닚???쒕퉬?ㅻ? ?щ윭 媛쒕줈 履쇨컿 寃곌낵臾쇱씠 ?꾨땲??
-?몄쬆 ?쒕쾭, 寃뚯씠?몄썾?? BFF, ?꾨찓???쒕퉬?? ?꾨줎?몄뿏?? Kubernetes媛
-媛곸옄???먮━?먯꽌 ?쒕줈瑜?諛?대궡怨??ㅼ떆 遺숈옟??怨쇱젙??愿李고븳 湲곕줉??媛源앸떎.
+### Backend
 
-泥섏쓬?먮뒗 湲곕뒫??留뚮뱶???쇱씠?덈떎.
-?섏?留??대뒓 ?쒓컙遺??吏덈Ц??諛붾뚯뿀??
-
-- ???붿껌? ?대뵒???쒖옉?댁꽌 ?대뵒???앸굹?붽?.
-- ?μ븷媛 ?쒕떎硫??대뒓 寃쎄퀎?먯꽌 硫덉떠???섎뒗媛.
-- 鍮꾨?媛믪? ?대뵒源뚯? ?섎윭媛???섎뒗媛.
-- 罹먯떆???띾룄瑜??꾪븳 ?μ튂?멸?, ?몃? ?섏〈?깆쓣 寃щ뵒湲??꾪븳 ?꾩땐?ъ씤媛.
-- ?붾㈃? ?곗씠?곕? 蹂댁뿬二쇰뒗 怨녹씤媛, ?쒖뒪?쒖쓽 ?곹깭瑜??ъ슜?먯뿉寃?踰덉뿭?섎뒗 怨녹씤媛.
-
-????μ냼??洹?吏덈Ц?ㅼ뿉 ????꾩옱???듭씠??
-?꾩꽦???뺣떟?대씪湲곕낫?ㅻ뒗, 怨꾩냽 怨좎퀜 ?곕뒗 ?먭뎄 ?명듃????媛源앸떎.
-
-## 臾댁뾿??留뚮뱾?덈굹
-
-Spring Boot? React濡?援ъ꽦??MSA 湲곕컲 ?쒕퉬?ㅻ떎.
-?뚯썝, 而ㅻ??덊떚, 二쇱떇 愿??醫낅ぉ, ?ㅼ떆媛꾩뿉 媛源뚯슫 ?쒖옣 ?곗씠??議고쉶 ?먮쫫??
-媛??쒕퉬?ㅼ쓽 梨낆엫?쇰줈 ?섎늻怨? BFF? Gateway瑜??듯빐 ?붾㈃怨??꾨찓???ъ씠??寃쎄퀎瑜??뺣━?덈떎.
-
-理쒓렐 ?묒뾽???듭떖 ?섏쭅 ?щ씪?댁뒪??`Stock Market Data`??
-?좎뒪利앷텒 REST API瑜??듯빐 醫낅ぉ ?뺣낫? ?꾩옱媛瑜?媛?몄삤怨?
-Redis 罹먯떆? stale fallback?쇰줈 ?몃? API ?μ븷瑜??꾩땐?쒕떎.
-?꾨줎?몄뿏?쒕뒗 WebSocket???꾨땲??2珥?REST polling?쇰줈 ?쒖옣 ?곗씠?곕? 媛깆떊?쒕떎.
-
-## ?쒖뒪??援ъ꽦
-
-```text
-FrontEnd/apps/member
-        |
-        v
-spring-member-gateway
-        |
-        v
-spring-member-bff-service
-        |
-        v
-spring-member-stock-service
-        |
-        +--> PostgreSQL: 愿??醫낅ぉ ???
-        +--> Redis: OAuth token, ?쒖꽭 罹먯떆, stale cache
-        +--> Toss REST API: OAuth, 醫낅ぉ, ?꾩옱媛, 罹붾뱾
-```
-
-二쇱슂 紐⑤뱢? ?ㅼ쓬怨?媛숇떎.
-
-| ?곸뿭 | ??븷 |
+| 경로 | 역할 |
 | --- | --- |
-| `spring-security-authorization-server` | OAuth2 ?몄쬆 ?쒕쾭 |
-| `spring-member-gateway` | ?ъ슜???곸뿭 Gateway |
-| `spring-member-bff-service` | ?붾㈃??留욎텣 API 議고빀, 遺遺??ㅽ뙣 ?묐떟 |
-| `spring-member-stock-service` | 愿??醫낅ぉ, ?좎뒪 API ?곕룞, 罹먯떆, 硫뷀듃由?|
-| `spring-msa-common-web` | 怨듯넻 ?덉쇅 ?묐떟怨???怨꾩링 ?좏떥 |
-| `FrontEnd/apps/member` | ?뚯썝/而ㅻ??덊떚/二쇱떇 ?붾㈃ |
-| `infra/k8s/spring-msa` | 濡쒖뺄 Kubernetes 諛고룷 manifest |
-| `infra/ci` | 蹂寃??뚯씪 湲곕컲 build matrix ?좏깮 |
+| `BackEnd/spring-user-service` | 사용자, 관리자 bootstrap, 사용자 도메인 Outbox |
+| `BackEnd/spring-security-authorization-server` | OAuth2/OIDC 인증 서버 |
+| `BackEnd/spring-member-gateway` | 회원 Gateway와 WebSocket route |
+| `BackEnd/spring-member-bff-service` | 회원 BFF, 세션, 채팅, Kafka 소비와 알림 |
+| `BackEnd/spring-member-community-service` | 커뮤니티 CRUD와 Outbox |
+| `BackEnd/spring-member-stock-service` | 관심 종목, Toss API, Redis cache, Outbox |
+| `BackEnd/spring-admin-gateway` | 관리자 Gateway |
+| `BackEnd/spring-admin-bff-service` | 관리자 BFF |
+| `BackEnd/spring-msa-common-web` | 공통 API 응답과 오류 계약 |
+| `BackEnd/spring-msa-common-kafka` | 공통 Kafka 이벤트 계약 |
 
-## Stock Market Data Slice
+### Frontend
 
-???щ씪?댁뒪?먯꽌 以묒슂?섍쾶 蹂?寃껋? "?쒖꽭瑜?蹂댁뿬以??媛 ?꾨땲??
-?몃? API瑜??쒖뒪???덉쑝濡??ㅼ뿬???? ?대뵒源뚯? 誘욧퀬 ?대뵒?쒕???諛⑹뼱?좎?瑜??뺥븯???쇱씠?덈떎.
-
-援ы쁽???먮쫫? ?ㅼ쓬怨?媛숇떎.
-
-1. ?ъ슜?먮뒗 stock ?붾㈃?먯꽌 愿??醫낅ぉ怨?議고쉶 醫낅ぉ???ㅻ，??
-2. ?붾㈃? `/bff/stock/market/workspace?symbols=...`瑜??몄텧?쒕떎.
-3. BFF??醫낅ぉ ?뺣낫, ?꾩옱媛, 愿??醫낅ぉ???낅┰?곸쑝濡?議고쉶?쒕떎.
-4. ?쇰? downstream???ㅽ뙣?대룄 媛?ν븳 ?곗씠?곕뒗 ?대━怨?`failures`???먯씤???대뒗??
-5. stock-service??Toss access token??Redis??罹먯떆?쒕떎.
-6. ?꾩옱媛??Redis??2珥덇컙 怨듭쑀 罹먯떆?쒕떎.
-7. Toss ?μ븷 ?먮뒗 rate limit ??5遺??대궡 stale cache瑜?紐낆떆?곸쑝濡?諛섑솚?쒕떎.
-
-罹먯떆 TTL? ?섎룄瑜??쒕윭?대뒗 ?レ옄濡?怨좎젙?덈떎.
-
-| ?곗씠??| TTL |
+| 경로 | 역할 |
 | --- | --- |
-| ?꾩옱媛 fresh cache | 2珥?|
-| ?꾩옱媛 stale fallback | 5遺?|
-| 醫낅ぉ ?뺣낫 | 24?쒓컙 |
-| 罹붾뱾 | 30珥?|
-| 媛寃?refresh lock | 2珥?|
+| `FrontEnd/apps/member` | 회원 shell, 인증, 채팅 |
+| `FrontEnd/apps/member-community` | 회원 커뮤니티 앱 |
+| `FrontEnd/apps/member-stock` | 회원 주식 앱 |
+| `FrontEnd/apps/admin` | 관리자 shell |
+| `FrontEnd/apps/admin-users` | 관리자 사용자 앱 |
+| `FrontEnd/apps/admin-logs` | 관리자 로그 앱 |
+| `FrontEnd/packages` | 공통 API 계약과 member/admin UI 패키지 |
 
-2珥?polling? 釉뚮씪?곗?留덈떎 ?몃? API瑜??뚮━?먮뒗 ?살씠 ?꾨땲??
-釉뚮씪?곗????먯＜ 臾쇱뼱蹂대릺, ?쒕쾭??Redis瑜??듯빐 媛숈? 吏덈Ц???섎굹???몃? ?붿껌?쇰줈 以꾩씤??
-?숈떆???щ윭 ?붿껌??cold cache瑜?留뚮굹??per-symbol refresh lock?쇰줈 Toss ?붿껌??踰덉???寃껋쓣 留됰뒗??
+## Clone
 
-## Toss API Secret ?ъ슜 諛⑹떇
-
-?좎뒪 API ?ㅻ뒗 肄붾뱶???녿떎.
-Git?먮룄 ?녿떎.
-?꾨줎?몄뿏?쒖뿉???녿떎.
-濡쒓렇?먮룄 ?④린吏 ?딅뒗 寃껋쓣 ?먯튃?쇰줈 ?붾떎.
-
-stock-service媛 ?붽뎄?섎뒗 ?섍꼍蹂?섎뒗 ??媛쒕떎.
-
-```text
-TOSS_API_BASE_URL
-TOSS_API_CLIENT_ID
-TOSS_API_CLIENT_SECRET
-```
-
-Spring ?ㅼ젙? ??媛믪쓣 ?ㅼ쓬 ?ㅼ젙?쇰줈 諛붿씤?⑺븳??
-
-```yaml
-toss:
-  api:
-    base-url: ${TOSS_API_BASE_URL}
-    client-id: ${TOSS_API_CLIENT_ID}
-    client-secret: ${TOSS_API_CLIENT_SECRET}
-```
-
-??媛?紐⑤몢 ?ㅽ뻾 ?섍꼍?먯꽌 紐낆떆?곸쑝濡?二쇱엯?섎ŉ 肄붾뱶 湲곕낯媛믪쓣 ?먯? ?딅뒗?? 濡쒖뺄 湲곕낯 二쇱냼媛 ?꾩슂?섎㈃ Git?먯꽌 ?쒖쇅??`.env.local`??`https://openapi.tossinvest.com`???ㅼ젙?쒕떎.
-
-洹몃━怨??좎뒪 媛?대뱶??Client Credentials ?먮쫫??留욎떠 ?좏겙??諛쒓툒?쒕떎.
-
-```text
-POST /oauth2/token
-Content-Type: application/x-www-form-urlencoded
-
-grant_type=client_credentials
-client_id=<TOSS_API_CLIENT_ID>
-client_secret=<TOSS_API_CLIENT_SECRET>
-```
-
-諛쒓툒諛쏆? access token? Redis??`toss:oauth:access-token`????λ맂??
-?ㅼ젣 market data API ?몄텧?먮뒗 ?ㅼ쓬 ?ㅻ뜑媛 遺숇뒗??
-
-```http
-Authorization: Bearer <access-token>
-```
-
-## 濡쒖뺄 Kubernetes?먯꽌 Toss API ?곌린
-
-濡쒖뺄 Kubernetes?먯꽌??ignored ?뚯씪??
-`infra/k8s/spring-msa/02-secrets.local.yaml`???ㅼ젣 ?ㅻ? ?ｋ뒗??
-
-```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: spring-msa-secret
-  namespace: spring-msa
-type: Opaque
-stringData:
-  TOSS_API_CLIENT_ID: "?ㅼ젣-client-id"
-  TOSS_API_CLIENT_SECRET: "?ㅼ젣-client-secret"
-```
-
-`12-stock-service.yaml`? ??Secret??pod ?섍꼍蹂?섎줈 二쇱엯?쒕떎.
-
-```yaml
-- name: TOSS_API_CLIENT_ID
-  valueFrom:
-    secretKeyRef:
-      name: spring-msa-secret
-      key: TOSS_API_CLIENT_ID
-- name: TOSS_API_CLIENT_SECRET
-  valueFrom:
-    secretKeyRef:
-      name: spring-msa-secret
-      key: TOSS_API_CLIENT_SECRET
-```
-
-?곸슜? ?대젃寃??쒕떎.
+새 환경에서는 반드시 submodule까지 함께 받습니다.
 
 ```powershell
-kubectl apply -f infra\k8s\spring-msa\02-secrets.local.yaml
-kubectl apply -f infra\k8s\spring-msa\01-configmap.yaml
-kubectl apply -f infra\k8s\spring-msa\12-stock-service.yaml
-kubectl rollout restart deployment/spring-member-stock-service -n spring-msa
-kubectl rollout status deployment/spring-member-stock-service -n spring-msa
+git clone --recurse-submodules https://github.com/hyunmyungchoi/Spring-React-MSA.git
+cd Spring-React-MSA
 ```
 
-`infra/tossApi/` 媛숈? ?꾩떆 ??蹂닿? ?대뜑???ъ슜?섏? ?딅뒗??
-洹몃윴 ?뚯씪? ?쒖뒪?쒖씠 ?쎌????딄퀬, ?ㅼ닔濡?而ㅻ컠???꾪뿕留?留뚮뱺??
-
-## ?ㅽ뻾怨?寃利?
-
-諛깆뿏??stock-service:
+이미 부모 저장소만 clone했다면 다음을 실행합니다.
 
 ```powershell
-cd BackEnd\spring-member-stock-service
+git submodule update --init --recursive
+```
+
+자식 저장소의 최신 `main`을 모두 반영하려면 다음을 사용합니다.
+
+```powershell
+git submodule update --remote --merge
+git add .gitmodules BackEnd FrontEnd
+git commit -m "chore: update submodule pointers"
+```
+
+자세한 작업 방식은 [멀티레포 운영 문서](docs/architecture/multi-repository.md)를 참고합니다.
+
+## Local runtime
+
+로컬 개발 인프라는 VirtualBox Ubuntu VM의 PostgreSQL, Redis, Kafka를 사용합니다.
+Docker Desktop 기반 로컬 실행은 사용하지 않습니다.
+
+1. `infra/vm/.env.local`에 로컬 자격증명과 VM 주소를 설정합니다.
+2. IntelliJ Run Configuration의 Active profiles에 `local`을 입력합니다.
+3. Environment variables에서 `infra/vm/.env.local`을 불러옵니다.
+4. Authorization Server, Gateway, 각 WAS를 실행합니다.
+
+Flyway는 서비스별 스키마를 사용합니다.
+
+- `user_service`
+- `community_service`
+- `stock_service`
+- `member_bff`
+
+과거 마이그레이션 파일을 의도적으로 변경해 체크섬을 복구해야 할 때만 해당 서비스에서 다음을 실행합니다.
+
+```powershell
+.\gradlew.bat repairDatabase
+.\gradlew.bat migrateDatabase
+```
+
+정상 개발에서는 적용된 마이그레이션을 수정하지 말고 새 버전 파일을 추가합니다.
+
+## Kafka
+
+User, Community, Stock, Chat 이벤트는 모두 transactional outbox를 사용합니다.
+Member BFF 소비자는 중복 이벤트를 차단하고 알림을 기록합니다. 소비 실패는 재시도 후 DLT로 전달됩니다.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File infra\ci\live-local-smoke.ps1 -KafkaEnabled
+powershell -ExecutionPolicy Bypass -File infra\ci\kafka-dlt-smoke.ps1
+```
+
+## Tests
+
+백엔드 서비스:
+
+```powershell
+cd BackEnd\spring-user-service
 .\gradlew.bat test
 ```
 
-member BFF:
-
-```powershell
-cd BackEnd\spring-member-bff-service
-.\gradlew.bat test
-```
-
-stock frontend:
+프런트 전체:
 
 ```powershell
 cd FrontEnd
-corepack pnpm --filter @springmsa/member-stock lint
-corepack pnpm --filter @springmsa/member-stock build
+corepack pnpm install
+corepack pnpm -r test
+corepack pnpm -r build
 ```
 
-CI build matrix:
+CI 스크립트:
 
 ```powershell
-python -m unittest infra\ci\test_select_build_matrix.py
+python -m unittest discover -s infra\ci -p "test_*.py"
 ```
 
-Stock load test:
+## Packages
 
-```powershell
-$env:PROMETHEUS_URL="http://prometheus.localtest.me"
-k6 run infra\load-tests\stock-market-data.js
-```
+공통 계약은 GitHub Packages로 배포합니다.
 
-load test??20紐낆쓽 媛???ъ슜?먭? 媛숈? 5媛?醫낅ぉ??2珥덈쭏??議고쉶?쒕떎.
-紐⑺몴??釉뚮씪?곗? ?붿껌 ?섍? ?꾨땲???몃? Toss ?붿껌 ?섍? Redis cache? refresh lock?쇰줈
-?쇰쭏???듭젣?섎뒗吏瑜?蹂대뒗 寃껋씠??
+- Maven: `com.springmsa:spring-msa-common-web:0.1.0`
+- Maven: `com.springmsa:spring-msa-common-kafka:0.1.0`
+- npm: `@hyunmyungchoi/api-contract@0.1.0`
+- npm: `@hyunmyungchoi/member-common@0.1.0`
+- npm: `@hyunmyungchoi/admin-common@0.1.0`
 
-## 愿李고븳 寃쎄퀎??
-
-### BFF???⑥닚 ?꾨떖?먭? ?꾨땲??
-
-BFF???곗씠?곕? 紐⑥쑝??怨녹씠吏留? 紐⑤뱺 ?ㅽ뙣瑜????⑹뼱由щ줈 萸됯컻??怨녹? ?꾨땲??
-醫낅ぉ ?뺣낫媛 ?ㅽ뙣?대룄 愿??醫낅ぉ 紐⑸줉? ?댁븘 ?덉쓣 ???덈떎.
-?꾩옱媛媛 ?ㅽ뙣?대룄 stale data???ъ슜?먯뿉寃??섎?媛 ?덉쓣 ???덈떎.
-洹몃옒??workspace ?묐떟? ?깃났??議곌컖怨??ㅽ뙣??議곌컖???④퍡 ?대뒗??
-
-### 罹먯떆??鍮좊Ⅴ寃??섍린 ?꾪븳 ?μ튂留뚯? ?꾨땲??
-
-罹먯떆???띾룄蹂대떎 癒쇱? ?꾩땐?щ떎.
-?몃? API媛 ?먮젮吏嫄곕굹 rate limit??諛섑솚?????쒖뒪?쒖씠 怨㏓컮濡?臾대꼫吏吏 ?딄쾶 ?쒕떎.
-fresh? stale??援щ텇??寃껊룄 媛숈? ?댁쑀??
-?ㅻ옒???곗씠?곕뒗 嫄곗쭞留먯씠 ?????덉?留? ?ㅻ옒?먮떎怨?留먰븯???곗씠?곕뒗 ?먮떒???щ즺媛 ?쒕떎.
-
-### Secret? 湲곕뒫???꾨땲??寃쎄퀎??
-
-API ?ㅻ뒗 湲곕뒫??耳쒕뒗 ?ㅼ쐞移섏쿂??蹂댁씠吏留?
-?ㅼ젣濡쒕뒗 ?쒖뒪?쒖쓽 寃쎄퀎瑜?媛瑜대뒗 臾쇨굔?대떎.
-?쒕쾭 ?섍꼍蹂?섏? Kubernetes Secret 諛붽묑?쇰줈 ?섎윭?섏삤硫?
-洹??쒓컙 肄붾뱶媛 ?꾨땲???댁쁺??臾몄젣媛 ?쒕떎.
-
-## ?꾩쭅 ?앸굹吏 ?딆? 寃?
-
-???꾨줈?앺듃???꾩꽦?덉씠?쇨린蹂대떎 怨꾩냽 ?吏곸씠???ㅽ뿕?μ씠??
-?ㅼ쓬 吏덈Ц?ㅼ씠 ?⑥븘 ?덈떎.
-
-- ?ㅼ젣 ?댁쁺 Prometheus/Grafana ??쒕낫?쒕? ?대뼡 ?⑥쐞濡??섎닃 寃껋씤媛.
-- BFF??遺遺??ㅽ뙣 紐⑤뜽???ㅻⅨ ?꾨찓?몄뿉??媛숈? 諛⑹떇?쇰줈 ?뺤옣??寃껋씤媛.
-- stock-service??罹먯떆/???뺤콉???몃옒???⑦꽩??留욎떠 ?대뼸寃?議곗젙??寃껋씤媛.
-- GitOps ?섍꼍?먯꽌 Secret???대뼡 諛⑹떇?쇰줈 ?몃??뷀븷 寃껋씤媛.
-
-?듭쓣 癒쇱? ?뺥빐?볤퀬 留뚮뱺 ?꾨줈?앺듃???꾨땲??
-吏덈Ц???앷꼈怨? 洹?吏덈Ц???쇳븯吏 ?딆쑝?ㅺ퀬 援ъ“瑜?留뚮뱾?덈떎.
-
+AWS 배포 자료는 보존되어 있지만 현재 로컬 VM 검증 범위에서는 제외합니다.
