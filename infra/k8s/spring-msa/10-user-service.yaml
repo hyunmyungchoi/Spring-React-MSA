@@ -17,7 +17,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: spring-user-service
-          image: ghcr.io/hyunmyungchoi/spring-user-service@sha256:e14463d4b6bcce35fea4d9bf292ef2bf44d990b8da7ca0715cc29ca4f51be94d
+          image: ghcr.io/hyunmyungchoi/spring-user-service@sha256:7c5fb7a97c4b71ed87192634d302f8aa85cfa35f426298b43b5cbf4a91c48530
           imagePullPolicy: Always
           ports:
             - containerPort: 8081
