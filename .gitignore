@@ -13,10 +13,13 @@ desktop.ini
 *.iml
 *.ipr
 *.iws
+.JDK.intellij
 
 # =========================
 # Java / Spring / Gradle
 # =========================
+/JDK/
+/설정파일/
 .gradle/
 build/
 out/

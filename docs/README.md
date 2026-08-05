@@ -24,7 +24,7 @@
 | Runtime | Node 24.18.0, pnpm 10.0.0, 단일 workspace lockfile |
 | Data | PostgreSQL 16, Redis 7 |
 | Messaging | Kafka 3.7.0 |
-| Platform | Docker Compose, Kubernetes, ingress-nginx, GHCR, Argo CD |
+| Platform | VM 직접 실행, Kubernetes, ingress-nginx, GHCR, Argo CD |
 | AWS migration | Backup Restore·Cleanup, Hikari `5/1`, RDS Alarm·Member BFF Prometheus Runtime ON/OFF 전체 검증과 Applied Plan·임시 로그 정리 완료; 현재 Runtime·RDS OFF |
 | Observability | Kubernetes Prometheus·Grafana·Loki; AWS SNS·Runtime Watchdog 적용 완료, RDS Alarm 5개·Watchdog Alarm 3개 유지, Runtime Alarm 29개 종료·최종 감사 완료 |
 

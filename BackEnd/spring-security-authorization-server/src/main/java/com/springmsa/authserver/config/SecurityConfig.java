@@ -106,7 +106,7 @@ public class SecurityConfig {
                         .permitAll()
                 )
                 .logout(logout -> logout
-                        .logoutRequestMatcher(pathPattern(HttpMethod.GET, LOGOUT_ENDPOINT))
+                        .logoutRequestMatcher(pathPattern(HttpMethod.POST, LOGOUT_ENDPOINT))
                         .logoutSuccessHandler(this::handleLogoutSuccess)
                         .clearAuthentication(true)
                         .invalidateHttpSession(true)

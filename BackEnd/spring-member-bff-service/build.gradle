@@ -39,7 +39,6 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.testcontainers:testcontainers-postgresql'
     testCompileOnly 'org.projectlombok:lombok'
     testAnnotationProcessor 'org.projectlombok:lombok'
 }
@@ -60,6 +59,14 @@ tasks.named('test') {
 
 tasks.named('jar') {
     enabled = false
+}
+
+tasks.register('migrateDatabase', JavaExec) {
+    group = 'database'
+    description = 'Runs Flyway migrations for the member_bff schema.'
+    dependsOn tasks.named('classes')
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.springmsa.memberbff.migration.FlywayMigrationMain'
 }
 
 dependencyLocking {

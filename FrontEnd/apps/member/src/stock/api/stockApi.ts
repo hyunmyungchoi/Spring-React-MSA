@@ -1,6 +1,6 @@
 import { memberRequest } from "../../common/api/memberApiClient";
 import type { UserServiceMeResponse } from "../../common/types/userSession";
-import type { MarketWorkspace } from "../types/marketData";
+import type { Candle, MarketWorkspace } from "../types/marketData";
 import type { StockWatchItem, StockWatchItemPayload } from "../types/stockWatchItem";
 
 // Loads the current user profile from the stock service.
@@ -18,6 +18,14 @@ export function fetchMarketWorkspace(symbols: string[], signal?: AbortSignal): P
         params: {
             symbols: normalizeSymbols(symbols).join(","),
         },
+        signal,
+    });
+}
+
+export function fetchMarketCandles(symbol: string, signal?: AbortSignal): Promise<Candle[]> {
+    return memberRequest<Candle[]>({
+        url: `/bff/stock/market/candles/${encodeURIComponent(symbol.trim().toUpperCase())}`,
+        params: { interval: "1d", count: 30 },
         signal,
     });
 }

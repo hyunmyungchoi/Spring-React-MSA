@@ -22,6 +22,18 @@ export type MarketQuote = {
     dataStatus: DataStatus;
 };
 
+export type Candle = {
+    timestamp: string;
+    openPrice: string;
+    highPrice: string;
+    lowPrice: string;
+    closePrice: string;
+    volume: string;
+    currency: string;
+    fetchedAt: string;
+    dataStatus: DataStatus;
+};
+
 export type PartialFailure = {
     component: string;
     code: string;

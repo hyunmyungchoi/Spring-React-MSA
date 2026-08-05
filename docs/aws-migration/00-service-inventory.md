@@ -74,7 +74,7 @@ Member와 Admin은 각각 CloudFront Distribution 한 개를 공유하지만 Buc
 
 ## Environment Separation
 
-- Local Docker Compose values live in `infra/docker/.env.local`; only `infra/docker/.env.example` is tracked.
+- Local VM values live in `infra/vm/.env.local`; only `infra/vm/.env.example` is tracked.
 - Git에서 제외되는 서비스별 `application-local.yml`도 실제 자격 증명을 직접 기록하지 않고 환경 변수 placeholder만 사용한다.
 - Local Kubernetes manifests live in `infra/k8s/spring-msa` and intentionally use `localtest.me`.
 - AWS ECS의 비밀이 아닌 값은 Task Definition 환경 변수 또는 SSM Parameter Store `String`, 비밀값은 Secrets Manager로 주입한다. SSM SecureString은 사용하지 않는다.

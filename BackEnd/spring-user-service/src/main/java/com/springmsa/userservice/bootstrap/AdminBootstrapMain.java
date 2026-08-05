@@ -78,8 +78,7 @@ public final class AdminBootstrapMain {
     ) throws SQLException {
         AdminAccount existingAdmin = findSingleAdmin(connection);
         if (existingAdmin != null) {
-            verifyIdempotentRetry(connection, config, existingAdmin);
-            return BootstrapStatus.ALREADY_PRESENT;
+            return verifyOrResetExistingAdmin(connection, config, existingAdmin);
         }
 
         refuseIdentityCollision(connection, config);
@@ -119,21 +118,41 @@ public final class AdminBootstrapMain {
         }
     }
 
-    private static void verifyIdempotentRetry(
+    private static BootstrapStatus verifyOrResetExistingAdmin(
             Connection connection,
             BootstrapConfig config,
             AdminAccount account
     ) throws SQLException {
         boolean sameIdentity = account.loginId().equals(config.loginId())
                 && account.email().equals(config.email());
-        boolean samePassword = PASSWORD_ENCODER.matches(config.password(), account.encodedPassword());
         Set<String> roles = findRoles(connection, account.userId());
 
         if (!sameIdentity
-                || !samePassword
                 || !account.enabled()
                 || !roles.containsAll(Set.of("ROLE_USER", "ROLE_ADMIN"))) {
             throw new IllegalStateException("Admin bootstrap refused because a different or invalid ROLE_ADMIN account exists");
+        }
+
+        if (PASSWORD_ENCODER.matches(config.password(), account.encodedPassword())) {
+            return BootstrapStatus.ALREADY_PRESENT;
+        }
+
+        if (!config.resetPassword()) {
+            throw new IllegalStateException("Admin bootstrap refused because the existing ROLE_ADMIN password differs");
+        }
+
+        resetPassword(connection, config, account.userId());
+        return BootstrapStatus.PASSWORD_RESET;
+    }
+
+    private static void resetPassword(Connection connection, BootstrapConfig config, long userId) throws SQLException {
+        String sql = "UPDATE user_service.users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, PASSWORD_ENCODER.encode(config.password()));
+            statement.setLong(2, userId);
+            if (statement.executeUpdate() != 1) {
+                throw new IllegalStateException("Admin password reset did not update exactly one account");
+            }
         }
     }
 
@@ -217,7 +236,8 @@ public final class AdminBootstrapMain {
 
     enum BootstrapStatus {
         CREATED("created"),
-        ALREADY_PRESENT("already_present");
+        ALREADY_PRESENT("already_present"),
+        PASSWORD_RESET("password_reset");
 
         private final String logValue;
 
@@ -255,6 +275,7 @@ public final class AdminBootstrapMain {
             String email,
             String password,
             String username,
+            boolean resetPassword,
             String auditActor,
             String requestId
     ) {
@@ -282,9 +303,21 @@ public final class AdminBootstrapMain {
                     email,
                     password,
                     normalized(environment, "ADMIN_BOOTSTRAP_USERNAME", 100),
+                    optionalBoolean(environment, "ADMIN_BOOTSTRAP_RESET_PASSWORD"),
                     auditActor,
                     requestId
             );
+        }
+
+        private static boolean optionalBoolean(Map<String, String> environment, String name) {
+            String value = environment.getOrDefault(name, "false").trim();
+            if ("true".equalsIgnoreCase(value)) {
+                return true;
+            }
+            if ("false".equalsIgnoreCase(value)) {
+                return false;
+            }
+            throw new IllegalArgumentException(name + " must be true or false");
         }
 
         private static String normalized(Map<String, String> environment, String name, int maxLength) {

@@ -33,11 +33,26 @@ dependencies {
     runtimeOnly 'org.postgresql:postgresql'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.testcontainers:testcontainers-postgresql'
 }
 
 tasks.named('test', Test) {
     useJUnitPlatform()
+}
+
+tasks.register('migrateDatabase', JavaExec) {
+    group = 'database'
+    description = 'Runs Flyway migrations for the user_service schema.'
+    dependsOn tasks.named('classes')
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.springmsa.userservice.migration.FlywayMigrationMain'
+}
+
+tasks.register('bootstrapAdmin', JavaExec) {
+    group = 'database'
+    description = 'Creates the single administrator account idempotently.'
+    dependsOn tasks.named('classes')
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.springmsa.userservice.bootstrap.AdminBootstrapMain'
 }
 
 dependencyLocking {

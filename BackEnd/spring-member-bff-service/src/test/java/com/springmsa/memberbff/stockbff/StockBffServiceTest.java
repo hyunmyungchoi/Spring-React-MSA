@@ -2,6 +2,7 @@ package com.springmsa.memberbff.stockbff;
 
 import com.springmsa.memberbff.auth.service.BffOAuth2ClientService;
 import com.springmsa.memberbff.stockbff.client.StockServiceClient;
+import com.springmsa.memberbff.stockbff.dto.CandleResponse;
 import com.springmsa.memberbff.stockbff.dto.DataStatus;
 import com.springmsa.memberbff.stockbff.dto.MarketQuoteResponse;
 import com.springmsa.memberbff.stockbff.dto.MarketWorkspaceResponse;
@@ -97,6 +98,28 @@ class StockBffServiceTest {
         verify(stockServiceClient).findMarketStocks("Bearer access-token", symbols);
         verify(stockServiceClient).findMarketPrices("Bearer access-token", symbols);
         verify(stockServiceClient).findWatchItems("Bearer access-token");
+    }
+
+    @Test
+    void marketCandlesAreForwardedWithBearerToken() {
+        List<CandleResponse> candles = List.of(new CandleResponse(
+                "2026-07-12T09:00:00+09:00",
+                "71000",
+                "73000",
+                "70500",
+                "72000",
+                "3521000",
+                "KRW",
+                FETCHED_AT,
+                DataStatus.FRESH
+        ));
+        when(bffOAuth2ClientService.getAccessToken(authentication, request, response)).thenReturn("access-token");
+        when(stockServiceClient.findMarketCandles("Bearer access-token", "005930", "1d", 30))
+                .thenReturn(candles);
+
+        assertThat(service.getMarketCandles(authentication, request, response, "005930", "1d", 30))
+                .containsExactlyElementsOf(candles);
+        verify(stockServiceClient).findMarketCandles("Bearer access-token", "005930", "1d", 30);
     }
 
     private static StockSummaryResponse stock(String symbol) {

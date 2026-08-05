@@ -35,8 +35,6 @@ dependencies {
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
-    testImplementation 'org.testcontainers:testcontainers-postgresql'
     testCompileOnly 'org.projectlombok:lombok'
     testAnnotationProcessor 'org.projectlombok:lombok'
 }
@@ -57,6 +55,14 @@ tasks.named('test') {
 
 tasks.named('jar') {
     enabled = false
+}
+
+tasks.register('migrateDatabase', JavaExec) {
+    group = 'database'
+    description = 'Runs Flyway migrations for the stock_service schema.'
+    dependsOn tasks.named('classes')
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.springmsa.memberstockservice.migration.FlywayMigrationMain'
 }
 
 dependencyLocking {

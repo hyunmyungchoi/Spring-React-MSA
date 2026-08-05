@@ -1,0 +1,25 @@
+spring:
+  config:
+    activate:
+      on-profile: vm
+  datasource:
+    url: jdbc:postgresql://${VM_HOST:192.168.56.101}:${POSTGRES_PORT:5432}/${POSTGRES_DB:postgres}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: member_bff
+  flyway:
+    enabled: true
+    default-schema: member_bff
+    schemas: member_bff
+    create-schemas: true
+  data:
+    redis:
+      host: ${VM_HOST:192.168.56.101}
+      port: ${REDIS_PORT:6379}
+      password: ${SPRING_DATA_REDIS_PASSWORD}
+      timeout: 2s

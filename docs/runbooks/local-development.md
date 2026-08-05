@@ -3,7 +3,7 @@
 ## 사전 요구사항
 
 - JDK 17
-- Docker Desktop 및 Docker Compose
+- PostgreSQL·Redis가 실행되는 Ubuntu Server VM
 - Node 24.18.0
 - Corepack과 pnpm 10.0.0
 - PowerShell
@@ -15,7 +15,7 @@ Gradle은 각 프로젝트의 Wrapper 9.3.0을 사용한다. 시스템 Gradle을
 저장소 루트에서 다음을 실행한다.
 
 ```powershell
-Copy-Item C:\Project\SpringMSA\infra\docker\.env.example C:\Project\SpringMSA\infra\docker\.env.local
+Copy-Item D:\Project\SpringMSA\infra\vm\.env.example D:\Project\SpringMSA\infra\vm\.env.local
 ```
 
 `.env.local`에서 최소 다음 값을 설정한다.
@@ -26,57 +26,35 @@ Copy-Item C:\Project\SpringMSA\infra\docker\.env.example C:\Project\SpringMSA\in
 - Toss API client ID/secret
 - origin, issuer, redirect URI가 실제 접속 주소와 일치하는지 확인
 
-`.env.local`은 Git에 commit하지 않는다. 기본 Compose는 Kafka를 포함하지 않으므로 `APP_KAFKA_ENABLED=false`를 유지한다. Kafka 기능을 켜려면 접근 가능한 broker와 bootstrap servers를 별도로 준비한다.
+`.env.local`은 Git에 commit하지 않는다. 현재 VM에 Kafka가 없으므로 `APP_KAFKA_ENABLED=false`를 유지한다. Kafka 기능을 켜려면 접근 가능한 broker와 bootstrap servers를 별도로 준비한다.
 
-## 전체 Docker Compose 실행
+## VM 데이터 계층 확인
 
 ```powershell
-Set-Location C:\Project\SpringMSA\infra\docker
-docker compose --env-file .env.local config --quiet
-docker compose --env-file .env.local up -d --build
-docker compose --env-file .env.local ps
+Test-NetConnection <VM_IP> -Port 5432
+Test-NetConnection <VM_IP> -Port 6379
 ```
 
-서비스가 모두 healthy가 된 뒤 접속한다.
+PostgreSQL과 Redis는 Ubuntu Server VM에서 직접 실행한다. VM 주소와 자격 증명은 `infra/vm/.env.local`에서 관리하고 애플리케이션은 `local,vm` 프로필로 실행한다.
+
+Backend 서비스가 실행된 뒤 접속한다.
 
 - Member: `http://localhost:5173`
 - Admin: `http://localhost:5176`
 - Member Gateway: `http://localhost:8080`
 - Admin Gateway: `http://localhost:8090`
 
-로그 확인:
-
-```powershell
-docker compose --env-file .env.local logs -f spring-member-bff-service
-docker compose --env-file .env.local logs -f spring-security-authorization-server
-```
-
-종료:
-
-```powershell
-docker compose --env-file .env.local down
-```
-
-데이터까지 삭제하는 `down -v`는 PostgreSQL volume을 지우므로 의도한 초기화일 때만 사용한다.
-
 ## Backend 직접 실행
 
-PostgreSQL과 Redis만 먼저 실행할 수 있다.
+`infra/vm/.env.local` 값을 현재 PowerShell 환경에 주입한 뒤 각 서비스 디렉터리에서 실행한다.
 
 ```powershell
-Set-Location C:\Project\SpringMSA\infra\docker
-docker compose --env-file .env.local up -d postgres redis
-```
-
-그다음 각 서비스 디렉터리에서 필요한 환경 변수를 주입하고 실행한다.
-
-```powershell
-Set-Location C:\Project\SpringMSA\BackEnd\spring-user-service
-$env:SPRING_PROFILES_ACTIVE = "local"
+Set-Location D:\Project\SpringMSA\BackEnd\spring-user-service
+$env:SPRING_PROFILES_ACTIVE = "local,vm"
 .\gradlew.bat bootRun
 ```
 
-`application-local.yml`도 환경 변수 placeholder를 사용한다. 서비스별 `application-local.example.yml`을 참고하되 secret을 source file에 기록하지 않는다.
+`application-local.yml`과 `application-vm.yml`은 함께 사용한다. secret을 source file에 기록하지 않는다.
 
 Backend 전체 테스트:
 
@@ -93,7 +71,7 @@ Get-ChildItem C:\Project\SpringMSA\BackEnd -Directory | Where-Object {
 ## Frontend 직접 실행
 
 ```powershell
-Set-Location C:\Project\SpringMSA\FrontEnd
+Set-Location D:\Project\SpringMSA\FrontEnd
 corepack enable
 corepack install
 pnpm --version
@@ -104,7 +82,7 @@ pnpm --filter member dev
 별도 터미널에서 Admin을 실행한다.
 
 ```powershell
-Set-Location C:\Project\SpringMSA\FrontEnd
+Set-Location D:\Project\SpringMSA\FrontEnd
 pnpm --filter admin dev
 ```
 

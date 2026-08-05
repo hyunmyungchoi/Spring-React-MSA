@@ -32,12 +32,6 @@ public class BffAuthController {
     @Value("${bff.oauth2.end-session-uri}")
     private String endSessionUri;
 
-    @Value("${bff.oauth2.logout-uri}")
-    private String logoutUri;
-
-    @Value("${bff.oauth2.use-end-session:false}")
-    private boolean useEndSession;
-
     @Value("${bff.frontend.redirect-uri}")
     private String frontendRedirectUri;
 
@@ -63,22 +57,18 @@ public class BffAuthController {
 
         String postLogoutRedirectUri = frontendRedirectUri + "/auth";
 
-        String authServerLogoutUrl = authServerLogoutUrl(idToken, postLogoutRedirectUri);
+        if (!StringUtils.hasText(idToken)) {
+            return ResponseEntity.ok(MsaResponse.ok(LogoutResponse.localSuccess()));
+        }
+
+        String authServerLogoutUrl = endSessionUrl(idToken, postLogoutRedirectUri);
 
         return ResponseEntity.ok(MsaResponse.ok(LogoutResponse.success(authServerLogoutUrl)));
     }
 
-    private String authServerLogoutUrl(String idToken, String postLogoutRedirectUri) {
-        if (useEndSession && StringUtils.hasText(idToken)) {
-            return UriComponentsBuilder.fromUriString(endSessionUri)
-                    .queryParam("id_token_hint", idToken)
-                    .queryParam("post_logout_redirect_uri", postLogoutRedirectUri)
-                    .build()
-                    .encode()
-                    .toUriString();
-        }
-
-        return UriComponentsBuilder.fromUriString(logoutUri)
+    private String endSessionUrl(String idToken, String postLogoutRedirectUri) {
+        return UriComponentsBuilder.fromUriString(endSessionUri)
+                .queryParam("id_token_hint", idToken)
                 .queryParam("post_logout_redirect_uri", postLogoutRedirectUri)
                 .build()
                 .encode()

@@ -1,0 +1,19 @@
+spring:
+  config:
+    activate:
+      on-profile: vm
+  datasource:
+    url: jdbc:postgresql://${VM_HOST:192.168.56.101}:${POSTGRES_PORT:5432}/${POSTGRES_DB:postgres}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: user_service
+  flyway:
+    enabled: true
+    default-schema: user_service
+    schemas: user_service
+    create-schemas: true

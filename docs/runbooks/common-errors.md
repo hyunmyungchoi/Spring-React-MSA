@@ -3,12 +3,13 @@
 ## 빠른 분류
 
 ```powershell
-docker compose --env-file C:\Project\SpringMSA\infra\docker\.env.local ps
+Test-NetConnection <VM_IP> -Port 5432
+Test-NetConnection <VM_IP> -Port 6379
 kubectl get pods -A
 kubectl get events -n spring-msa --sort-by=.lastTimestamp
 ```
 
-로컬 Compose인지 Kubernetes인지 먼저 구분하고, 최초 실패 component의 로그를 본다.
+로컬 VM 직접 실행인지 Kubernetes인지 먼저 구분하고, 최초 실패 component의 로그를 본다.
 
 ## OAuth `redirect_uri` 불일치
 
@@ -59,14 +60,12 @@ JWT/`userinfo`의 `roles`에 정확히 `ROLE_ADMIN`이 있는지 확인한다. r
 - header 이름이 `X-Internal-Token`인지 확인한다.
 - `/internal/**`를 외부에 임시 공개해 우회하지 않는다.
 
-## Compose service unhealthy
+## VM PostgreSQL 또는 Redis 연결 실패
 
-```powershell
-docker compose --env-file .env.local logs <service>
-docker compose --env-file .env.local exec <service> sh -c "command -v wget"
-```
-
-Backend healthcheck는 runtime image의 BusyBox `wget`으로 actuator readiness를 호출한다. wget이 없다면 base image digest 변경 여부를 확인하고 healthcheck 도구 정책을 다시 결정한다. port와 actuator path가 service 설정과 같은지도 확인한다.
+- VirtualBox Host-Only 어댑터와 VM IP를 확인한다.
+- `application-vm.yml`의 host·port와 `infra/vm/.env.local` 자격 증명을 확인한다.
+- VM에서 PostgreSQL `5432`, Redis `6379`가 listen 중인지 확인한다.
+- Ubuntu 방화벽이 Host-Only 네트워크의 접근을 허용하는지 확인한다.
 
 ## `ImagePullBackOff`
 

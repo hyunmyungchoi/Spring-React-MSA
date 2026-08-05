@@ -1,5 +1,6 @@
 package com.springmsa.memberbff.stockbff.client;
 
+import com.springmsa.memberbff.stockbff.dto.CandleResponse;
 import com.springmsa.memberbff.stockbff.dto.MarketQuoteResponse;
 import com.springmsa.memberbff.stockbff.dto.StockSummaryResponse;
 import com.springmsa.memberbff.stockbff.dto.StockWatchItemRequest;
@@ -32,6 +33,14 @@ public interface StockServiceClient {
 
     @GetMapping("/api/stock/market/prices")
     List<MarketQuoteResponse> findMarketPrices(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorization, @RequestParam("symbols") String symbols);
+
+    @GetMapping("/api/stock/market/candles/{symbol}")
+    List<CandleResponse> findMarketCandles(
+            @RequestHeader(HttpHeaders.AUTHORIZATION) String authorization,
+            @PathVariable("symbol") String symbol,
+            @RequestParam("interval") String interval,
+            @RequestParam("count") int count
+    );
 
     @PostMapping("/api/stock/watch-items")
     StockWatchItemResponse createWatchItem(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorization, @RequestBody StockWatchItemRequest request);

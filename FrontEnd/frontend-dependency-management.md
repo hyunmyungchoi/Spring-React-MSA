@@ -147,23 +147,9 @@ pnpm -v
 pnpm list
 ```
 
-## Docker Entry Images
+## Kubernetes Entry Images
 
-Frontend deployable entries use separate Dockerfiles. The default compose services build the full member/admin SPAs.
-
-```bash
-docker compose up --build spring-member-web
-docker compose up --build spring-admin-web
-```
-
-Build a single entry image directly when you need the same target as CI.
-
-```bash
-docker build -f FrontEnd/apps/member/Dockerfile.community -t spring-react-msa/spring-community-web:local .
-docker build -f FrontEnd/apps/member/Dockerfile.stock -t spring-react-msa/spring-stock-web:local .
-docker build -f FrontEnd/apps/admin/Dockerfile.users -t spring-react-msa/spring-admin-users-web:local .
-docker build -f FrontEnd/apps/admin/Dockerfile.logs -t spring-react-msa/spring-admin-logs-web:local .
-```
+Frontend deployable entries keep separate Dockerfiles only for GitHub Actions image builds and Kubernetes deployments. Local development runs the Vite applications directly and does not use Docker Compose.
 
 Kubernetes frontend deployments use separate images for independently deployable entries.
 

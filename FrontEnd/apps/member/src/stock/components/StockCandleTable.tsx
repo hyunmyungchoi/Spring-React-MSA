@@ -1,39 +1,38 @@
 import { formatDateTime } from "./formatDateTime";
-import StockDataStatus from "./StockDataStatus";
-import type { MarketQuote } from "../types/marketData";
+import type { Candle } from "../types/marketData";
 
 type StockCandleTableProps = {
-    quotes: MarketQuote[];
+    candles: Candle[];
 };
 
-function StockCandleTable({ quotes }: StockCandleTableProps) {
+function StockCandleTable({ candles }: StockCandleTableProps) {
     return (
         <div className="stock-table-wrap">
             <table className="stock-candle-table">
                 <thead>
                     <tr>
-                        <th>종목</th>
-                        <th>시간</th>
+                        <th>날짜</th>
+                        <th>시가</th>
+                        <th>고가</th>
+                        <th>저가</th>
                         <th>종가</th>
-                        <th>통화</th>
-                        <th>상태</th>
+                        <th>거래량</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {quotes.length === 0 ? (
+                    {candles.length === 0 ? (
                         <tr>
-                            <td colSpan={5}>표시할 데이터가 없습니다.</td>
+                            <td colSpan={6}>표시할 캔들 데이터가 없습니다.</td>
                         </tr>
                     ) : (
-                        quotes.map((quote) => (
-                            <tr key={quote.symbol}>
-                                <td>{quote.symbol}</td>
-                                <td>{formatDateTime(quote.timestamp)}</td>
-                                <td>{quote.lastPrice}</td>
-                                <td>{quote.currency}</td>
-                                <td>
-                                    <StockDataStatus status={quote.dataStatus} fetchedAt={quote.fetchedAt} />
-                                </td>
+                        candles.slice(0, 10).map((candle) => (
+                            <tr key={candle.timestamp}>
+                                <td>{formatDateTime(candle.timestamp)}</td>
+                                <td>{candle.openPrice}</td>
+                                <td>{candle.highPrice}</td>
+                                <td>{candle.lowPrice}</td>
+                                <td>{candle.closePrice}</td>
+                                <td>{new Intl.NumberFormat("ko-KR").format(Number(candle.volume))}</td>
                             </tr>
                         ))
                     )}

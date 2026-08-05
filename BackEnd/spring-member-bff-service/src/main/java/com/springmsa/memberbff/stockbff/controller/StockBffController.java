@@ -1,6 +1,7 @@
 package com.springmsa.memberbff.stockbff.controller;
 
 import com.springmsa.common.web.response.MsaResponse;
+import com.springmsa.memberbff.stockbff.dto.CandleResponse;
 import com.springmsa.memberbff.stockbff.dto.MarketWorkspaceResponse;
 import com.springmsa.memberbff.stockbff.dto.StockWatchItemRequest;
 import com.springmsa.memberbff.stockbff.dto.StockWatchItemResponse;
@@ -41,6 +42,20 @@ public class StockBffController {
     @GetMapping("/stock/market/workspace")
     public ResponseEntity<MsaResponse<MarketWorkspaceResponse>> marketWorkspace(Authentication authentication, HttpServletRequest request, HttpServletResponse response, @RequestParam(defaultValue = "") String symbols) {
         return ResponseEntity.ok(MsaResponse.ok(stockBffService.getMarketWorkspace(authentication, request, response, symbols)));
+    }
+
+    @GetMapping("/stock/market/candles/{symbol}")
+    public ResponseEntity<MsaResponse<List<CandleResponse>>> marketCandles(
+            Authentication authentication,
+            HttpServletRequest request,
+            HttpServletResponse response,
+            @PathVariable String symbol,
+            @RequestParam(defaultValue = "1d") String interval,
+            @RequestParam(defaultValue = "30") int count
+    ) {
+        return ResponseEntity.ok(MsaResponse.ok(
+                stockBffService.getMarketCandles(authentication, request, response, symbol, interval, count)
+        ));
     }
 
     @PostMapping("/stock/watch-items")

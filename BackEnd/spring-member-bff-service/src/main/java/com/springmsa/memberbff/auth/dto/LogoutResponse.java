@@ -9,4 +9,8 @@ public record LogoutResponse(
     public static LogoutResponse success(String authServerLogoutUrl) {
         return new LogoutResponse("success", true, authServerLogoutUrl);
     }
+
+    public static LogoutResponse localSuccess() {
+        return new LogoutResponse("success", false, null);
+    }
 }

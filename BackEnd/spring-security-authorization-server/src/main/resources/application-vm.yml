@@ -1,0 +1,10 @@
+spring:
+  config:
+    activate:
+      on-profile: vm
+  data:
+    redis:
+      host: ${VM_HOST:192.168.56.101}
+      port: ${REDIS_PORT:6379}
+      password: ${SPRING_DATA_REDIS_PASSWORD}
+      timeout: 2s

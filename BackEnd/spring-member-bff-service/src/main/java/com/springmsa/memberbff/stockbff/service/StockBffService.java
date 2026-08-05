@@ -4,6 +4,7 @@ import com.springmsa.common.web.error.ApiException;
 import com.springmsa.memberbff.auth.service.BffOAuth2ClientService;
 import com.springmsa.memberbff.common.error.DownstreamFeignExceptionMapper;
 import com.springmsa.memberbff.stockbff.client.StockServiceClient;
+import com.springmsa.memberbff.stockbff.dto.CandleResponse;
 import com.springmsa.memberbff.stockbff.dto.MarketQuoteResponse;
 import com.springmsa.memberbff.stockbff.dto.MarketWorkspaceResponse;
 import com.springmsa.memberbff.stockbff.dto.PartialFailure;
@@ -63,6 +64,26 @@ public class StockBffService {
         List<StockWatchItemResponse> watchItems = findWatchItems(authorization, failures);
 
         return new MarketWorkspaceResponse(stocks, prices, watchItems, failures);
+    }
+
+    public List<CandleResponse> getMarketCandles(
+            Authentication authentication,
+            HttpServletRequest request,
+            HttpServletResponse response,
+            String symbol,
+            String interval,
+            int count
+    ) {
+        try {
+            return stockServiceClient.findMarketCandles(
+                    bearerToken(authentication, request, response),
+                    symbol,
+                    interval,
+                    count
+            );
+        } catch (FeignException exception) {
+            throw stockFailure(exception, "Stock market candles request failed");
+        }
     }
 
     public StockWatchItemResponse createWatchItem(Authentication authentication, HttpServletRequest request, HttpServletResponse response, StockWatchItemRequest watchItemRequest) {

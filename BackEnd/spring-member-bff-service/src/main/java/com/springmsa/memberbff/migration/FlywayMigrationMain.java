@@ -24,7 +24,7 @@ public final class FlywayMigrationMain {
                         required(environment, "SPRING_DATASOURCE_PASSWORD"))
                 .defaultSchema(SCHEMA)
                 .schemas(SCHEMA)
-                .createSchemas(false)
+                .createSchemas(true)
                 .locations("classpath:db/migration")
                 .validateOnMigrate(true)
                 .load()

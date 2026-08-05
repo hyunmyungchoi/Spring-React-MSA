@@ -1,13 +1,14 @@
 import { formatDateTime } from "./formatDateTime";
-import StockDataStatus from "./StockDataStatus";
 import type { MarketQuote, StockSummary } from "../types/marketData";
 
 type StockQuoteGridProps = {
     quotes: MarketQuote[];
     stocks: StockSummary[];
+    selectedSymbol: string;
+    onSelect: (symbol: string) => void;
 };
 
-function StockQuoteGrid({ quotes, stocks }: StockQuoteGridProps) {
+function StockQuoteGrid({ quotes, stocks, selectedSymbol, onSelect }: StockQuoteGridProps) {
     const stockBySymbol = new Map(stocks.map((stock) => [stock.symbol, stock]));
 
     if (quotes.length === 0) {
@@ -20,23 +21,27 @@ function StockQuoteGrid({ quotes, stocks }: StockQuoteGridProps) {
                 const stock = stockBySymbol.get(quote.symbol);
 
                 return (
-                    <article className={quote.dataStatus === "STALE" ? "stock-quote-card is-stale" : "stock-quote-card"} key={quote.symbol}>
+                    <button
+                        className={`stock-quote-card${quote.dataStatus === "STALE" ? " is-stale" : ""}${selectedSymbol === quote.symbol ? " is-selected" : ""}`}
+                        key={quote.symbol}
+                        type="button"
+                        onClick={() => onSelect(quote.symbol)}
+                    >
                         <div className="stock-quote-heading">
                             <div>
                                 <span>{stock?.market ?? "MARKET"}</span>
                                 <strong>{quote.symbol}</strong>
                             </div>
-                            <StockDataStatus status={quote.dataStatus} fetchedAt={quote.fetchedAt} />
+                            <span className="stock-list-currency">{quote.currency}</span>
                         </div>
                         <p className="stock-name">{stock?.name ?? stock?.englishName ?? quote.symbol}</p>
                         <div className="stock-price-row">
                             <strong>{formatPrice(quote.lastPrice, quote.currency)}</strong>
-                            <span>{quote.currency}</span>
                         </div>
                         {quote.dataStatus === "STALE" && (
                             <p className="stock-stale-banner">마지막 정상 수신: {formatDateTime(quote.timestamp ?? quote.fetchedAt)}</p>
                         )}
-                    </article>
+                    </button>
                 );
             })}
         </div>

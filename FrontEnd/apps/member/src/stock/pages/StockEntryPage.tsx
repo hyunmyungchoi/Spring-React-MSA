@@ -8,6 +8,8 @@ import {
 import StockCandleTable from "../components/StockCandleTable";
 import StockQuoteGrid from "../components/StockQuoteGrid";
 import StockSearchForm from "../components/StockSearchForm";
+import StockMarketDetail from "../components/StockMarketDetail";
+import { useMarketCandles } from "../hooks/useMarketCandles";
 import { useMarketWorkspace } from "../hooks/useMarketWorkspace";
 import { toKoreanStockMessage } from "../messages/stockErrorMessages";
 import type { PartialFailure } from "../types/marketData";
@@ -20,16 +22,20 @@ const MAX_SYMBOLS = 200;
 function StockEntryPage() {
     const [symbols, setSymbols] = useState(INITIAL_SYMBOLS);
     const [symbolQuery, setSymbolQuery] = useState(INITIAL_SYMBOLS.join(","));
+    const [selectedSymbol, setSelectedSymbol] = useState(INITIAL_SYMBOLS[0]);
     const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
     const [symbol, setSymbol] = useState("");
     const [memo, setMemo] = useState("");
     const [message, setMessage] = useState("");
     const { workspace, loading, error, paused, refresh } = useMarketWorkspace(symbols);
+    const { candles, loading: candlesLoading, error: candlesError } = useMarketCandles(selectedSymbol);
 
     const items = workspace?.watchItems ?? [];
     const quotes = workspace?.prices ?? [];
     const stocks = workspace?.stocks ?? [];
     const failures = workspace?.failures ?? [];
+    const selectedQuote = quotes.find((quote) => quote.symbol === selectedSymbol);
+    const selectedStock = stocks.find((stock) => stock.symbol === selectedSymbol);
     const displayMessage = message || (error ? toKoreanStockMessage(error, "시세 정보를 불러오지 못했습니다.") : "");
 
     const resetForm = () => {
@@ -99,15 +105,19 @@ function StockEntryPage() {
 
         setMessage("");
         setSymbols(nextSymbols);
+        if (!nextSymbols.includes(selectedSymbol)) {
+            setSelectedSymbol(nextSymbols[0]);
+        }
     };
 
     return (
         <div className="stock-workspace">
-            <section className="info-panel stock-panel">
+            <section className="info-panel stock-panel stock-overview">
                 <div className="stock-section-heading">
                     <div>
-                        <h2>시장 현황</h2>
-                        <p className="entry-copy">관심 종목과 실시간 시세</p>
+                        <span className="stock-kicker">MARKET</span>
+                        <h2>오늘의 주식</h2>
+                        <p className="entry-copy">토스증권 Open API로 확인하는 국내·미국 주식</p>
                     </div>
                     <StockSearchForm
                         value={symbolQuery}
@@ -120,13 +130,33 @@ function StockEntryPage() {
 
                 {displayMessage && <p className="status-message">{displayMessage}</p>}
                 <FailurePanel failures={failures} />
-                <StockQuoteGrid quotes={quotes} stocks={stocks} />
+                <div className="stock-market-board">
+                    <aside className="stock-list-panel">
+                        <div className="stock-list-heading">
+                            <strong>종목 리스트</strong>
+                            <span>{quotes.length}개</span>
+                        </div>
+                        <StockQuoteGrid
+                            quotes={quotes}
+                            stocks={stocks}
+                            selectedSymbol={selectedSymbol}
+                            onSelect={setSelectedSymbol}
+                        />
+                    </aside>
+                    <StockMarketDetail
+                        quote={selectedQuote}
+                        stock={selectedStock}
+                        candles={candles}
+                        loading={candlesLoading}
+                        error={candlesError}
+                    />
+                </div>
             </section>
 
             <section className="stock-layout">
                 <div className="info-panel stock-panel">
-                    <div className="stock-section-heading">
-                        <h2>관심 종목</h2>
+                    <div className="stock-section-heading compact">
+                        <div><span className="stock-kicker">WATCHLIST</span><h2>관심 종목</h2></div>
                     </div>
                     <form className="auth-form stock-watch-form" onSubmit={handleSubmit}>
                         <label>
@@ -153,10 +183,14 @@ function StockEntryPage() {
                         ) : (
                             items.map((item) => (
                                 <article className="stock-watch-item" key={item.id}>
-                                    <div>
+                                    <button className="stock-watch-select" type="button" onClick={() => {
+                                        setSelectedSymbol(item.symbol);
+                                        setSymbols((current) => current.includes(item.symbol) ? current : [...current, item.symbol]);
+                                        setSymbolQuery((current) => parseSymbols(current).includes(item.symbol) ? current : `${current},${item.symbol}`);
+                                    }}>
                                         <strong>{item.symbol}</strong>
                                         <span>{item.memo}</span>
-                                    </div>
+                                    </button>
                                     <div className="stock-actions">
                                         <button type="button" onClick={() => handleEdit(item)}>
                                             수정
@@ -173,9 +207,9 @@ function StockEntryPage() {
 
                 <section className="info-panel stock-panel">
                     <div className="stock-section-heading">
-                        <h2>캔들 테이블</h2>
+                        <div><span className="stock-kicker">DAILY</span><h2>{selectedSymbol} 일봉</h2></div>
                     </div>
-                    <StockCandleTable quotes={quotes} />
+                    <StockCandleTable candles={candles} />
                 </section>
             </section>
         </div>

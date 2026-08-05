@@ -28,8 +28,6 @@ dependencies {
     runtimeOnly 'org.postgresql:postgresql'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
-    testImplementation 'org.testcontainers:testcontainers-postgresql'
 }
 
 tasks.named('test') {
@@ -38,6 +36,14 @@ tasks.named('test') {
 
 tasks.named('jar') {
     enabled = false
+}
+
+tasks.register('migrateDatabase', JavaExec) {
+    group = 'database'
+    description = 'Runs Flyway migrations for the community_service schema.'
+    dependsOn tasks.named('classes')
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.springmsa.membercommunityservice.migration.FlywayMigrationMain'
 }
 
 dependencyLocking {
