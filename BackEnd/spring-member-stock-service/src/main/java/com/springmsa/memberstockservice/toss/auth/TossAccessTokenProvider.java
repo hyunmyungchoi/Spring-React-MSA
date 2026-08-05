@@ -15,7 +15,7 @@ public class TossAccessTokenProvider {
 
     private static final String LOCK_VALUE = "locked";
     private static final Duration REFRESH_LOCK_TTL = Duration.ofSeconds(5);
-    private static final Duration LOCK_WAIT_TIMEOUT = Duration.ofSeconds(1);
+    private static final Duration LOCK_WAIT_TIMEOUT = Duration.ofSeconds(6);
     private static final Duration LOCK_RETRY_INTERVAL = Duration.ofMillis(50);
     private static final long TOKEN_TTL_BUFFER_SECONDS = 60;
 
@@ -111,6 +111,24 @@ public class TossAccessTokenProvider {
             }
 
             pause(retryInterval);
+        }
+
+        String cachedToken = valueOperations.get(properties.tokenCacheKey());
+        if (hasText(cachedToken)) {
+            return cachedToken;
+        }
+
+        Boolean lockAcquired = valueOperations.setIfAbsent(
+                properties.refreshLockKey(),
+                LOCK_VALUE,
+                REFRESH_LOCK_TTL
+        );
+        if (Boolean.TRUE.equals(lockAcquired)) {
+            try {
+                return issueAndCacheToken(valueOperations);
+            } finally {
+                redisTemplate.delete(properties.refreshLockKey());
+            }
         }
 
         throw new ApiException(TossErrorCode.TOSS_TOKEN_UNAVAILABLE);

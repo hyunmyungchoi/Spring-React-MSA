@@ -3,6 +3,7 @@ package com.springmsa.userservice.user.service;
 import com.springmsa.userservice.user.domain.User;
 import com.springmsa.userservice.user.dto.CreateUserRequest;
 import com.springmsa.userservice.user.repository.UserRepository;
+import com.springmsa.userservice.outbox.OutboxEventWriter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,6 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Set;
 
@@ -31,11 +33,14 @@ class InternalUserCreateServiceTest {
     @Mock
     PasswordEncoder passwordEncoder;
 
+    @Mock
+    OutboxEventWriter outboxEventWriter;
+
     InternalUserCreateService service;
 
     @BeforeEach
     void setUp() {
-        service = new InternalUserCreateService(userRepository, passwordEncoder);
+        service = new InternalUserCreateService(userRepository, passwordEncoder, outboxEventWriter);
     }
 
     @Test
@@ -56,7 +61,11 @@ class InternalUserCreateServiceTest {
         when(userRepository.existsByLoginId("member1")).thenReturn(false);
         when(userRepository.existsByEmail("member1@example.com")).thenReturn(false);
         when(passwordEncoder.encode("safe-password")).thenReturn("encoded-password");
-        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+            User user = invocation.getArgument(0);
+            ReflectionTestUtils.setField(user, "userId", 1L);
+            return user;
+        });
 
         var response = service.create(request(null));
 
@@ -64,6 +73,13 @@ class InternalUserCreateServiceTest {
         verify(userRepository).save(captor.capture());
         assertThat(captor.getValue().getRoles()).containsExactly("ROLE_USER");
         assertThat(response.roles()).containsExactly("ROLE_USER");
+        verify(outboxEventWriter).append(
+                org.mockito.ArgumentMatchers.eq("User"),
+                org.mockito.ArgumentMatchers.eq("1"),
+                org.mockito.ArgumentMatchers.eq("springmsa.user.registered.v1"),
+                org.mockito.ArgumentMatchers.eq("member1"),
+                any()
+        );
     }
 
     private static CreateUserRequest request(Set<String> roles) {

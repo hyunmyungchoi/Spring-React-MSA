@@ -4,6 +4,10 @@ import com.springmsa.userservice.user.domain.User;
 import com.springmsa.userservice.user.dto.CreateUserRequest;
 import com.springmsa.userservice.user.dto.CreateUserResponse;
 import com.springmsa.userservice.user.repository.UserRepository;
+import com.springmsa.userservice.outbox.OutboxEventWriter;
+import com.springmsa.kafka.event.MsaEventEnvelope;
+import com.springmsa.kafka.event.UserRegisteredEvent;
+import com.springmsa.kafka.topic.MsaKafkaTopics;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -13,6 +17,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.Set;
+import java.time.Instant;
 
 @Service
 public class InternalUserCreateService {
@@ -21,13 +26,16 @@ public class InternalUserCreateService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final OutboxEventWriter outboxEventWriter;
 
     public InternalUserCreateService(
             UserRepository userRepository,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder,
+            OutboxEventWriter outboxEventWriter
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.outboxEventWriter = outboxEventWriter;
     }
 
     @Transactional
@@ -56,6 +64,19 @@ public class InternalUserCreateService {
                 whatsappNumber,
                 roles
         ));
+
+        Instant occurredAt = Instant.now();
+        MsaEventEnvelope<UserRegisteredEvent> event = MsaEventEnvelope.create(
+                "user.registered", 1, "spring-user-service", occurredAt,
+                new UserRegisteredEvent(
+                        savedUser.getUserId(), savedUser.getLoginId(), savedUser.getEmail(),
+                        savedUser.getUsername(), Set.copyOf(savedUser.getRoles())
+                )
+        );
+        outboxEventWriter.append(
+                "User", savedUser.getUserId().toString(), MsaKafkaTopics.USER_REGISTERED_V1,
+                savedUser.getLoginId(), event
+        );
 
         return new CreateUserResponse(
                 savedUser.getUserId(),

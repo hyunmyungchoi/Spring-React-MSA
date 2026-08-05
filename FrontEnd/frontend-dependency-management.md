@@ -86,7 +86,7 @@ Add this field to `package.json`.
 Create `.nvmrc`.
 
 ```text
-24.18.0
+24.19.0
 ```
 
 ## Development Commands
@@ -99,7 +99,7 @@ pnpm --filter member build:all
 pnpm --filter admin build:all
 ```
 
-Workspace root `package.json`에는 `dev`, `build`, `preview` script가 없으므로 app filter 없이 `pnpm dev` 또는 `pnpm build`를 실행하지 않는다.
+Workspace root `package.json`?먮뒗 `dev`, `build`, `preview` script媛 ?놁쑝誘濡?app filter ?놁씠 `pnpm dev` ?먮뒗 `pnpm build`瑜??ㅽ뻾?섏? ?딅뒗??
 
 ## CI/CD Install Command
 
@@ -156,10 +156,11 @@ Kubernetes frontend deployments use separate images for independently deployable
 | Deployment | Dockerfile | Mount path |
 |---|---|---|
 | `spring-member-web` | `FrontEnd/apps/member/Dockerfile.member` | `/` |
-| `spring-community-web` | `FrontEnd/apps/member/Dockerfile.community` | `/community` |
-| `spring-stock-web` | `FrontEnd/apps/member/Dockerfile.stock` | `/stock` |
+| `spring-member-community-web` | `FrontEnd/apps/member-community/Dockerfile` | `/community` |
+| `spring-member-stock-web` | `FrontEnd/apps/member-stock/Dockerfile` | `/stock` |
 | `spring-admin-web` | `FrontEnd/apps/admin/Dockerfile.admin` | `/` |
-| `spring-admin-users-web` | `FrontEnd/apps/admin/Dockerfile.users` | `/manage/users` |
-| `spring-admin-logs-web` | `FrontEnd/apps/admin/Dockerfile.logs` | `/manage/logs` |
+| `spring-admin-users-web` | `FrontEnd/apps/admin-users/Dockerfile` | `/manage/users` |
+| `spring-admin-logs-web` | `FrontEnd/apps/admin-logs/Dockerfile` | `/manage/logs` |
 
 Each entry Dockerfile fixes its own Vite mode and output mount path, so GitHub Actions does not pass `VITE_MODE` or `WEB_MOUNT_PATH`.
+

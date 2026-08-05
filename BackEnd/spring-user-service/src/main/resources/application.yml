@@ -4,6 +4,22 @@ server:
 spring:
   application:
     name: spring-user-service
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      properties:
+        enable.idempotence: true
+
+app:
+  kafka:
+    enabled: ${APP_KAFKA_ENABLED:false}
+    outbox:
+      fixed-delay-ms: ${APP_KAFKA_OUTBOX_FIXED_DELAY_MS:1000}
+      batch-size: ${APP_KAFKA_OUTBOX_BATCH_SIZE:100}
+      send-timeout-seconds: ${APP_KAFKA_SEND_TIMEOUT_SECONDS:10}
 
 management:
   endpoint:

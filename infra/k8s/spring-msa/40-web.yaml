@@ -38,23 +38,23 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: spring-community-web
+  name: spring-member-community-web
   namespace: spring-msa
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: spring-community-web
+      app: spring-member-community-web
   template:
     metadata:
       labels:
-        app: spring-community-web
+        app: spring-member-community-web
     spec:
       imagePullSecrets:
         - name: ghcr-secret
       containers:
-        - name: spring-community-web
-          image: ghcr.io/hyunmyungchoi/spring-community-web@sha256:b1a3c2e75b083d66480fad91bcd4207bc8282f0a887798a605db494ebd64efdf
+        - name: spring-member-community-web
+          image: ghcr.io/hyunmyungchoi/spring-member-community-web@sha256:b1a3c2e75b083d66480fad91bcd4207bc8282f0a887798a605db494ebd64efdf
           imagePullPolicy: Always
           ports:
             - containerPort: 80
@@ -62,12 +62,12 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: spring-community-web
+  name: spring-member-community-web
   namespace: spring-msa
 spec:
   type: ClusterIP
   selector:
-    app: spring-community-web
+    app: spring-member-community-web
   ports:
     - port: 80
       targetPort: 80
@@ -75,23 +75,23 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: spring-stock-web
+  name: spring-member-stock-web
   namespace: spring-msa
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: spring-stock-web
+      app: spring-member-stock-web
   template:
     metadata:
       labels:
-        app: spring-stock-web
+        app: spring-member-stock-web
     spec:
       imagePullSecrets:
         - name: ghcr-secret
       containers:
-        - name: spring-stock-web
-          image: ghcr.io/hyunmyungchoi/spring-stock-web@sha256:2ad109fb25338094c047be803a8454dd94040802f171115fca94cf9b9c12830f
+        - name: spring-member-stock-web
+          image: ghcr.io/hyunmyungchoi/spring-member-stock-web@sha256:2ad109fb25338094c047be803a8454dd94040802f171115fca94cf9b9c12830f
           imagePullPolicy: Always
           ports:
             - containerPort: 80
@@ -99,12 +99,12 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: spring-stock-web
+  name: spring-member-stock-web
   namespace: spring-msa
 spec:
   type: ClusterIP
   selector:
-    app: spring-stock-web
+    app: spring-member-stock-web
   ports:
     - port: 80
       targetPort: 80

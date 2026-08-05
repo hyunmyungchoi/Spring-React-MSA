@@ -53,8 +53,8 @@ Examples:
 
 ```text
 spring-member-stock-service -> builds and deploys only the stock backend service
-spring-stock-web            -> builds and deploys only the stock frontend entry
-spring-community-web        -> builds and deploys only the community frontend entry
+spring-member-stock-web            -> builds and deploys only the stock frontend entry
+spring-member-community-web        -> builds and deploys only the community frontend entry
 spring-admin-users-web      -> builds and deploys only the admin users frontend entry
 spring-admin-logs-web       -> builds and deploys only the admin logs frontend entry
 ```

@@ -198,4 +198,31 @@ class TossAccessTokenProviderTest {
                     assertThat(apiException.status().value()).isEqualTo(503);
                 });
     }
+
+    @Test
+    void reacquiresExpiredRefreshLockAfterWaiting() {
+        TossAccessTokenProvider provider = new TossAccessTokenProvider(
+                redisTemplate,
+                tokenClient,
+                properties
+        ).withTimingForTest(
+                duration -> {
+                },
+                Duration.ZERO,
+                Duration.ZERO
+        );
+        when(valueOperations.get("toss:oauth:access-token")).thenReturn((String) null);
+        when(valueOperations.setIfAbsent("toss:oauth:refresh-lock", "locked", Duration.ofSeconds(5)))
+                .thenReturn(false, true);
+        when(tokenClient.issueToken()).thenReturn(new TossTokenResponse("issued-after-wait", "Bearer", 3600));
+
+        assertThat(provider.getAccessToken()).isEqualTo("issued-after-wait");
+
+        verify(valueOperations).set(
+                "toss:oauth:access-token",
+                "issued-after-wait",
+                Duration.ofSeconds(3540)
+        );
+        verify(redisTemplate).delete("toss:oauth:refresh-lock");
+    }
 }

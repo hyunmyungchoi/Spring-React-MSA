@@ -6,9 +6,14 @@ import com.springmsa.memberstockservice.watchlist.dto.StockWatchItemRequest;
 import com.springmsa.memberstockservice.watchlist.dto.StockWatchItemResponse;
 import com.springmsa.memberstockservice.watchlist.error.StockWatchItemErrorCode;
 import com.springmsa.memberstockservice.watchlist.repository.StockWatchItemRepository;
+import com.springmsa.memberstockservice.outbox.OutboxEventWriter;
+import com.springmsa.kafka.event.MsaEventEnvelope;
+import com.springmsa.kafka.event.WatchlistItemAddedEvent;
+import com.springmsa.kafka.topic.MsaKafkaTopics;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -17,21 +22,37 @@ import java.util.List;
 public class StockWatchItemService {
 
     private final StockWatchItemRepository repository;
+    private final OutboxEventWriter outboxEventWriter;
 
+    @Transactional(readOnly = true)
     public List<StockWatchItemResponse> findAll(String ownerSub) {
         return repository.findAllByOwnerSubOrderByCreatedAtDesc(ownerSub).stream()
                 .map(this::toResponse)
                 .toList();
     }
 
+    @Transactional
     public StockWatchItemResponse create(StockWatchItemRequest request, String owner) {
         try {
-            return toResponse(repository.save(StockWatchItem.create(owner, request.symbol(), request.memo())));
+            StockWatchItem savedItem = repository.save(StockWatchItem.create(owner, request.symbol(), request.memo()));
+            MsaEventEnvelope<WatchlistItemAddedEvent> event = MsaEventEnvelope.create(
+                    "watchlist.item-added", 1, "spring-member-stock-service", savedItem.getCreatedAt(),
+                    new WatchlistItemAddedEvent(
+                            savedItem.getId(), savedItem.getOwnerSub(), savedItem.getSymbol(),
+                            savedItem.getMemo(), savedItem.getCreatedAt()
+                    )
+            );
+            outboxEventWriter.append(
+                    "StockWatchItem", savedItem.getId().toString(), MsaKafkaTopics.WATCHLIST_ITEM_ADDED_V1,
+                    savedItem.getOwnerSub(), event
+            );
+            return toResponse(savedItem);
         } catch (DataIntegrityViolationException exception) {
             throw new ApiException(StockWatchItemErrorCode.WATCH_ITEM_DUPLICATE, exception);
         }
     }
 
+    @Transactional
     public StockWatchItemResponse update(Long itemId, StockWatchItemRequest request, String ownerSub) {
         StockWatchItem item = repository.findByIdAndOwnerSub(itemId, ownerSub)
                 .orElseThrow(() -> new ApiException(StockWatchItemErrorCode.WATCH_ITEM_NOT_FOUND));
@@ -44,6 +65,7 @@ public class StockWatchItemService {
         }
     }
 
+    @Transactional
     public void delete(Long itemId, String ownerSub) {
         StockWatchItem item = repository.findByIdAndOwnerSub(itemId, ownerSub)
                 .orElseThrow(() -> new ApiException(StockWatchItemErrorCode.WATCH_ITEM_NOT_FOUND));

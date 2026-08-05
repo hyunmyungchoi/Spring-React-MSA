@@ -16,8 +16,8 @@ class AwsFrontendDeployWorkflowTest(unittest.TestCase):
     def test_exposes_each_independent_frontend_target(self) -> None:
         for target in (
             "spring-member-web",
-            "spring-community-web",
-            "spring-stock-web",
+            "spring-member-community-web",
+            "spring-member-stock-web",
             "spring-admin-web",
             "spring-admin-users-web",
             "spring-admin-logs-web",

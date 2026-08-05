@@ -19,6 +19,7 @@ ext {
 }
 
 dependencies {
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-api:3.0.3'
     implementation 'com.springmsa:spring-msa-common-web:0.0.1-SNAPSHOT'
 
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'

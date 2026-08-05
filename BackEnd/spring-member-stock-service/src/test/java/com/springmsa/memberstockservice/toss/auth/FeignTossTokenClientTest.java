@@ -8,7 +8,10 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class FeignTossTokenClientTest {
@@ -31,7 +34,7 @@ class FeignTossTokenClientTest {
 
     @Test
     void issuesClientCredentialsTokenThroughFeignClient() {
-        when(feignClient.issueToken("client_credentials", "dummy-client-id", "dummy-client-secret"))
+        when(feignClient.issueToken(any()))
                 .thenReturn(new TossTokenResponse("issued-token", "Bearer", 3600));
 
         TossTokenResponse response = client.issueToken();
@@ -39,11 +42,16 @@ class FeignTossTokenClientTest {
         assertThat(response.accessToken()).isEqualTo("issued-token");
         assertThat(response.tokenType()).isEqualTo("Bearer");
         assertThat(response.expiresIn()).isEqualTo(3600);
+        verify(feignClient).issueToken(argThat(formData ->
+                "client_credentials".equals(formData.getFirst("grant_type"))
+                        && "dummy-client-id".equals(formData.getFirst("client_id"))
+                        && "dummy-client-secret".equals(formData.getFirst("client_secret"))
+        ));
     }
 
     @Test
     void mapsFeignFailureToTokenUnavailable() {
-        when(feignClient.issueToken("client_credentials", "dummy-client-id", "dummy-client-secret"))
+        when(feignClient.issueToken(any()))
                 .thenThrow(mock(FeignException.class));
 
         assertThatThrownBy(client::issueToken)

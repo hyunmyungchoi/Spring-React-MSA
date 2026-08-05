@@ -5,6 +5,8 @@ import com.springmsa.memberstockservice.toss.config.TossApiProperties;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 @Component
 @RequiredArgsConstructor
@@ -17,12 +19,13 @@ class FeignTossTokenClient implements TossTokenClient {
 
     @Override
     public TossTokenResponse issueToken() {
+        MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+        formData.add("grant_type", CLIENT_CREDENTIALS);
+        formData.add("client_id", properties.clientId());
+        formData.add("client_secret", properties.clientSecret());
+
         try {
-            return feignClient.issueToken(
-                    CLIENT_CREDENTIALS,
-                    properties.clientId(),
-                    properties.clientSecret()
-            );
+            return feignClient.issueToken(formData);
         } catch (FeignException exception) {
             throw new ApiException(TossErrorCode.TOSS_TOKEN_UNAVAILABLE, exception);
         }

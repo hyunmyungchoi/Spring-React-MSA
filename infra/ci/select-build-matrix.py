@@ -57,12 +57,12 @@ FRONTEND_IMAGES: list[dict[str, str]] = [
         "dockerfile": "FrontEnd/apps/member/Dockerfile.member",
     },
     {
-        "service": "spring-community-web",
-        "dockerfile": "FrontEnd/apps/member/Dockerfile.community",
+        "service": "spring-member-community-web",
+        "dockerfile": "FrontEnd/apps/member-community/Dockerfile",
     },
     {
-        "service": "spring-stock-web",
-        "dockerfile": "FrontEnd/apps/member/Dockerfile.stock",
+        "service": "spring-member-stock-web",
+        "dockerfile": "FrontEnd/apps/member-stock/Dockerfile",
     },
     {
         "service": "spring-admin-web",
@@ -70,11 +70,11 @@ FRONTEND_IMAGES: list[dict[str, str]] = [
     },
     {
         "service": "spring-admin-users-web",
-        "dockerfile": "FrontEnd/apps/admin/Dockerfile.users",
+        "dockerfile": "FrontEnd/apps/admin-users/Dockerfile",
     },
     {
         "service": "spring-admin-logs-web",
-        "dockerfile": "FrontEnd/apps/admin/Dockerfile.logs",
+        "dockerfile": "FrontEnd/apps/admin-logs/Dockerfile",
     },
 ]
 
@@ -146,15 +146,24 @@ def detect_services(paths: list[str]) -> list[str]:
             add("spring-admin-bff-service")
         elif path.startswith("BackEnd/spring-msa-common-web/"):
             add(
+                "spring-member-gateway",
+                "spring-admin-gateway",
                 "spring-security-authorization-server",
                 "spring-user-service",
+                "spring-member-community-service",
+                "spring-member-stock-service",
                 "spring-member-bff-service",
                 "spring-admin-bff-service",
             )
         elif path.startswith("BackEnd/spring-msa-common-kafka/"):
-            add("spring-member-bff-service")
+            add(
+                "spring-user-service",
+                "spring-member-community-service",
+                "spring-member-stock-service",
+                "spring-member-bff-service",
+            )
         elif path == "infra/nginx/web/member-web.conf":
-            add("spring-member-web", "spring-community-web", "spring-stock-web")
+            add("spring-member-web", "spring-member-community-web", "spring-member-stock-web")
         elif path == "infra/nginx/web/admin-web.conf":
             add("spring-admin-web", "spring-admin-users-web", "spring-admin-logs-web")
         elif path in {
@@ -167,30 +176,39 @@ def detect_services(paths: list[str]) -> list[str]:
         }:
             add(
                 "spring-member-web",
-                "spring-community-web",
-                "spring-stock-web",
+                "spring-member-community-web",
+                "spring-member-stock-web",
                 "spring-admin-web",
                 "spring-admin-users-web",
                 "spring-admin-logs-web",
             )
         elif path.startswith("FrontEnd/apps/member/"):
-            if path.endswith("Dockerfile.stock") or path.startswith("FrontEnd/apps/member/src/stock/"):
-                add("spring-stock-web")
-            elif path.endswith("Dockerfile.community") or path.startswith("FrontEnd/apps/member/src/community/"):
-                add("spring-community-web")
-            elif path.endswith("Dockerfile.member"):
+            if path.endswith("Dockerfile.member"):
                 add("spring-member-web")
             else:
-                add("spring-member-web", "spring-community-web", "spring-stock-web")
+                add("spring-member-web")
         elif path.startswith("FrontEnd/apps/admin/"):
-            if path.endswith("Dockerfile.users") or path.startswith("FrontEnd/apps/admin/src/users/"):
-                add("spring-admin-users-web")
-            elif path.endswith("Dockerfile.logs") or path.startswith("FrontEnd/apps/admin/src/logs/"):
-                add("spring-admin-logs-web")
-            elif path.endswith("Dockerfile.admin"):
+            if path.endswith("Dockerfile.admin"):
                 add("spring-admin-web")
             else:
-                add("spring-admin-web", "spring-admin-users-web", "spring-admin-logs-web")
+                add("spring-admin-web")
+        elif path.startswith("FrontEnd/apps/member-community/"):
+            add("spring-member-community-web")
+        elif path.startswith("FrontEnd/apps/member-stock/"):
+            add("spring-member-stock-web")
+        elif path.startswith("FrontEnd/apps/admin-users/"):
+            add("spring-admin-users-web")
+        elif path.startswith("FrontEnd/apps/admin-logs/"):
+            add("spring-admin-logs-web")
+        elif path.startswith("FrontEnd/packages/member-common/"):
+            add("spring-member-web", "spring-member-community-web", "spring-member-stock-web")
+        elif path.startswith("FrontEnd/packages/admin-common/"):
+            add("spring-admin-web", "spring-admin-users-web", "spring-admin-logs-web")
+        elif path.startswith("FrontEnd/packages/api-contract/"):
+            add(
+                "spring-member-web", "spring-member-community-web", "spring-member-stock-web",
+                "spring-admin-web", "spring-admin-users-web", "spring-admin-logs-web",
+            )
 
     return [service for service in service_order() if service in selected]
 

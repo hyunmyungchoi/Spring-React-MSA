@@ -1,27 +1,20 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+﻿import { Navigate, Route, Routes } from "react-router-dom";
 import ChatEntryPage from "./chat/pages/ChatEntryPage";
-import CommunityEntryPage from "./community/pages/CommunityEntryPage";
-import UserAuthLayout from "./common/layouts/UserAuthLayout";
-import UserLayout from "./common/layouts/UserLayout";
-import ServiceSelectPage from "./common/pages/ServiceSelectPage";
-import UserAuthPage from "./common/pages/UserAuthPage";
-import StockEntryPage from "./stock/pages/StockEntryPage";
+import UserAuthLayout from "@springmsa/member-common/layouts/UserAuthLayout";
+import UserLayout from "@springmsa/member-common/layouts/UserLayout";
+import ServiceSelectPage from "@springmsa/member-common/pages/ServiceSelectPage";
+import UserAuthPage from "@springmsa/member-common/pages/UserAuthPage";
 
-// Defines the user web page routers.
 function UserRouters() {
     return (
         <Routes>
             <Route element={<UserAuthLayout />}>
                 <Route path="/auth" element={<UserAuthPage />} />
             </Route>
-
             <Route element={<UserLayout />}>
                 <Route path="/" element={<ServiceSelectPage />} />
                 <Route path="/chat" element={<ChatEntryPage />} />
-                <Route path="/community" element={<CommunityEntryPage />} />
-                <Route path="/stock" element={<StockEntryPage />} />
             </Route>
-
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
     );

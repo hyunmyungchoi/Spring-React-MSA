@@ -1,6 +1,6 @@
-import { BrowserRouter } from 'react-router-dom'
+﻿import { BrowserRouter } from 'react-router-dom'
 import AdminRouters from './AdminRouters'
-import './App.css'
+import '@springmsa/admin-common/App.css'
 
 // Mounts the admin web router.
 function App() {
@@ -12,3 +12,4 @@ function App() {
 }
 
 export default App
+

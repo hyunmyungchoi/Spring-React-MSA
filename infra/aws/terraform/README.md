@@ -217,7 +217,7 @@ Runtime OFF Plan `tfplan-runtime-off-after-public-domain-smoke`, 195,052 bytes, 
 - `enable_frontend_hosting=false`: 적용된 Frontend 리소스 삭제 Plan이 되므로 사용하지 않는다.
 - `enable_frontend_hosting=true`: 기존 Runtime과 분리해 Frontend Hosting Foundation만 Plan에 포함한다.
 - `.github/workflows/aws-frontend-deploy.yml`: 선택한 Frontend Workspace·Build Script·Bucket·Invalidation 경로만 사용한다.
-- `spring-stock-web` 선택 시 Stock 전용 Bucket과 `/stock`, `/stock/*`만 바뀌며 Member·Community 배포는 실행하지 않는다.
+- `spring-member-stock-web` 선택 시 Stock 전용 Bucket과 `/stock`, `/stock/*`만 바뀌며 Member·Community 배포는 실행하지 않는다.
 
 pnpm `10.0.0` Frozen Lockfile로 여섯 Lint·Build와 Entry 문서를 확인했고 Python 선택/Workflow 계약 14개, Terraform `validate`와 `test` 20/20을 통과했다. Saved Plan `tfplan-frontend-hosting-foundation`은 143,862 bytes, SHA-256 `f49031685f65ff8ed8274316e34e1c195431a3d1912ac279114b14b23f0aa5e8`이었으며 승인한 파일을 Apply해 `49 added, 0 changed, 0 destroyed`로 완료했다. S3 보안 계약 6/6, CloudFront `Deployed` 2/2·Origin 3+3·경로 네 개·Function 연결 6개, Function `DEPLOYED` 2/2, OAC `always/sigv4`, OIDC `master` Trust와 재계획 `No changes`를 확인했다. 적용된 Saved Plan은 재사용하지 않고 삭제했다. GitHub Variable 3개를 값 비노출 방식으로 연결하고 Source SHA `f29249373feae470e2c30758e3245d43d22fef25`의 [Run 29677216377](https://github.com/hyunmyungchoi/Spring-React-MSA/actions/runs/29677216377)에서 Frontend 6개 Job과 필수 단계 24/24를 성공시켰다. S3 Entry `no-cache`·Asset immutable metadata 6/6과 CloudFront 정적 curl 6/6 HTTP 200도 확인했다. ACM·Route 53·Custom Domain과 ALB API Origin은 이번 Apply에 넣지 않았다.
 

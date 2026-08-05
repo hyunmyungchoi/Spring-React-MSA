@@ -73,14 +73,14 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: spring-community-web
+                name: spring-member-community-web
                 port:
                   number: 80
           - path: /stock
             pathType: Prefix
             backend:
               service:
-                name: spring-stock-web
+                name: spring-member-stock-web
                 port:
                   number: 80
           - path: /

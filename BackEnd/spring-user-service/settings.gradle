@@ -13,5 +13,6 @@ dependencyResolutionManagement {
 }
 
 includeBuild('../spring-msa-common-web')
+includeBuild('../spring-msa-common-kafka')
 
 rootProject.name = 'spring-user-service'

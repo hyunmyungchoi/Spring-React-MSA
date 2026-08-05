@@ -3,6 +3,7 @@ package com.springmsa.membercommunityservice.community.service;
 import com.springmsa.membercommunityservice.community.domain.CommunityPost;
 import com.springmsa.membercommunityservice.community.dto.CommunityPostRequest;
 import com.springmsa.membercommunityservice.community.repository.CommunityPostRepository;
+import com.springmsa.membercommunityservice.outbox.OutboxEventWriter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,11 +26,14 @@ class CommunityPostServiceTest {
     @Mock
     CommunityPostRepository repository;
 
+    @Mock
+    OutboxEventWriter outboxEventWriter;
+
     CommunityPostService service;
 
     @BeforeEach
     void setUp() {
-        service = new CommunityPostService(repository);
+        service = new CommunityPostService(repository, outboxEventWriter);
     }
 
     @Test

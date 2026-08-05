@@ -57,7 +57,7 @@ Frontend job은 Node 24.18.0과 Corepack을 사용해 pnpm 10.0.0을 설치하�
 - Invalidation은 선택한 Entry·경로로 제한하며 동시 Frontend 배포를 직렬화한다.
 - GitHub OIDC Role은 `master` Subject만 신뢰하고 여섯 Bucket 객체 작업과 두 Distribution Invalidation만 허용한다.
 
-따라서 Stock 개발자가 `spring-stock-web`을 선택하면 Community나 Member를 Build·Upload하지 않는다. 자세한 Apply·GitHub Variable·curl 절차는 [AWS Frontend Runbook](../runbooks/aws-frontend-hosting.md)을 따른다. Custom Domain, ACM, Route 53과 API/OAuth/WebSocket ALB Origin은 다음 단계다.
+따라서 Stock 개발자가 `spring-member-stock-web`을 선택하면 Community나 Member를 Build·Upload하지 않는다. 자세한 Apply·GitHub Variable·curl 절차는 [AWS Frontend Runbook](../runbooks/aws-frontend-hosting.md)을 따른다. Custom Domain, ACM, Route 53과 API/OAuth/WebSocket ALB Origin은 다음 단계다.
 
 ## 이미지 게시
 

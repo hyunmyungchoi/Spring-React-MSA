@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+﻿import { useCallback, useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { chatWebSocketUrl, fetchChatMessages } from "../api/chatApi";
 import type { ChatMessage, ChatServerMessage } from "../types/chatMessage";
-import { useUserMe } from "../../common/hooks/useUserMe";
+import { useUserMe } from "@springmsa/member-common/hooks/useUserMe";
 
 const ROOM_ID = "global";
 const MAX_RENDERED_MESSAGES = 200;
@@ -321,3 +321,4 @@ function formatTime(value: string) {
 }
 
 export default ChatEntryPage;
+

@@ -1,4 +1,4 @@
-export type ChatMessage = {
+﻿export type ChatMessage = {
     streamId: string;
     roomId: string;
     senderUserId?: number | null;
@@ -16,3 +16,4 @@ export type ChatServerMessage = {
     detail?: string | null;
     occurredAt: string;
 };
+

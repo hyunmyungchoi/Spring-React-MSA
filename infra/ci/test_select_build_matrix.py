@@ -24,9 +24,9 @@ class SelectBuildMatrixTest(unittest.TestCase):
     def test_stock_ui_change_selects_stock_web(self) -> None:
         self.assertEqual(
             select_build_matrix.detect_services(
-                ["FrontEnd/apps/member/src/stock/pages/StockEntryPage.tsx"]
+                ["FrontEnd/apps/member-stock/src/pages/StockEntryPage.tsx"]
             ),
-            ["spring-stock-web"],
+            ["spring-member-stock-web"],
         )
 
     def test_shared_frontend_lock_change_selects_all_frontend_images(self) -> None:
@@ -34,8 +34,8 @@ class SelectBuildMatrixTest(unittest.TestCase):
             select_build_matrix.detect_services(["FrontEnd/pnpm-lock.yaml"]),
             [
                 "spring-member-web",
-                "spring-community-web",
-                "spring-stock-web",
+                "spring-member-community-web",
+                "spring-member-stock-web",
                 "spring-admin-web",
                 "spring-admin-users-web",
                 "spring-admin-logs-web",

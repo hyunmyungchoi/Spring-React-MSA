@@ -1,0 +1,28 @@
+{
+  "name": "@springmsa/admin-common",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    "./api/*": "./src/api/*.ts",
+    "./hooks/*": "./src/hooks/*.ts",
+    "./layouts/*": "./src/layouts/*.tsx",
+    "./messages/*": "./src/messages/*.ts",
+    "./pages/*": "./src/pages/*.tsx",
+    "./store/*": "./src/store/*.ts",
+    "./types/*": "./src/types/*.ts",
+    "./utils/*": "./src/utils/*.ts",
+    "./App.css": "./src/App.css",
+    "./index.css": "./src/index.css"
+  },
+  "dependencies": {
+    "@reduxjs/toolkit": "2.11.2",
+    "@springmsa/api-contract": "workspace:*",
+    "react": "19.2.6",
+    "react-redux": "9.3.0",
+    "react-router-dom": "7.18.2"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.14"
+  }
+}

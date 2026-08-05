@@ -17,8 +17,8 @@ MANIFESTS: dict[str, list[str]] = {
     "31-admin-gateway.yaml": ["spring-admin-gateway"],
     "40-web.yaml": [
         "spring-member-web",
-        "spring-community-web",
-        "spring-stock-web",
+        "spring-member-community-web",
+        "spring-member-stock-web",
         "spring-admin-web",
         "spring-admin-users-web",
         "spring-admin-logs-web",

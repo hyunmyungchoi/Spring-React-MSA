@@ -6,6 +6,7 @@ import com.springmsa.memberstockservice.watchlist.dto.StockWatchItemRequest;
 import com.springmsa.memberstockservice.watchlist.dto.StockWatchItemResponse;
 import com.springmsa.memberstockservice.watchlist.repository.StockWatchItemRepository;
 import com.springmsa.memberstockservice.watchlist.service.StockWatchItemService;
+import com.springmsa.memberstockservice.outbox.OutboxEventWriter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -26,12 +27,13 @@ import static org.mockito.Mockito.when;
 class StockWatchItemServiceTest {
 
     private final StockWatchItemRepository repository = mock(StockWatchItemRepository.class);
+    private final OutboxEventWriter outboxEventWriter = mock(OutboxEventWriter.class);
 
     private StockWatchItemService service;
 
     @BeforeEach
     void setUp() {
-        service = new StockWatchItemService(repository);
+        service = new StockWatchItemService(repository, outboxEventWriter);
     }
 
     @Test
@@ -59,6 +61,13 @@ class StockWatchItemServiceTest {
         assertThat(response.id()).isEqualTo(7L);
         assertThat(response.symbol()).isEqualTo("AAPL");
         assertThat(response.owner()).isEqualTo("user-a");
+        verify(outboxEventWriter).append(
+                org.mockito.ArgumentMatchers.eq("StockWatchItem"),
+                org.mockito.ArgumentMatchers.eq("7"),
+                org.mockito.ArgumentMatchers.eq("springmsa.stock.watchlist-item-added.v1"),
+                org.mockito.ArgumentMatchers.eq("user-a"),
+                any()
+        );
     }
 
     @Test

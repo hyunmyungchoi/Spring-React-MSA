@@ -14,11 +14,12 @@ spec.loader.exec_module(select_frontend_deploy_matrix)
 
 class SelectFrontendDeployMatrixTest(unittest.TestCase):
     def test_stock_target_deploys_only_stock(self) -> None:
-        selected = select_frontend_deploy_matrix.select_deployments("spring-stock-web")
+        selected = select_frontend_deploy_matrix.select_deployments("spring-member-stock-web")
 
         self.assertEqual(len(selected), 1)
         self.assertEqual(selected[0]["bucket_key"], "stock")
-        self.assertEqual(selected[0]["build_script"], "build:stock")
+        self.assertEqual(selected[0]["workspace"], "@springmsa/member-stock")
+        self.assertEqual(selected[0]["build_script"], "build")
         self.assertEqual(selected[0]["invalidation_paths"], ["/stock", "/stock/*"])
 
     def test_member_group_contains_only_three_member_units(self) -> None:
@@ -26,7 +27,7 @@ class SelectFrontendDeployMatrixTest(unittest.TestCase):
 
         self.assertEqual(
             [item["service"] for item in selected],
-            ["spring-member-web", "spring-community-web", "spring-stock-web"],
+            ["spring-member-web", "spring-member-community-web", "spring-member-stock-web"],
         )
 
     def test_all_target_has_six_unique_buckets(self) -> None:
