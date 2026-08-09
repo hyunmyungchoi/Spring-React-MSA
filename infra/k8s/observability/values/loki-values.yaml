@@ -25,8 +25,8 @@ ignoreMinioDeprecation: true
 minio:
   enabled: true
   persistence:
-    storageClass: standard
-    size: 5Gi
+    storageClass: local-path
+    size: 2Gi
 
 deploymentMode: Monolithic
 
@@ -34,10 +34,10 @@ singleBinary:
   replicas: 1
   persistence:
     enabled: true
-    storageClass: standard
+    storageClass: local-path
     accessModes:
       - ReadWriteOnce
-    size: 5Gi
+    size: 2Gi
   resources:
     requests:
       cpu: 100m

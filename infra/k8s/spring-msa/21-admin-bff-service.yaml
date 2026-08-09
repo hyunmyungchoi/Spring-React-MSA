@@ -3,6 +3,8 @@ kind: Deployment
 metadata:
   name: spring-admin-bff-service
   namespace: spring-msa
+  labels:
+    observability.springmsa.dev/scrape: "true"
 spec:
   replicas: 1
   selector:
@@ -117,6 +119,7 @@ spec:
   selector:
     app: spring-admin-bff-service
   ports:
-    - port: 8087
+    - name: http
+      port: 8087
       targetPort: 8087
 

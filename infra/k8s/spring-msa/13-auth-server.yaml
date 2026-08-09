@@ -3,6 +3,8 @@ kind: Deployment
 metadata:
   name: spring-security-authorization-server
   namespace: spring-msa
+  labels:
+    observability.springmsa.dev/scrape: "true"
 spec:
   replicas: 1
   selector:
@@ -132,6 +134,7 @@ spec:
   selector:
     app: spring-security-authorization-server
   ports:
-    - port: 9000
+    - name: http
+      port: 9000
       targetPort: 9000
 

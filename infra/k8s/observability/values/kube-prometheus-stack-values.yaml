@@ -1,7 +1,6 @@
 grafana:
   enabled: true
   adminUser: admin
-  adminPassword: admin
   defaultDashboardsTimezone: Asia/Seoul
   service:
     type: ClusterIP
@@ -18,10 +17,10 @@ grafana:
   persistence:
     enabled: true
     type: pvc
-    storageClassName: standard
+    storageClassName: local-path
     accessModes:
       - ReadWriteOnce
-    size: 2Gi
+    size: 1Gi
   additionalDataSources:
     - name: Loki
       type: loki
@@ -55,12 +54,12 @@ prometheus:
     storageSpec:
       volumeClaimTemplate:
         spec:
-          storageClassName: standard
+          storageClassName: local-path
           accessModes:
             - ReadWriteOnce
           resources:
             requests:
-              storage: 5Gi
+              storage: 3Gi
     resources:
       requests:
         cpu: 100m

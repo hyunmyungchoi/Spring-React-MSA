@@ -45,6 +45,7 @@ Kubernetes nodes/pods/services
 
 ```powershell
 kubectl cluster-info
+kubectl get storageclass local-path
 helm version
 ```
 
@@ -62,6 +63,13 @@ Run from this directory:
 
 ```powershell
 .\scripts\install-observability.ps1
+```
+
+Run directly on the Linux control-plane:
+
+```bash
+chmod +x scripts/install-observability.sh
+./scripts/install-observability.sh
 ```
 
 The script installs:
@@ -92,16 +100,33 @@ Then open:
 http://localhost:3000
 ```
 
-Default local login:
+Local login:
 
 ```text
-admin / admin
+admin / <generated password>
+```
+
+Read the generated password without storing it in Git:
+
+```powershell
+[System.Text.Encoding]::UTF8.GetString(
+  [System.Convert]::FromBase64String(
+    (kubectl -n observability get secret kube-prometheus-stack-grafana -o jsonpath="{.data.admin-password}")
+  )
+)
 ```
 
 ## Verify
 
 ```powershell
 .\scripts\check-observability.ps1
+```
+
+From the Linux control-plane:
+
+```bash
+chmod +x scripts/check-observability.sh
+./scripts/check-observability.sh
 ```
 
 Useful LogQL queries:

@@ -3,6 +3,8 @@ kind: Deployment
 metadata:
   name: spring-member-stock-service
   namespace: spring-msa
+  labels:
+    observability.springmsa.dev/scrape: "true"
 spec:
   replicas: 1
   selector:
@@ -147,6 +149,7 @@ spec:
   selector:
     app: spring-member-stock-service
   ports:
-    - port: 8084
+    - name: http
+      port: 8084
       targetPort: 8084
 

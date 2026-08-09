@@ -5,13 +5,13 @@ Argo CD watches the Git repository and syncs Kubernetes manifests into the clust
 Install Argo CD:
 
 ```powershell
-kubectl apply -f C:\Project\SpringMSA\infra\k8s\argocd\00-namespace.yaml
-kubectl apply -n argocd --server-side --force-conflicts -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
-kubectl patch configmap argocd-cmd-params-cm -n argocd --type merge --patch-file C:\Project\SpringMSA\infra\k8s\argocd\10-cmd-params-patch.json
+kubectl apply -f D:\Project\SpringMSA\infra\k8s\argocd\00-namespace.yaml
+kubectl apply -n argocd --server-side --force-conflicts -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.0/manifests/install.yaml
+kubectl patch configmap argocd-cmd-params-cm -n argocd --type merge --patch-file D:\Project\SpringMSA\infra\k8s\argocd\10-cmd-params-patch.json
 kubectl rollout restart deployment/argocd-server -n argocd
 kubectl rollout status deployment/argocd-server -n argocd
-kubectl apply -f C:\Project\SpringMSA\infra\k8s\argocd\20-ingress.yaml
-kubectl apply -f C:\Project\SpringMSA\infra\k8s\argocd\30-spring-msa-application.yaml
+kubectl apply -f D:\Project\SpringMSA\infra\k8s\argocd\20-ingress.yaml
+kubectl apply -f D:\Project\SpringMSA\infra\k8s\argocd\30-spring-msa-application.yaml
 ```
 
 Open Argo CD:

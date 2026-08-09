@@ -31,6 +31,7 @@ Require-Command kubectl
 Require-Command helm
 
 Run @("kubectl", "cluster-info")
+Run @("kubectl", "get", "storageclass", "local-path")
 Run @("kubectl", "apply", "-f", $NamespaceManifest)
 
 Run @("helm", "repo", "add", "prometheus-community", "https://prometheus-community.github.io/helm-charts", "--force-update")
@@ -72,4 +73,5 @@ Run @("kubectl", "get", "pods,svc,ingress,pvc", "-n", "observability")
 Write-Host ""
 Write-Host "Grafana ingress: http://grafana.localtest.me"
 Write-Host "Grafana local port-forward: .\scripts\port-forward-grafana.ps1"
-Write-Host "Grafana login: admin / admin"
+Write-Host "Grafana user: admin"
+Write-Host "Read the generated password from secret kube-prometheus-stack-grafana."

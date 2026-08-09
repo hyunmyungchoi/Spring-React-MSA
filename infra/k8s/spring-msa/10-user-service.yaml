@@ -3,6 +3,8 @@ kind: Deployment
 metadata:
   name: spring-user-service
   namespace: spring-msa
+  labels:
+    observability.springmsa.dev/scrape: "true"
 spec:
   replicas: 1
   selector:
@@ -122,6 +124,7 @@ spec:
   selector:
     app: spring-user-service
   ports:
-    - port: 8081
+    - name: http
+      port: 8081
       targetPort: 8081
 
