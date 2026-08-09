@@ -29,7 +29,7 @@ spec:
                       - worker-2
       containers:
         - name: spring-admin-bff-service
-          image: ghcr.io/hyunmyungchoi/spring-admin-bff-service@sha256:4f4ecd344d0e15ee812a68979afe2bbe4b04e731e9f3f2c87f4dca6db98e8261
+          image: ghcr.io/hyunmyungchoi/spring-admin-bff-service@sha256:dcc7a32469d142b10e85b8ac20d24c47ff642275c426af0f83c3d74239bfd029
           imagePullPolicy: Always
           ports:
             - containerPort: 8087

@@ -29,7 +29,7 @@ spec:
                       - worker-2
       containers:
         - name: spring-member-community-service
-          image: ghcr.io/hyunmyungchoi/spring-member-community-service@sha256:9f51fb85d0da9c8025d23f04a1a699a7cfa8b64de35c3b89874b6ac21c7086b7
+          image: ghcr.io/hyunmyungchoi/spring-member-community-service@sha256:c431a46d2b9aa20e1fa697cdeb82beb8a4cb8d7d934ad8cde472d3f04afdf998
           imagePullPolicy: Always
           ports:
             - containerPort: 8083

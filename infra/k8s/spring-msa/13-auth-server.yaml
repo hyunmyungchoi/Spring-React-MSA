@@ -29,7 +29,7 @@ spec:
                       - worker-1
       containers:
         - name: spring-security-authorization-server
-          image: ghcr.io/hyunmyungchoi/spring-security-authorization-server@sha256:0368bc82644b03a678a830cf8c0aaf4074e8f3421ffa49b7b9d50cdf7b518513
+          image: ghcr.io/hyunmyungchoi/spring-security-authorization-server@sha256:113a0b15ed1acb0ec22eda4c433d9f8b57ac7a0527cafaac806b674113d8c757
           imagePullPolicy: Always
           ports:
             - containerPort: 9000

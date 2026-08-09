@@ -29,7 +29,7 @@ spec:
                       - worker-1
       containers:
         - name: spring-user-service
-          image: ghcr.io/hyunmyungchoi/spring-user-service@sha256:8ac9a4622888b27b73404abc7c0921e3feb251e931266fd3503cc38427524041
+          image: ghcr.io/hyunmyungchoi/spring-user-service@sha256:9a32b0722bfd4b9ca8b2656a3b722b18cc0fe3383a2dbd1e64d2998a48b988cf
           imagePullPolicy: Always
           ports:
             - containerPort: 8081
