@@ -11,12 +11,12 @@ from pathlib import Path
 BACKEND_IMAGES: list[dict[str, str]] = [
     {
         "service": "spring-member-gateway",
-        "context": "BackEnd/spring-member-gateway",
+        "context": "BackEnd",
         "dockerfile": "BackEnd/spring-member-gateway/Dockerfile",
     },
     {
         "service": "spring-admin-gateway",
-        "context": "BackEnd/spring-admin-gateway",
+        "context": "BackEnd",
         "dockerfile": "BackEnd/spring-admin-gateway/Dockerfile",
     },
     {
@@ -31,7 +31,7 @@ BACKEND_IMAGES: list[dict[str, str]] = [
     },
     {
         "service": "spring-member-community-service",
-        "context": "BackEnd/spring-member-community-service",
+        "context": "BackEnd",
         "dockerfile": "BackEnd/spring-member-community-service/Dockerfile",
     },
     {
