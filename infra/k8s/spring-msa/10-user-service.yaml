@@ -15,6 +15,16 @@ spec:
     spec:
       imagePullSecrets:
         - name: ghcr-secret
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              preference:
+                matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - worker-1
       containers:
         - name: spring-user-service
           image: ghcr.io/hyunmyungchoi/spring-user-service@sha256:7c5fb7a97c4b71ed87192634d302f8aa85cfa35f426298b43b5cbf4a91c48530
@@ -39,7 +49,7 @@ spec:
             - name: SERVER_TOMCAT_ACCESSLOG_BUFFERED
               value: "false"
             - name: SPRING_DATASOURCE_URL
-              value: jdbc:postgresql://postgres:5432/msa
+              value: jdbc:postgresql://postgres:5432/postgres
             - name: SPRING_DATASOURCE_USERNAME
               valueFrom:
                 configMapKeyRef:
@@ -73,6 +83,13 @@ spec:
               value: user_service
             - name: SPRING_FLYWAY_SCHEMAS
               value: user_service
+            - name: APP_KAFKA_ENABLED
+              value: "true"
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              valueFrom:
+                configMapKeyRef:
+                  name: spring-msa-config
+                  key: KAFKA_BOOTSTRAP_SERVERS
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
@@ -89,11 +106,11 @@ spec:
             failureThreshold: 3
           resources:
             requests:
-              cpu: 512m
-              memory: 768Mi
+              cpu: 250m
+              memory: 384Mi
             limits:
-              cpu: 512m
-              memory: 768Mi
+              cpu: "1"
+              memory: 640Mi
 ---
 apiVersion: v1
 kind: Service

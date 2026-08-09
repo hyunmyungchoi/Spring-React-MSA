@@ -15,6 +15,16 @@ spec:
     spec:
       imagePullSecrets:
         - name: ghcr-secret
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              preference:
+                matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - worker-2
       containers:
         - name: spring-admin-bff-service
           image: ghcr.io/hyunmyungchoi/spring-admin-bff-service@sha256:ed4c3f0030f319b6a1e7934712dd878b3078b1f321f3c25a9eff6b5226e8a965
@@ -91,11 +101,11 @@ spec:
             failureThreshold: 3
           resources:
             requests:
-              cpu: 512m
-              memory: 768Mi
+              cpu: 250m
+              memory: 384Mi
             limits:
-              cpu: 512m
-              memory: 768Mi
+              cpu: "1"
+              memory: 640Mi
 ---
 apiVersion: v1
 kind: Service

@@ -19,6 +19,16 @@ spec:
     spec:
       imagePullSecrets:
         - name: ghcr-secret
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              preference:
+                matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - worker-2
       containers:
         - name: spring-member-stock-service
           image: ghcr.io/hyunmyungchoi/spring-member-stock-service@sha256:8f7e13e911066078585a4fd4a5cec355405d1d2534bcf1d4d312676ab5c0ef6e
@@ -43,7 +53,7 @@ spec:
             - name: SERVER_TOMCAT_ACCESSLOG_BUFFERED
               value: "false"
             - name: SPRING_DATASOURCE_URL
-              value: jdbc:postgresql://postgres:5432/msa
+              value: jdbc:postgresql://postgres:5432/postgres
             - name: SPRING_DATASOURCE_USERNAME
               valueFrom:
                 configMapKeyRef:
@@ -81,6 +91,13 @@ spec:
               value: stock_service
             - name: SPRING_FLYWAY_SCHEMAS
               value: stock_service
+            - name: APP_KAFKA_ENABLED
+              value: "true"
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              valueFrom:
+                configMapKeyRef:
+                  name: spring-msa-config
+                  key: KAFKA_BOOTSTRAP_SERVERS
             - name: MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED
               value: "true"
             - name: TOSS_API_BASE_URL
@@ -114,11 +131,11 @@ spec:
             failureThreshold: 3
           resources:
             requests:
-              cpu: 512m
-              memory: 1024Mi
+              cpu: 300m
+              memory: 512Mi
             limits:
-              cpu: 512m
-              memory: 1024Mi
+              cpu: "1"
+              memory: 768Mi
 ---
 apiVersion: v1
 kind: Service

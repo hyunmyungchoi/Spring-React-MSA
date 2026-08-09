@@ -15,6 +15,16 @@ spec:
     spec:
       imagePullSecrets:
         - name: ghcr-secret
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              preference:
+                matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - worker-2
       containers:
         - name: spring-member-community-service
           image: ghcr.io/hyunmyungchoi/spring-member-community-service@sha256:620870dc067bdfca0fbb82480be091405fb4e4862dcdce3ce5834571123849d0
@@ -39,7 +49,7 @@ spec:
             - name: SERVER_TOMCAT_ACCESSLOG_BUFFERED
               value: "false"
             - name: SPRING_DATASOURCE_URL
-              value: jdbc:postgresql://postgres:5432/msa
+              value: jdbc:postgresql://postgres:5432/postgres
             - name: SPRING_DATASOURCE_USERNAME
               valueFrom:
                 configMapKeyRef:
@@ -64,6 +74,13 @@ spec:
               value: community_service
             - name: SPRING_FLYWAY_SCHEMAS
               value: community_service
+            - name: APP_KAFKA_ENABLED
+              value: "true"
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              valueFrom:
+                configMapKeyRef:
+                  name: spring-msa-config
+                  key: KAFKA_BOOTSTRAP_SERVERS
             - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI
               value: http://user.localtest.me
             - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI
@@ -84,11 +101,11 @@ spec:
             failureThreshold: 3
           resources:
             requests:
-              cpu: 512m
-              memory: 768Mi
+              cpu: 250m
+              memory: 384Mi
             limits:
-              cpu: 512m
-              memory: 768Mi
+              cpu: "1"
+              memory: 640Mi
 ---
 apiVersion: v1
 kind: Service

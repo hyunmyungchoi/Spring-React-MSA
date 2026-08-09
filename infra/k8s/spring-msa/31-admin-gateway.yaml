@@ -15,6 +15,16 @@ spec:
     spec:
       imagePullSecrets:
         - name: ghcr-secret
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              preference:
+                matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - worker-2
       containers:
         - name: spring-admin-gateway
           image: ghcr.io/hyunmyungchoi/spring-admin-gateway@sha256:de3bc4526bfa0cccc6575be30835fe0f3627726f6e722dc829f8e53370db1752

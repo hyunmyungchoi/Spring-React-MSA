@@ -15,6 +15,16 @@ spec:
     spec:
       imagePullSecrets:
         - name: ghcr-secret
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              preference:
+                matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - worker-1
       containers:
         - name: spring-security-authorization-server
           image: ghcr.io/hyunmyungchoi/spring-security-authorization-server@sha256:a54ae91f4c7c65756758844c2ff4e616c4533404fabb5ab626dd750ebd2f6a4c
@@ -106,11 +116,11 @@ spec:
             failureThreshold: 3
           resources:
             requests:
-              cpu: 512m
-              memory: 1024Mi
+              cpu: 300m
+              memory: 512Mi
             limits:
-              cpu: 512m
-              memory: 1024Mi
+              cpu: "1"
+              memory: 768Mi
 ---
 apiVersion: v1
 kind: Service

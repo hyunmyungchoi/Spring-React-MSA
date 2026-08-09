@@ -15,12 +15,21 @@ spec:
     spec:
       imagePullSecrets:
         - name: ghcr-secret
+      nodeSelector:
+        kubernetes.io/hostname: worker-1
       containers:
         - name: spring-member-web
           image: ghcr.io/hyunmyungchoi/spring-member-web@sha256:76f14c258ea577da4007c6efb51cf339665f86cde118002f60a0c306ce0f2187
           imagePullPolicy: Always
           ports:
             - containerPort: 80
+          resources:
+            requests:
+              cpu: 20m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
 ---
 apiVersion: v1
 kind: Service
@@ -52,12 +61,21 @@ spec:
     spec:
       imagePullSecrets:
         - name: ghcr-secret
+      nodeSelector:
+        kubernetes.io/hostname: worker-1
       containers:
         - name: spring-member-community-web
           image: ghcr.io/hyunmyungchoi/spring-member-community-web@sha256:b1a3c2e75b083d66480fad91bcd4207bc8282f0a887798a605db494ebd64efdf
           imagePullPolicy: Always
           ports:
             - containerPort: 80
+          resources:
+            requests:
+              cpu: 20m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
 ---
 apiVersion: v1
 kind: Service
@@ -89,12 +107,21 @@ spec:
     spec:
       imagePullSecrets:
         - name: ghcr-secret
+      nodeSelector:
+        kubernetes.io/hostname: worker-1
       containers:
         - name: spring-member-stock-web
           image: ghcr.io/hyunmyungchoi/spring-member-stock-web@sha256:2ad109fb25338094c047be803a8454dd94040802f171115fca94cf9b9c12830f
           imagePullPolicy: Always
           ports:
             - containerPort: 80
+          resources:
+            requests:
+              cpu: 20m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
 ---
 apiVersion: v1
 kind: Service
@@ -126,12 +153,21 @@ spec:
     spec:
       imagePullSecrets:
         - name: ghcr-secret
+      nodeSelector:
+        kubernetes.io/hostname: worker-2
       containers:
         - name: spring-admin-web
           image: ghcr.io/hyunmyungchoi/spring-admin-web@sha256:83702706835dfa4619e0edbfa4e24740ca0e47ec08bd419e501e4b9431c301bf
           imagePullPolicy: Always
           ports:
             - containerPort: 80
+          resources:
+            requests:
+              cpu: 20m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
 ---
 apiVersion: v1
 kind: Service
@@ -163,12 +199,21 @@ spec:
     spec:
       imagePullSecrets:
         - name: ghcr-secret
+      nodeSelector:
+        kubernetes.io/hostname: worker-2
       containers:
         - name: spring-admin-users-web
           image: ghcr.io/hyunmyungchoi/spring-admin-users-web@sha256:87b610cb1fadfa39556c517a3288dc51287d6443a2d4b307cd28a8e628deac67
           imagePullPolicy: Always
           ports:
             - containerPort: 80
+          resources:
+            requests:
+              cpu: 20m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
 ---
 apiVersion: v1
 kind: Service
@@ -200,12 +245,21 @@ spec:
     spec:
       imagePullSecrets:
         - name: ghcr-secret
+      nodeSelector:
+        kubernetes.io/hostname: worker-2
       containers:
         - name: spring-admin-logs-web
           image: ghcr.io/hyunmyungchoi/spring-admin-logs-web@sha256:520e96f6b642cc6b5f18a8b95c650eaf82641d4e7bc854428416b21bbe754c03
           imagePullPolicy: Always
           ports:
             - containerPort: 80
+          resources:
+            requests:
+              cpu: 20m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
 ---
 apiVersion: v1
 kind: Service

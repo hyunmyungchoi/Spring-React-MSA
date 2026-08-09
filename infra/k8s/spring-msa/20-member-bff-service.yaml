@@ -4,7 +4,7 @@ metadata:
   name: spring-member-bff-service
   namespace: spring-msa
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: spring-member-bff-service
@@ -15,6 +15,16 @@ spec:
     spec:
       imagePullSecrets:
         - name: ghcr-secret
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              preference:
+                matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - worker-1
       containers:
         - name: spring-member-bff-service
           image: ghcr.io/hyunmyungchoi/spring-member-bff-service@sha256:2bb2a6a68a48c08f0242c55fd2d2196d4be663f11504a31579449822487454f2
@@ -39,7 +49,7 @@ spec:
             - name: SERVER_TOMCAT_ACCESSLOG_BUFFERED
               value: "false"
             - name: SPRING_DATASOURCE_URL
-              value: jdbc:postgresql://postgres:5432/msa
+              value: jdbc:postgresql://postgres:5432/postgres
             - name: SPRING_DATASOURCE_USERNAME
               valueFrom:
                 configMapKeyRef:
@@ -93,7 +103,10 @@ spec:
             - name: APP_KAFKA_ENABLED
               value: "true"
             - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
-              value: kafka.kafka.svc.cluster.local:9092
+              valueFrom:
+                configMapKeyRef:
+                  name: spring-msa-config
+                  key: KAFKA_BOOTSTRAP_SERVERS
             - name: BFF_KAFKA_NOTIFICATION_GROUP
               value: spring-member-bff-chat-notification
             - name: BFF_KAFKA_ANALYTICS_GROUP
@@ -160,11 +173,11 @@ spec:
             failureThreshold: 3
           resources:
             requests:
-              cpu: 512m
-              memory: 1024Mi
+              cpu: 250m
+              memory: 384Mi
             limits:
-              cpu: 512m
-              memory: 1024Mi
+              cpu: "1"
+              memory: 640Mi
 ---
 apiVersion: v1
 kind: Service
