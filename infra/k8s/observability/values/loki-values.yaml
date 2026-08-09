@@ -61,6 +61,9 @@ singleBinary:
       memory: 2Gi
 
 gateway:
+  service:
+    type: NodePort
+    nodePort: 31000
   nodeSelector:
     node-pool: observability
   tolerations:

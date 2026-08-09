@@ -1,0 +1,19 @@
+services:
+  alloy:
+    image: grafana/alloy:v1.18.0
+    container_name: springmsa-alloy
+    hostname: ${ALLOY_INSTANCE:-external-vm}
+    restart: unless-stopped
+    command:
+      - run
+      - /etc/alloy/config.alloy
+      - --storage.path=/var/lib/alloy/data
+    environment:
+      ALLOY_INSTANCE: ${ALLOY_INSTANCE:-external-vm}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./alloy-config.alloy:/etc/alloy/config.alloy:ro
+      - alloy-data:/var/lib/alloy/data
+
+volumes:
+  alloy-data:

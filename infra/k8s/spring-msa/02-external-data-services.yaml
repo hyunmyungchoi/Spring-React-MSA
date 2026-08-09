@@ -70,7 +70,7 @@ spec:
 apiVersion: discovery.k8s.io/v1
 kind: EndpointSlice
 metadata:
-  name: kafka-storage-vm
+  name: kafka-vm
   namespace: spring-msa
   labels:
     kubernetes.io/service-name: kafka
@@ -81,6 +81,6 @@ ports:
     port: 9092
 endpoints:
   - addresses:
-      - 192.168.147.101
+      - 192.168.147.131
     conditions:
       ready: true
