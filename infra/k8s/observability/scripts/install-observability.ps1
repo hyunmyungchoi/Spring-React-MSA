@@ -68,6 +68,7 @@ Run @(
     "--timeout", "15m"
 )
 
+Run @("kubectl", "apply", "-f", (Join-Path $Root "10-spring-service-monitor.yaml"))
 Run @("kubectl", "get", "pods,svc,ingress,pvc", "-n", "observability")
 
 Write-Host ""

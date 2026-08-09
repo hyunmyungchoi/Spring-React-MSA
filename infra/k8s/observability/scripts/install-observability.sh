@@ -66,4 +66,5 @@ helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheu
   --wait \
   --timeout 20m
 
+kubectl apply -f "$ROOT/10-spring-service-monitor.yaml"
 kubectl get pods,svc,ingress,pvc -n observability
