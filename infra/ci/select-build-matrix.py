@@ -86,6 +86,27 @@ DATABASE_MIGRATION_IMAGES = [
     "spring-member-bff-service",
 ]
 ALL_BACKEND_IMAGES = [image["service"] for image in BACKEND_IMAGES]
+SUBMODULE_ROOTS = {
+    "BackEnd/spring-member-gateway",
+    "BackEnd/spring-admin-gateway",
+    "BackEnd/spring-security-authorization-server",
+    "BackEnd/spring-user-service",
+    "BackEnd/spring-member-community-service",
+    "BackEnd/spring-member-stock-service",
+    "BackEnd/spring-member-bff-service",
+    "BackEnd/spring-admin-bff-service",
+    "BackEnd/spring-msa-common-web",
+    "BackEnd/spring-msa-common-kafka",
+    "FrontEnd/apps/member",
+    "FrontEnd/apps/member-community",
+    "FrontEnd/apps/member-stock",
+    "FrontEnd/apps/admin",
+    "FrontEnd/apps/admin-users",
+    "FrontEnd/apps/admin-logs",
+    "FrontEnd/packages/member-common",
+    "FrontEnd/packages/admin-common",
+    "FrontEnd/packages/api-contract",
+}
 
 
 def parse_args() -> argparse.Namespace:
@@ -128,6 +149,8 @@ def detect_services(paths: list[str]) -> list[str]:
         selected.update(services)
 
     for path in normalize_paths(paths):
+        if path in SUBMODULE_ROOTS:
+            path = f"{path}/"
         if path.startswith("BackEnd/spring-member-gateway/"):
             add("spring-member-gateway")
         elif path.startswith("BackEnd/spring-admin-gateway/"):

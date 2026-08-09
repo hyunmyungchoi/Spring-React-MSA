@@ -21,6 +21,12 @@ class SelectBuildMatrixTest(unittest.TestCase):
             ["spring-member-stock-service"],
         )
 
+    def test_submodule_pointer_change_selects_service_image(self) -> None:
+        self.assertEqual(
+            select_build_matrix.detect_services(["BackEnd/spring-user-service"]),
+            ["spring-user-service"],
+        )
+
     def test_stock_ui_change_selects_stock_web(self) -> None:
         self.assertEqual(
             select_build_matrix.detect_services(
