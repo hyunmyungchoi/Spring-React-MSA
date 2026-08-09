@@ -25,6 +25,8 @@ spec:
                     operator: In
                     values:
                       - worker-1
+      nodeSelector:
+        kubernetes.io/hostname: worker-1
       containers:
         - name: spring-member-gateway
           image: ghcr.io/hyunmyungchoi/spring-member-gateway@sha256:b30ad1debf25e1fd8b9b7dfb9a4ec7567f815eaf359100673dbe4540fbd42118

@@ -25,6 +25,8 @@ spec:
                     operator: In
                     values:
                       - worker-2
+      nodeSelector:
+        kubernetes.io/hostname: worker-2
       containers:
         - name: spring-admin-gateway
           image: ghcr.io/hyunmyungchoi/spring-admin-gateway@sha256:43f6c8e254209680bbeb9254a1a2cdb411bc678f4f1a2a4b9c2815ed174af20b
