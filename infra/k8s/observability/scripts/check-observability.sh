@@ -28,7 +28,7 @@ services=(
   spring-user-service:8081
   spring-member-community-service:8083
   spring-member-stock-service:8084
-  spring-member-bff-service:8082
+  spring-member-bff-service:8079
   spring-admin-bff-service:8087
   spring-member-gateway:8080
   spring-admin-gateway:8090
