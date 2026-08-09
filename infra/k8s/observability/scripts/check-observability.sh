@@ -13,7 +13,7 @@ probe() {
   output="$(kubectl run "probe-$name" --rm -i --restart=Never \
     --image=curlimages/curl:8.17.0 -n observability -- \
     curl -sS -o /dev/null -w '%{http_code}' "$url")"
-  status="${output:0:3}"
+  status="$(printf '%s' "$output" | grep -oE '[0-9]{3}' | head -n 1)"
   echo "${name^^}=$status"
   [[ "$status" == "200" ]]
 }
