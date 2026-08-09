@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PLATFORM_NODE="${PLATFORM_NODE:-worker-app-3}"
+PLATFORM_NODE="${PLATFORM_NODE:-worker-platform}"
 
 kubectl label node worker-1 node-pool=application workload=application --overwrite
 kubectl label node worker-2 node-pool=application workload=application --overwrite
