@@ -31,7 +31,7 @@ spec:
                       - worker-2
       containers:
         - name: spring-member-stock-service
-          image: ghcr.io/hyunmyungchoi/spring-member-stock-service@sha256:8f7e13e911066078585a4fd4a5cec355405d1d2534bcf1d4d312676ab5c0ef6e
+          image: ghcr.io/hyunmyungchoi/spring-member-stock-service@sha256:aeeb49d62d0625ad23ac5c418cb1a0ffc05c7d3d8ad2062ae474225748a285e8
           imagePullPolicy: Always
           ports:
             - containerPort: 8084

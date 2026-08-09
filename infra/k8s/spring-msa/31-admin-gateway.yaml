@@ -27,7 +27,7 @@ spec:
                       - worker-2
       containers:
         - name: spring-admin-gateway
-          image: ghcr.io/hyunmyungchoi/spring-admin-gateway@sha256:de3bc4526bfa0cccc6575be30835fe0f3627726f6e722dc829f8e53370db1752
+          image: ghcr.io/hyunmyungchoi/spring-admin-gateway@sha256:43f6c8e254209680bbeb9254a1a2cdb411bc678f4f1a2a4b9c2815ed174af20b
           imagePullPolicy: Always
           ports:
             - containerPort: 8090

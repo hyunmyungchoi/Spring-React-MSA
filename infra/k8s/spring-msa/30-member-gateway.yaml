@@ -27,7 +27,7 @@ spec:
                       - worker-1
       containers:
         - name: spring-member-gateway
-          image: ghcr.io/hyunmyungchoi/spring-member-gateway@sha256:7b31c386b46cdf8e7e140bb1e644f1de1dec2b22349ef8789c7cb3152463a913
+          image: ghcr.io/hyunmyungchoi/spring-member-gateway@sha256:b30ad1debf25e1fd8b9b7dfb9a4ec7567f815eaf359100673dbe4540fbd42118
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
