@@ -1,5 +1,12 @@
 grafana:
   enabled: true
+  nodeSelector:
+    node-pool: observability
+  tolerations:
+    - key: node-pool
+      operator: Equal
+      value: observability
+      effect: NoSchedule
   adminUser: admin
   defaultDashboardsTimezone: Asia/Seoul
   service:
@@ -40,8 +47,33 @@ grafana:
 alertmanager:
   enabled: false
 
+prometheusOperator:
+  nodeSelector:
+    node-pool: observability
+  tolerations:
+    - key: node-pool
+      operator: Equal
+      value: observability
+      effect: NoSchedule
+
+kube-state-metrics:
+  nodeSelector:
+    node-pool: observability
+  tolerations:
+    - key: node-pool
+      operator: Equal
+      value: observability
+      effect: NoSchedule
+
 prometheus:
   prometheusSpec:
+    nodeSelector:
+      node-pool: observability
+    tolerations:
+      - key: node-pool
+        operator: Equal
+        value: observability
+        effect: NoSchedule
     retention: 7d
     scrapeInterval: 30s
     evaluationInterval: 30s

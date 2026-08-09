@@ -24,6 +24,13 @@ ignoreMinioDeprecation: true
 
 minio:
   enabled: true
+  nodeSelector:
+    node-pool: observability
+  tolerations:
+    - key: node-pool
+      operator: Equal
+      value: observability
+      effect: NoSchedule
   persistence:
     storageClass: local-path
     size: 2Gi
@@ -32,6 +39,13 @@ deploymentMode: Monolithic
 
 singleBinary:
   replicas: 1
+  nodeSelector:
+    node-pool: observability
+  tolerations:
+    - key: node-pool
+      operator: Equal
+      value: observability
+      effect: NoSchedule
   persistence:
     enabled: true
     storageClass: local-path
@@ -45,6 +59,15 @@ singleBinary:
     limits:
       cpu: 1000m
       memory: 2Gi
+
+gateway:
+  nodeSelector:
+    node-pool: observability
+  tolerations:
+    - key: node-pool
+      operator: Equal
+      value: observability
+      effect: NoSchedule
 
 backend:
   replicas: 0

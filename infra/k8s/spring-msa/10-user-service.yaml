@@ -17,16 +17,8 @@ spec:
     spec:
       imagePullSecrets:
         - name: ghcr-secret
-      affinity:
-        nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 100
-              preference:
-                matchExpressions:
-                  - key: kubernetes.io/hostname
-                    operator: In
-                    values:
-                      - worker-1
+      nodeSelector:
+        node-pool: application
       containers:
         - name: spring-user-service
           image: ghcr.io/hyunmyungchoi/spring-user-service@sha256:9a32b0722bfd4b9ca8b2656a3b722b18cc0fe3383a2dbd1e64d2998a48b988cf

@@ -17,18 +17,8 @@ spec:
     spec:
       imagePullSecrets:
         - name: ghcr-secret
-      affinity:
-        nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 100
-              preference:
-                matchExpressions:
-                  - key: kubernetes.io/hostname
-                    operator: In
-                    values:
-                      - worker-1
       nodeSelector:
-        kubernetes.io/hostname: worker-1
+        node-pool: application
       containers:
         - name: spring-member-gateway
           image: ghcr.io/hyunmyungchoi/spring-member-gateway@sha256:5a6626521f99366079e801f1ba73331231b0ec3282f71e6f6f8bcb61bfa1f15a

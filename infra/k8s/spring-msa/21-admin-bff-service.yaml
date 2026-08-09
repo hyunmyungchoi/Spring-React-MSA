@@ -17,16 +17,8 @@ spec:
     spec:
       imagePullSecrets:
         - name: ghcr-secret
-      affinity:
-        nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 100
-              preference:
-                matchExpressions:
-                  - key: kubernetes.io/hostname
-                    operator: In
-                    values:
-                      - worker-2
+      nodeSelector:
+        node-pool: application
       containers:
         - name: spring-admin-bff-service
           image: ghcr.io/hyunmyungchoi/spring-admin-bff-service@sha256:dcc7a32469d142b10e85b8ac20d24c47ff642275c426af0f83c3d74239bfd029
