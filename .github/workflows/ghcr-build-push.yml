@@ -83,6 +83,7 @@ jobs:
         run: >-
           python -m unittest
           infra/ci/test_select_build_matrix.py
+          infra/ci/test_ghcr_build_push_workflow.py
           infra/ci/test_select_frontend_deploy_matrix.py
           infra/ci/test_aws_frontend_deploy_workflow.py
 

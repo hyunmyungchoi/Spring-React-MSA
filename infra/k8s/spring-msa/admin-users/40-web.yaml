@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spring-admin-users-web
+  namespace: spring-msa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spring-admin-users-web
+  template:
+    metadata:
+      labels:
+        app: spring-admin-users-web
+    spec:
+      imagePullSecrets:
+        - name: ghcr-secret
+      nodeSelector:
+        node-pool: application
+      containers:
+        - name: spring-admin-users-web
+          image: ghcr.io/hyunmyungchoi/spring-admin-users-web@sha256:77c9aec41713de72cc85e0d04c24acea5037f7b90fea56c49728a84ac1a2423f
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 20m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spring-admin-users-web
+  namespace: spring-msa
+spec:
+  type: ClusterIP
+  selector:
+    app: spring-admin-users-web
+  ports:
+    - port: 80
+      targetPort: 80

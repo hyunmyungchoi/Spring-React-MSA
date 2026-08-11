@@ -7,22 +7,20 @@ from pathlib import Path
 
 
 MANIFESTS: dict[str, list[str]] = {
-    "10-user-service.yaml": ["spring-user-service"],
-    "11-community-service.yaml": ["spring-member-community-service"],
-    "12-stock-service.yaml": ["spring-member-stock-service"],
-    "13-auth-server.yaml": ["spring-security-authorization-server"],
-    "20-member-bff-service.yaml": ["spring-member-bff-service"],
-    "21-admin-bff-service.yaml": ["spring-admin-bff-service"],
-    "30-member-gateway.yaml": ["spring-member-gateway"],
-    "31-admin-gateway.yaml": ["spring-admin-gateway"],
-    "40-web.yaml": [
-        "spring-member-web",
-        "spring-member-community-web",
-        "spring-member-stock-web",
-        "spring-admin-web",
-        "spring-admin-users-web",
-        "spring-admin-logs-web",
-    ],
+    "security/10-user-service.yaml": ["spring-user-service"],
+    "member-community/11-community-service.yaml": ["spring-member-community-service"],
+    "member-stock/12-stock-service.yaml": ["spring-member-stock-service"],
+    "security/13-auth-server.yaml": ["spring-security-authorization-server"],
+    "member-shell/20-member-bff-service.yaml": ["spring-member-bff-service"],
+    "admin-shell/21-admin-bff-service.yaml": ["spring-admin-bff-service"],
+    "member-shell/30-member-gateway.yaml": ["spring-member-gateway"],
+    "admin-shell/31-admin-gateway.yaml": ["spring-admin-gateway"],
+    "member-shell/40-web.yaml": ["spring-member-web"],
+    "member-community/40-web.yaml": ["spring-member-community-web"],
+    "member-stock/40-web.yaml": ["spring-member-stock-web"],
+    "admin-shell/40-web.yaml": ["spring-admin-web"],
+    "admin-users/40-web.yaml": ["spring-admin-users-web"],
+    "admin-logs/40-web.yaml": ["spring-admin-logs-web"],
 }
 
 

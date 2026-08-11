@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spring-member-stock-web
+  namespace: spring-msa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spring-member-stock-web
+  template:
+    metadata:
+      labels:
+        app: spring-member-stock-web
+    spec:
+      imagePullSecrets:
+        - name: ghcr-secret
+      nodeSelector:
+        node-pool: application
+      containers:
+        - name: spring-member-stock-web
+          image: ghcr.io/hyunmyungchoi/spring-member-stock-web@sha256:0af02e2397730dace021578352b92dddc30a1b8189b1a13474d3458754747c3a
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 20m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spring-member-stock-web
+  namespace: spring-msa
+spec:
+  type: ClusterIP
+  selector:
+    app: spring-member-stock-web
+  ports:
+    - port: 80
+      targetPort: 80

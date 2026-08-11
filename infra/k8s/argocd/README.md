@@ -1,6 +1,20 @@
 # Argo CD
 
-Argo CD watches the Git repository and syncs Kubernetes manifests into the cluster.
+Argo CD watches the Git repository and syncs Kubernetes manifests through a nested App of Apps structure.
+
+```text
+spring-msa-root
+|- spring-msa-member
+|  |- spring-member-shell
+|  |- spring-member-community
+|  `- spring-member-stock
+|- spring-msa-admin
+|  |- spring-admin-shell
+|  |- spring-admin-users
+|  `- spring-admin-logs
+|- spring-msa-security
+`- spring-msa-platform
+```
 
 Install Argo CD:
 

@@ -1,16 +1,16 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: spring-msa-root
+  name: spring-msa-admin
   namespace: argocd
   labels:
-    springmsa.dev/domain: root
+    springmsa.dev/domain: admin
 spec:
   project: default
   source:
     repoURL: https://github.com/hyunmyungchoi/Spring-React-MSA.git
     targetRevision: master
-    path: infra/k8s/argocd/root
+    path: infra/k8s/argocd/apps/admin
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd

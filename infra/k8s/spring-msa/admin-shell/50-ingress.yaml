@@ -1,0 +1,81 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: spring-msa-admin
+  namespace: spring-msa
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: admin.localtest.me
+      http:
+        paths:
+          - path: /admin-bff
+            pathType: Prefix
+            backend:
+              service:
+                name: spring-admin-gateway
+                port:
+                  number: 8090
+          - path: /login
+            pathType: Prefix
+            backend:
+              service:
+                name: spring-admin-gateway
+                port:
+                  number: 8090
+          - path: /oauth2
+            pathType: Prefix
+            backend:
+              service:
+                name: spring-admin-gateway
+                port:
+                  number: 8090
+          - path: /.well-known
+            pathType: Prefix
+            backend:
+              service:
+                name: spring-admin-gateway
+                port:
+                  number: 8090
+          - path: /logout
+            pathType: Prefix
+            backend:
+              service:
+                name: spring-admin-gateway
+                port:
+                  number: 8090
+          - path: /connect
+            pathType: Prefix
+            backend:
+              service:
+                name: spring-admin-gateway
+                port:
+                  number: 8090
+          - path: /userinfo
+            pathType: Prefix
+            backend:
+              service:
+                name: spring-admin-gateway
+                port:
+                  number: 8090
+          - path: /manage/users
+            pathType: Prefix
+            backend:
+              service:
+                name: spring-admin-users-web
+                port:
+                  number: 80
+          - path: /manage/logs
+            pathType: Prefix
+            backend:
+              service:
+                name: spring-admin-logs-web
+                port:
+                  number: 80
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: spring-admin-web
+                port:
+                  number: 80

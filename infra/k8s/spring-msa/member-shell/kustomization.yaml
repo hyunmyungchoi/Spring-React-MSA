@@ -1,0 +1,30 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - 20-member-bff-service.yaml
+  - 30-member-gateway.yaml
+  - 40-web.yaml
+  - 50-ingress.yaml
+
+replicas:
+  - name: spring-member-bff-service
+    count: 2
+  - name: spring-member-gateway
+    count: 2
+  - name: spring-member-web
+    count: 2
+
+patches:
+  - target:
+      kind: Deployment
+    patch: |-
+      - op: add
+        path: /spec/template/spec/affinity
+        value:
+          podAntiAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              - labelSelector: {}
+                matchLabelKeys:
+                  - pod-template-hash
+                topologyKey: kubernetes.io/hostname

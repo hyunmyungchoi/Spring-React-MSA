@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spring-admin-logs-web
+  namespace: spring-msa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spring-admin-logs-web
+  template:
+    metadata:
+      labels:
+        app: spring-admin-logs-web
+    spec:
+      imagePullSecrets:
+        - name: ghcr-secret
+      nodeSelector:
+        node-pool: application
+      containers:
+        - name: spring-admin-logs-web
+          image: ghcr.io/hyunmyungchoi/spring-admin-logs-web@sha256:9284c2efbbb475d46067924c9aabc960deba156f57f48c06371e0d8f44c1c216
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 20m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spring-admin-logs-web
+  namespace: spring-msa
+spec:
+  type: ClusterIP
+  selector:
+    app: spring-admin-logs-web
+  ports:
+    - port: 80
+      targetPort: 80
