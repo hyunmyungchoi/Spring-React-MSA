@@ -205,6 +205,15 @@ def detect_services(paths: list[str]) -> list[str]:
                 "spring-admin-users-web",
                 "spring-admin-logs-web",
             )
+        elif path == "FrontEnd/packages":
+            add(
+                "spring-member-web",
+                "spring-member-community-web",
+                "spring-member-stock-web",
+                "spring-admin-web",
+                "spring-admin-users-web",
+                "spring-admin-logs-web",
+            )
         elif path.startswith("FrontEnd/apps/member/"):
             if path.endswith("Dockerfile.member"):
                 add("spring-member-web")

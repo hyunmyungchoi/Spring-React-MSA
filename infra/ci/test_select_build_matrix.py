@@ -48,6 +48,19 @@ class SelectBuildMatrixTest(unittest.TestCase):
             ],
         )
 
+    def test_frontend_packages_submodule_pointer_change_selects_all_frontend_images(self) -> None:
+        self.assertEqual(
+            select_build_matrix.detect_services(["FrontEnd/packages"]),
+            [
+                "spring-member-web",
+                "spring-member-community-web",
+                "spring-member-stock-web",
+                "spring-admin-web",
+                "spring-admin-users-web",
+                "spring-admin-logs-web",
+            ],
+        )
+
     def test_stock_service_image_builds_from_backend_context(self) -> None:
         stock_image = next(
             image
