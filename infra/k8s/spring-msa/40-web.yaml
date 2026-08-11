@@ -19,7 +19,7 @@ spec:
         node-pool: application
       containers:
         - name: spring-member-web
-          image: ghcr.io/hyunmyungchoi/spring-member-web@sha256:6ad76dede8e1365a6f74ea8de5f42198e93fd5044b1630270ccb61d26a7c762d
+          image: ghcr.io/hyunmyungchoi/spring-member-web@sha256:46d05830fe0164abdec974f1d81b8cd133d6afb8bb43b3257033d442c8d2ff8a
           imagePullPolicy: Always
           ports:
             - containerPort: 80
@@ -65,7 +65,7 @@ spec:
         node-pool: application
       containers:
         - name: spring-member-community-web
-          image: ghcr.io/hyunmyungchoi/spring-member-community-web@sha256:b2395587eacdf1114e1f5c82a29aa2904d65b4c9f87174e2aa38760700d0ad8d
+          image: ghcr.io/hyunmyungchoi/spring-member-community-web@sha256:d1412063ed4238de6e44913796b272867fd8a86e9f2dccc78d622ef2f6d8ea13
           imagePullPolicy: Always
           ports:
             - containerPort: 80
@@ -111,7 +111,7 @@ spec:
         node-pool: application
       containers:
         - name: spring-member-stock-web
-          image: ghcr.io/hyunmyungchoi/spring-member-stock-web@sha256:1311ed625833454dc4768b153c400aa198a420b2e198e9e3535d1722487b4e84
+          image: ghcr.io/hyunmyungchoi/spring-member-stock-web@sha256:0af02e2397730dace021578352b92dddc30a1b8189b1a13474d3458754747c3a
           imagePullPolicy: Always
           ports:
             - containerPort: 80
@@ -157,7 +157,7 @@ spec:
         node-pool: application
       containers:
         - name: spring-admin-web
-          image: ghcr.io/hyunmyungchoi/spring-admin-web@sha256:7ead64fcc1b127e2fdb754eccd46eface5d263062c0e41e3516fc6e5dc31e1a5
+          image: ghcr.io/hyunmyungchoi/spring-admin-web@sha256:8eb90daee342bc7f6913825a1bd4d8a95876c93b4dc3b899ad3394a98f756be9
           imagePullPolicy: Always
           ports:
             - containerPort: 80
@@ -203,7 +203,7 @@ spec:
         node-pool: application
       containers:
         - name: spring-admin-users-web
-          image: ghcr.io/hyunmyungchoi/spring-admin-users-web@sha256:eceda728422df1f0e7d5fbff044e427e8089f594357b57db05b94cfa9897eedf
+          image: ghcr.io/hyunmyungchoi/spring-admin-users-web@sha256:77c9aec41713de72cc85e0d04c24acea5037f7b90fea56c49728a84ac1a2423f
           imagePullPolicy: Always
           ports:
             - containerPort: 80
@@ -249,7 +249,7 @@ spec:
         node-pool: application
       containers:
         - name: spring-admin-logs-web
-          image: ghcr.io/hyunmyungchoi/spring-admin-logs-web@sha256:1c63b1f56652d93ddc72dffe534786bbb1c22902f1b6890cc1e35b148b13bdf2
+          image: ghcr.io/hyunmyungchoi/spring-admin-logs-web@sha256:9284c2efbbb475d46067924c9aabc960deba156f57f48c06371e0d8f44c1c216
           imagePullPolicy: Always
           ports:
             - containerPort: 80
