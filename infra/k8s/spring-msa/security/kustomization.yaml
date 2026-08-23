@@ -9,7 +9,7 @@ replicas:
   - name: spring-user-service
     count: 2
   - name: spring-security-authorization-server
-    count: 2
+    count: 1
 
 patches:
   - target:
