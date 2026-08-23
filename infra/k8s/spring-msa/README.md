@@ -1,13 +1,22 @@
-# Local Kubernetes Manifests
+# Spring MSA Kubernetes Manifests
 
-This directory is for local Kubernetes only.
+현재 VMware 온프레미스 배포 선언이다.
 
-- PostgreSQL, Redis, and Kafka run outside Kubernetes on the Storage VM at `192.168.147.101`.
-- `02-external-data-services.yaml` exposes those external endpoints through stable in-cluster service names.
-- Member-facing workloads prefer `worker-1`; Admin and domain workloads prefer `worker-2`.
-- Web workloads are pinned to their requested worker. Backend preferences remain soft so they can fail over.
-- `localtest.me` routes traffic to local ingress and is intentionally used by these manifests.
-- These manifests are not the AWS ECS deployment source.
-- AWS ECS will use ECS Task Definitions plus SSM Parameter Store or Secrets Manager for environment values.
-- Do not add AWS VPC, ECS, ALB, RDS, ElastiCache, Route 53, Terraform resources, or `docker-compose-aws.yml` here.
-- Keep local values such as `http://user.localtest.me` and `http://admin.localtest.me` scoped to this directory.
+- PostgreSQL: 192.168.147.101:5432
+- Redis: 192.168.147.101:6379
+- Kafka: 192.168.147.131:9092
+- Application: worker-1/2
+- Platform + Observability: worker-platform-observability
+
+02-external-data-services.yaml이 외부 endpoint를 cluster Service로 제공한다. Required anti-affinity로 application replica를 worker-1/2에 분리한다.
+
+Authorization Server는 현재 replicas 1이다. 공유 OAuth2 authorization 저장소와 JWK를 구현하기 전에는 확장하지 않는다.
+
+~~~bash
+kubectl apply -k infra/k8s/spring-msa
+kubectl rollout status deployment -n spring-msa --timeout=10m
+~~~
+
+~~~powershell
+powershell.exe -ExecutionPolicy Bypass -File infra\ci\k8s-live-smoke.ps1
+~~~

@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PLATFORM_NODE="${PLATFORM_NODE:-worker-platform}"
+PLATFORM_NODE="${PLATFORM_NODE:-worker-platform-observability}"
 
 kubectl label node worker-1 node-pool=application workload=application --overwrite
 kubectl label node worker-2 node-pool=application workload=application --overwrite
-kubectl label node "${PLATFORM_NODE}" node-pool=platform workload=platform --overwrite
-kubectl taint node "${PLATFORM_NODE}" node-pool=platform:NoSchedule --overwrite
+kubectl label node "${PLATFORM_NODE}" node-pool=platform-observability workload=platform-observability --overwrite
+kubectl taint node "${PLATFORM_NODE}" node-pool=platform-observability:NoSchedule --overwrite
 
-platform_patch='{"spec":{"template":{"spec":{"nodeSelector":{"node-pool":"platform"},"tolerations":[{"key":"node-pool","operator":"Equal","value":"platform","effect":"NoSchedule"}]}}}}'
+platform_patch='{"spec":{"template":{"spec":{"nodeSelector":{"node-pool":"platform-observability"},"tolerations":[{"key":"node-pool","operator":"Equal","value":"platform-observability","effect":"NoSchedule"}]}}}}'
 application_patch='{"spec":{"replicas":2,"template":{"spec":{"nodeSelector":{"node-pool":"application"},"affinity":{"podAntiAffinity":{"requiredDuringSchedulingIgnoredDuringExecution":[{"labelSelector":{"matchLabels":{"app.kubernetes.io/component":"controller","app.kubernetes.io/instance":"ingress-nginx","app.kubernetes.io/name":"ingress-nginx"}},"topologyKey":"kubernetes.io/hostname"}]}}}}}}'
 
 while IFS= read -r resource; do

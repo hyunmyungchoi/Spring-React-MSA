@@ -1,41 +1,39 @@
-# VM Kafka runbook
+# Kafka VM 런북
 
-The local Kafka broker runs inside the Ubuntu VM. Windows Docker Desktop is not required.
+Kafka는 Kubernetes 밖의 전용 VM에서 실행한다.
 
-## Start Kafka
+- Host: kafka-1
+- IP: 192.168.147.131
+- Mode: 단일 KRaft broker/controller
+- Container: springmsa-kafka
 
-Run these commands in the VM from the checked-out repository:
+단일 broker이므로 HA가 아니다.
 
-```bash
-cd infra/vm
+## 시작과 확인
+
+~~~bash
+cd ~/kafka
 chmod +x kafka-up.sh
-KAFKA_ADVERTISED_HOST=192.168.56.101 ./kafka-up.sh
-```
-
-The script starts Apache Kafka 4.3.1 in single-node KRaft mode, waits for the broker, and creates all application and DLT topics.
-
-## Check the broker
-
-```bash
+KAFKA_ADVERTISED_HOST=192.168.147.131 ./kafka-up.sh
 docker ps --filter name=springmsa-kafka
-docker exec springmsa-kafka /opt/kafka/bin/kafka-topics.sh \
-  --bootstrap-server localhost:9092 \
-  --list
-```
+docker exec springmsa-kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
+~~~
 
-Expected Windows-side settings in `infra/vm/.env.local`:
+~~~powershell
+Test-NetConnection 192.168.147.131 -Port 9092
+~~~
 
-```dotenv
+~~~dotenv
 APP_KAFKA_ENABLED=true
-SPRING_KAFKA_BOOTSTRAP_SERVERS=192.168.56.101:9092
-```
+SPRING_KAFKA_BOOTSTRAP_SERVERS=192.168.147.131:9092
+~~~
 
-The producer services and Member BFF can still start without Kafka by setting `APP_KAFKA_ENABLED=false`. Domain writes continue to record Outbox rows, and the relay publishes them after Kafka is enabled again.
+Community, Stock, User는 Outbox에 먼저 저장하므로 Kafka 중단 중에도 도메인 transaction은 보존된다.
 
-## Stop Kafka
+## 중지
 
-```bash
-docker compose -f infra/vm/kafka-compose.yml stop kafka
-```
+~~~bash
+docker compose -f kafka-compose.yml stop kafka
+~~~
 
-Use `down` only when the Compose network should also be removed. The named `kafka-data` volume is intentionally retained.
+down -v는 데이터를 지우므로 사용하지 않는다.

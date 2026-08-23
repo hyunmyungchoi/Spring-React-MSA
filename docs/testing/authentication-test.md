@@ -1,103 +1,46 @@
 # 인증 테스트
 
-## 범위
+## 운영 제약
 
-Authorization Server, Member/Admin BFF, User Service, Redis Session, Gateway/Ingress를 통과하는 인증·권한·CSRF·logout을 검증한다.
+Authorization Server는 1 replica로 운영한다. Spring Session은 Redis지만 OAuth2 authorization과 JWK는 공유되지 않는다.
 
-## 사전 조건
+실제 검증 결과:
 
-- User Service, Authorization Server, Member/Admin BFF와 Gateway가 healthy
-- Redis 사용 가능
-- member와 admin OAuth client ID/secret/redirect URI가 일치
-- `ROLE_USER` 사용자와 `ROLE_ADMIN` 사용자 준비
-- browser origin이 CORS 허용 목록과 일치
+- 2 replicas: 간헐 실패 후 재기동 상태에서 8/8 oauth2_login_failed
+- 1 replica: 동일 로그인 5/5 성공
 
-실제 password, token, cookie를 test 결과나 문서에 기록하지 않는다.
+2 replicas 전환 전 필요한 항목:
 
-## 필수 시나리오
+- 영속 OAuth2AuthorizationService
+- 공유 OAuth2AuthorizationConsentService
+- 고정 JWK key set
+- replica 교차 token 교환 테스트
+- key rotation 런북
 
-| ID | 시나리오 | 기대 결과 |
-| --- | --- | --- |
-| A-01 | 회원 올바른 비밀번호 로그인 | Auth session 후 authorization code 완료, Member session 생성 |
-| A-02 | 잘못된 비밀번호 | 401 `AUTH_INVALID_CREDENTIALS`, 사용자 존재 여부 비노출 |
-| A-03 | disabled 사용자 | A-02와 같은 외부 응답 |
-| A-04 | 회원 `/bff/auth/me` | authenticated user와 Member CSRF cookie |
-| A-05 | 익명 `/bff/auth/me` | 200, `authenticated=false` |
-| A-06 | Admin role 로그인 | Admin session 생성, frontend redirect |
-| A-07 | ROLE_USER의 Admin 로그인 | session 정리, `admin_role_required` |
-| A-08 | CSRF 없는 Member POST | 403 |
-| A-09 | Admin CSRF를 Member 요청에 사용 | 403 |
-| A-10 | access token 만료 + 유효 refresh | BFF가 갱신하고 downstream 성공 |
-| A-11 | BFF logout만 실행 | BFF 보호 API 거부, Auth session 잔존 가능성 확인 |
-| A-12 | authServerLogoutUrl까지 이동 | Auth/BFF 모두 logout, 재인증 필요 |
-| A-13 | internal token 누락/오류 | User `/internal/**` 401 |
-| A-14 | JWT 역할 변조/잘못된 issuer | Resource Server 401/403 |
-| A-15 | 익명 관리자 가입 | AWS Learning Public Traffic 정책에서 거부되어야 함 |
-| A-16 | 최초 관리자 Bootstrap 재실행 | 최초 `created`, 동일 입력 `already_present`, 다른 Admin 거부 |
+## 자동 E2E
 
-A-15는 관리자 가입 Controller와 정적 가입 UI가 코드베이스에 존재하지 않는지 검증한다. A-16은 Private ECS Task 최초 `created`와 동일 입력 `already_present`, 관리자 1명, Password Login·OAuth·`ROLE_ADMIN` Session·양쪽 Logout까지 검증한다. Cookie·Password·Token 값은 기록하지 않는다.
+~~~powershell
+powershell.exe -ExecutionPolicy Bypass -File infra\ci\k8s-live-smoke.ps1
+~~~
 
-2026-07-23 Post-Restore Full Smoke에서도 새 무작위 `ROLE_USER`의 Registration 201, Password Login, OAuth Authorization Code, `AUTHSESSIONID`·`BFFSESSIONID`, 인증 `/bff/auth/me`, CSRF Heartbeat, `/bff/user/me`, WebSocket 네 Frame, REST History와 양쪽 Logout을 실제 `curl.exe`로 재검증했다. 기존 Bootstrap 관리자는 DPAPI 암호화 자격증명으로만 제공해 Password Login, OAuth, `AUTHSESSIONID`·`ADMINSESSIONID`, `ROLE_ADMIN+ROLE_USER`, 보호 User/Session/Presence REST, 관리자 정확히 1명, 공개 가입 404와 양쪽 Logout을 확인했다. 원본 `sessionId`는 응답에 없었고 자격증명·Cookie·합성 비밀번호는 폐기했다. 로컬 WebSocket 실행기 인자 전달 오류로 연결 전에 중단된 합성 회원 1명과 최종 성공 회원 1명은 비밀번호가 폐기된 감사·정리 대상이다.
+검증 범위:
 
-## 브라우저 수동 확인
+- Member/Admin password login과 OAuth
+- auth/me와 CSRF
+- Community CRUD
+- Stock CRUD
+- Toss market API
+- Admin user/session/presence API
+- 양쪽 logout
+- 테스트 데이터 삭제
 
-1. Member `/auth`에서 가입한다.
-2. 로그인 요청 후 Network 탭에서 `/login/password` → `/oauth2/authorize` → BFF callback 순서를 확인한다.
-3. Storage에서 `AUTHSESSIONID`, `BFFSESSIONID`, `MEMBER-XSRF-TOKEN` 존재를 확인한다.
-4. localStorage/sessionStorage에 OAuth token이 없는지 확인한다.
-5. `/bff/user/me`가 성공하는지 확인한다.
-6. logout 응답의 `authServerLogoutUrl`로 이동한 뒤 다시 보호 페이지를 요청한다.
+## 실패 진단
 
-Admin도 `ADMINSESSIONID`, `ADMIN-XSRF-TOKEN`으로 반복한다. cookie 값을 screenshot이나 issue에 노출하지 않는다.
+1. callback redirect query의 error 확인
+2. Auth Server replica 수 확인
+3. client ID, secret hash, redirect URI 확인
+4. Redis와 Spring Session namespace 확인
+5. Gateway prefix 확인
+6. callback과 auth/me replica 비교
 
-## 자동화 권장 구조
-
-### Auth Server
-
-- `PasswordLoginController`: validation, invalid credential, disabled user
-- `LoginSessionService`: SavedRequest 있음/없음
-- JWT customizer: access/id token claim과 roles
-- logout redirect allow-list와 open redirect 거부
-
-### BFF
-
-- 익명/인증 `/auth/me`
-- cookie CSRF repository 이름과 header
-- OAuth success/failure handler redirect
-- Admin role check
-- authorized client access token relay와 refresh
-- logout 시 Member presence 삭제/이벤트
-
-### User Service
-
-- internal token constant-time 검증의 성공/실패
-- `/api/user/admin/**` ROLE_ADMIN 정책
-- login ID/email unique와 정규화
-- password가 평문으로 저장되지 않음
-- Bootstrap의 단일 Admin, Transaction Rollback, BCrypt와 동일 입력 멱등성
-
-### E2E
-
-Playwright context를 Member/Admin origin별로 분리한다. redirect와 cookie를 브라우저가 실제 처리하게 하고 access token을 test code에서 직접 주입하지 않는다.
-
-## Redis 확인
-
-값 자체를 출력하지 않고 key 존재와 TTL만 확인한다.
-
-```powershell
-kubectl exec deployment/redis -n spring-msa -- redis-cli --scan --pattern 'spring:session:*'
-```
-
-운영 환경에서는 위 command 권한을 제한하고 session content를 조회하지 않는다.
-
-## 실패 진단 순서
-
-1. Gateway route와 host/origin
-2. client ID, redirect URI, issuer
-3. Auth session cookie와 Redis
-4. BFF session/authorized client
-5. JWT JWK/roles
-6. CSRF cookie/header
-7. downstream internal token
-
-자세한 증상별 조치는 [common errors](../runbooks/common-errors.md)를 따른다.
+Cookie, password, OAuth code, token은 출력하지 않는다.

@@ -1,153 +1,31 @@
 # Observability
 
-This directory installs the local Kubernetes observability baseline for the
-Spring MSA cluster.
+- worker-platform-observability: Grafana, MinIO, Loki gateway, operator, Prometheus, kube-state-metrics
+- 모든 Kubernetes node: Alloy, node-exporter
+- Storage/Kafka VM: 외부 Alloy agent
 
-## Components
+~~~text
+Pod logs -> Alloy -> Loki -> Grafana
+External VM logs -> Alloy -> Loki NodePort -> Grafana
+Metrics/exporters -> Prometheus -> Grafana
+~~~
 
-```text
-Grafana             UI for metrics and logs
-Prometheus          Metrics storage and scrape engine
-kube-state-metrics  Kubernetes object metrics
-node-exporter       Node metrics
-Loki                Log storage
-Grafana Alloy       Kubernetes log collector
-```
+## 설치
 
-Loki is configured for local development with auth disabled.
-Grafana Alloy currently collects logs from these namespaces only:
-
-```text
-spring-msa
-observability
-ingress-nginx
-```
-
-## Flow
-
-```text
-Spring/Redis/Postgres/Ingress pods
-  -> stdout/stderr
-  -> Kubernetes pod log API
-  -> Grafana Alloy
-  -> Loki
-  -> Grafana
-```
-
-```text
-Kubernetes nodes/pods/services
-  -> exporters and ServiceMonitors
-  -> Prometheus
-  -> Grafana
-```
-
-## Prerequisites
-
-```powershell
-kubectl cluster-info
-kubectl get storageclass local-path
-helm version
-```
-
-If Helm is not installed on Windows:
-
-```powershell
-winget install Helm.Helm
-```
-
-Restart the terminal after installing Helm so the PATH is refreshed.
-
-## Install
-
-Run from this directory:
-
-```powershell
-.\scripts\install-observability.ps1
-```
-
-Run directly on the Linux control-plane:
-
-```bash
-chmod +x scripts/install-observability.sh
+~~~bash
+chmod +x scripts/install-observability.sh scripts/expose-control-plane-metrics.sh
 ./scripts/install-observability.sh
-```
+./scripts/expose-control-plane-metrics.sh
+~~~
 
-The script installs:
+control-plane 백업은 /etc/kubernetes/backup-springmsa에 둔다. /etc/kubernetes/manifests 안에 백업을 두면 안 된다.
 
-```text
-loki                    grafana-community/loki
-alloy                   grafana/alloy
-kube-prometheus-stack   prometheus-community/kube-prometheus-stack
-```
+## 검증
 
-## Access Grafana
+~~~bash
+kubectl top nodes
+kubectl get --raw '/api/v1/namespaces/observability/services/http:kube-prometheus-stack-prometheus:9090/proxy/-/ready'
+kubectl get --raw '/api/v1/namespaces/observability/services/http:loki-gateway:80/proxy/loki/api/v1/labels'
+~~~
 
-If ingress-nginx is running:
-
-```text
-http://grafana.localtest.me
-```
-
-Or use port-forward:
-
-```powershell
-.\scripts\port-forward-grafana.ps1
-```
-
-Then open:
-
-```text
-http://localhost:3000
-```
-
-Local login:
-
-```text
-admin / <generated password>
-```
-
-Read the generated password without storing it in Git:
-
-```powershell
-[System.Text.Encoding]::UTF8.GetString(
-  [System.Convert]::FromBase64String(
-    (kubectl -n observability get secret kube-prometheus-stack-grafana -o jsonpath="{.data.admin-password}")
-  )
-)
-```
-
-## Verify
-
-```powershell
-.\scripts\check-observability.ps1
-```
-
-From the Linux control-plane:
-
-```bash
-chmod +x scripts/check-observability.sh
-./scripts/check-observability.sh
-```
-
-Useful LogQL queries:
-
-```logql
-{namespace="spring-msa"}
-{namespace="spring-msa", app="spring-member-bff-service"}
-{namespace="spring-msa"} |= "ERROR"
-{namespace="ingress-nginx"}
-```
-
-## Uninstall
-
-Remove Helm releases only:
-
-```powershell
-.\scripts\uninstall-observability.ps1
-```
-
-Remove releases, namespace, and PVCs:
-
-```powershell
-.\scripts\uninstall-observability.ps1 -DeleteNamespace
-```
+Grafana: http://grafana.localtest.me
