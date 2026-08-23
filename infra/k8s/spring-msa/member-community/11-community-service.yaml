@@ -21,7 +21,7 @@ spec:
         node-pool: application
       containers:
         - name: spring-member-community-service
-          image: ghcr.io/hyunmyungchoi/spring-member-community-service@sha256:c431a46d2b9aa20e1fa697cdeb82beb8a4cb8d7d934ad8cde472d3f04afdf998
+          image: ghcr.io/hyunmyungchoi/spring-member-community-service@sha256:684d3b769ac47e07321d661ce1773ade76b8653966d33b55292616ceb8222953
           imagePullPolicy: Always
           ports:
             - containerPort: 8083

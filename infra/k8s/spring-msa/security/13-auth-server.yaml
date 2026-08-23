@@ -21,7 +21,7 @@ spec:
         node-pool: application
       containers:
         - name: spring-security-authorization-server
-          image: ghcr.io/hyunmyungchoi/spring-security-authorization-server@sha256:113a0b15ed1acb0ec22eda4c433d9f8b57ac7a0527cafaac806b674113d8c757
+          image: ghcr.io/hyunmyungchoi/spring-security-authorization-server@sha256:7a0c95cf10c7af43e92bcfd967ecafa1e13f27186c2f4791b878b78b61046749
           imagePullPolicy: Always
           ports:
             - containerPort: 9000
