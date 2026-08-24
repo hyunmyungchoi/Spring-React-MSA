@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620">
+<defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#263238"/></marker></defs>
+<rect width="1200" height="620" fill="#fbfcfe"/>
+<text x="60" y="64" font-family="Segoe UI,sans-serif" font-size="30" font-weight="700" fill="#20262e">Linux Network Datapath: Netfilter and eBPF</text>
+<rect x="45" y="100" width="1110" height="470" rx="26" fill="#f6f8fb" stroke="#b8c6d8" stroke-width="2" stroke-dasharray="10 9"/>
+<text x="82" y="145" font-family="Segoe UI,sans-serif" font-size="21" font-weight="700" fill="#475569">Linux Network Stack</text>
+<rect x="85" y="185" width="480" height="325" rx="22" fill="#eef6ff" stroke="#4d8be3" stroke-width="2"/>
+<text x="325" y="232" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="25" font-weight="700" fill="#173f73">Netfilter hooks</text>
+<rect x="125" y="267" width="180" height="92" rx="16" fill="#fff" stroke="#7aa7e5" stroke-width="2"/>
+<text x="215" y="306" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="19" font-weight="700" fill="#25324a">x_tables rules</text>
+<text x="215" y="334" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="16" fill="#4b5d75">iptables-legacy</text>
+<rect x="345" y="267" width="180" height="132" rx="16" fill="#fff" stroke="#7aa7e5" stroke-width="2"/>
+<text x="435" y="306" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="19" font-weight="700" fill="#25324a">nf_tables rules</text>
+<text x="435" y="334" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="16" fill="#4b5d75">nft</text>
+<text x="435" y="365" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="16" fill="#4b5d75">iptables-nft</text>
+<path d="M325 245 L325 257" stroke="#263238" stroke-width="2" marker-end="url(#a)"/>
+<text x="325" y="468" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="16" fill="#59697c">Shared Netfilter hook family</text>
+<rect x="635" y="185" width="480" height="325" rx="22" fill="#f2fbf4" stroke="#58a568" stroke-width="2"/>
+<text x="875" y="232" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="25" font-weight="700" fill="#28613a">eBPF attachment points</text>
+<rect x="680" y="285" width="115" height="72" rx="15" fill="#fff" stroke="#73b982" stroke-width="2"/><text x="737" y="330" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="20" font-weight="700" fill="#315b3b">XDP</text>
+<rect x="818" y="285" width="115" height="72" rx="15" fill="#fff" stroke="#73b982" stroke-width="2"/><text x="875" y="330" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="20" font-weight="700" fill="#315b3b">tc</text>
+<rect x="956" y="285" width="115" height="72" rx="15" fill="#fff" stroke="#73b982" stroke-width="2"/><text x="1013" y="318" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="17" font-weight="700" fill="#315b3b">socket /</text><text x="1013" y="340" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="17" font-weight="700" fill="#315b3b">cgroup</text>
+<path d="M875 245 L875 272" stroke="#263238" stroke-width="2" marker-end="url(#a)"/>
+<text x="875" y="468" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="16" fill="#59697c">Independent Kernel program framework</text>
+</svg>
