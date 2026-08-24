@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#20242c"/>
+    </marker>
+    <style>
+      .title { font: 700 28px Consolas, 'Courier New', monospace; fill: #20242c; }
+      .lane { font: 700 20px Consolas, 'Courier New', monospace; fill: #4b5563; }
+      .label { font: 700 18px Consolas, 'Courier New', monospace; fill: #20242c; text-anchor: middle; dominant-baseline: middle; }
+      .small { font: 15px Consolas, 'Courier New', monospace; fill: #687386; text-anchor: middle; }
+      .box { stroke-width: 2; rx: 18; }
+      .arrow { fill: none; stroke: #20242c; stroke-width: 2; marker-end: url(#arrow); }
+    </style>
+  </defs>
+  <rect width="1200" height="720" fill="#ffffff"/>
+  <text x="60" y="55" class="title">Hubble observability paths</text>
+
+  <rect x="35" y="90" width="1130" height="180" rx="24" fill="#f7f9fc" stroke="#b9c9dd" stroke-width="2" stroke-dasharray="9 8"/>
+  <text x="65" y="125" class="lane">Flows</text>
+  <rect x="70" y="155" width="235" height="75" class="box" fill="#eaf7e9" stroke="#54ad5e"/>
+  <text x="187" y="183" class="label">Cilium Agent</text>
+  <text x="187" y="207" class="small">Hubble Server</text>
+  <rect x="390" y="155" width="190" height="75" class="box" fill="#eee9ff" stroke="#8667e8"/>
+  <text x="485" y="192" class="label">Hubble Relay</text>
+  <rect x="690" y="135" width="170" height="65" class="box" fill="#e9f2ff" stroke="#4b83dc"/>
+  <text x="775" y="167" class="label">Hubble CLI</text>
+  <rect x="690" y="210" width="170" height="65" class="box" fill="#e9f2ff" stroke="#4b83dc"/>
+  <text x="775" y="242" class="label">Hubble UI</text>
+  <path d="M305 192 H390" class="arrow"/>
+  <path d="M580 192 H630 V167 H690" class="arrow"/>
+  <path d="M630 192 V242 H690" class="arrow"/>
+
+  <rect x="35" y="300" width="820" height="165" rx="24" fill="#f7f9fc" stroke="#d8c7a1" stroke-width="2" stroke-dasharray="9 8"/>
+  <text x="65" y="335" class="lane">Metrics</text>
+  <rect x="70" y="365" width="235" height="65" class="box" fill="#fff5d9" stroke="#e7aa32"/>
+  <text x="187" y="397" class="label">Hubble Metrics</text>
+  <rect x="390" y="365" width="190" height="65" class="box" fill="#ffe9ed" stroke="#ef6a82"/>
+  <text x="485" y="397" class="label">Prometheus</text>
+  <path d="M305 397 H390" class="arrow"/>
+  <text x="347" y="385" class="small">scrape</text>
+  <path d="M580 397 H875 V470 H945" class="arrow"/>
+
+  <rect x="35" y="495" width="820" height="175" rx="24" fill="#f7f9fc" stroke="#d2bfd6" stroke-width="2" stroke-dasharray="9 8"/>
+  <text x="65" y="530" class="lane">Logs</text>
+  <rect x="70" y="565" width="235" height="65" class="box" fill="#eaf7e9" stroke="#54ad5e"/>
+  <text x="187" y="588" class="label">Application /</text>
+  <text x="187" y="610" class="label">Cilium Logs</text>
+  <rect x="390" y="565" width="150" height="65" class="box" fill="#eee9ff" stroke="#8667e8"/>
+  <text x="465" y="597" class="label">Alloy</text>
+  <rect x="625" y="565" width="150" height="65" class="box" fill="#fff5d9" stroke="#e7aa32"/>
+  <text x="700" y="597" class="label">Loki</text>
+  <path d="M305 597 H390" class="arrow"/>
+  <path d="M540 597 H625" class="arrow"/>
+  <path d="M775 597 H875 V510 H945" class="arrow"/>
+
+  <rect x="900" y="300" width="265" height="370" rx="24" fill="#f7f9fc" stroke="#9dbbe8" stroke-width="2" stroke-dasharray="9 8"/>
+  <text x="930" y="335" class="lane">Visualization</text>
+  <rect x="945" y="450" width="175" height="80" class="box" fill="#e9f2ff" stroke="#4b83dc"/>
+  <text x="1032" y="490" class="label">Grafana</text>
+</svg>
