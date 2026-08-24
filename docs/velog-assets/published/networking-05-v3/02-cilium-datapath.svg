@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="650" viewBox="0 0 1200 650">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#20242c"/>
+    </marker>
+    <style>
+      .title { font: 700 28px Consolas, 'Courier New', monospace; fill: #20242c; }
+      .section { font: 700 20px Consolas, 'Courier New', monospace; fill: #4b5563; }
+      .label { font: 700 19px Consolas, 'Courier New', monospace; fill: #20242c; text-anchor: middle; dominant-baseline: middle; }
+      .small { font: 15px Consolas, 'Courier New', monospace; fill: #687386; text-anchor: middle; }
+      .box { stroke-width: 2; rx: 18; }
+      .arrow { fill: none; stroke: #20242c; stroke-width: 2; marker-end: url(#arrow); }
+      .control { fill: none; stroke: #687386; stroke-width: 2; stroke-dasharray: 7 6; marker-end: url(#arrow); }
+    </style>
+  </defs>
+  <rect width="1200" height="650" fill="#ffffff"/>
+  <text x="60" y="55" class="title">Cilium setup and datapath workflow</text>
+  <rect x="40" y="85" width="1120" height="510" rx="25" fill="#f8fafc" stroke="#b9c9dd" stroke-width="2" stroke-dasharray="9 8"/>
+  <text x="70" y="125" class="section">Kubernetes Node</text>
+
+  <rect x="70" y="175" width="155" height="80" class="box" fill="#e9f2ff" stroke="#4b83dc"/>
+  <text x="147" y="215" class="label">kubelet</text>
+  <rect x="285" y="175" width="170" height="80" class="box" fill="#eee9ff" stroke="#8667e8"/>
+  <text x="370" y="205" class="label">Cilium CNI</text>
+  <text x="370" y="232" class="small">Pod interface setup</text>
+  <rect x="520" y="175" width="190" height="80" class="box" fill="#eaf7e9" stroke="#54ad5e"/>
+  <text x="615" y="205" class="label">Cilium Agent</text>
+  <text x="615" y="232" class="small">node reconciliation</text>
+  <rect x="885" y="120" width="205" height="80" class="box" fill="#fff5d9" stroke="#e7aa32"/>
+  <text x="987" y="150" class="label">Cilium Operator</text>
+  <text x="987" y="177" class="small">cluster-wide control</text>
+
+  <path d="M225 215 H285" class="arrow"/>
+  <path d="M455 215 H520" class="arrow"/>
+  <path d="M885 160 H770 V200 H710" class="control"/>
+
+  <rect x="405" y="340" width="205" height="90" class="box" fill="#ffe9ed" stroke="#ef6a82"/>
+  <text x="507" y="375" class="label">eBPF Programs</text>
+  <text x="507" y="402" class="small">forwarding and policy</text>
+  <rect x="665" y="340" width="205" height="90" class="box" fill="#fff5d9" stroke="#e7aa32"/>
+  <text x="767" y="375" class="label">BPF Maps</text>
+  <text x="767" y="402" class="small">service and endpoint state</text>
+  <path d="M575 255 V310 H507 V340" class="arrow"/>
+  <path d="M655 255 V310 H767 V340" class="arrow"/>
+
+  <rect x="485" y="500" width="305" height="70" class="box" fill="#e9f2ff" stroke="#4b83dc"/>
+  <text x="637" y="525" class="label">Pod Network Datapath</text>
+  <text x="637" y="551" class="small">endpoint, service, policy, routing</text>
+  <path d="M507 430 V465 H605 V500" class="arrow"/>
+  <path d="M767 430 V465 H670 V500" class="arrow"/>
+</svg>
