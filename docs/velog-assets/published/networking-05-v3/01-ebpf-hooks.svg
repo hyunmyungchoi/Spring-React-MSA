@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#20242c"/>
+    </marker>
+    <style>
+      .title { font: 700 28px Consolas, 'Courier New', monospace; fill: #20242c; }
+      .lane { font: 700 22px Consolas, 'Courier New', monospace; fill: #4b5563; }
+      .label { font: 700 18px Consolas, 'Courier New', monospace; fill: #20242c; text-anchor: middle; dominant-baseline: middle; }
+      .note { font: 16px Consolas, 'Courier New', monospace; fill: #687386; text-anchor: middle; }
+      .box { stroke-width: 2; rx: 18; }
+      .arrow { fill: none; stroke: #20242c; stroke-width: 2; marker-end: url(#arrow); }
+    </style>
+  </defs>
+  <rect width="1200" height="620" fill="#ffffff"/>
+  <text x="60" y="55" class="title">eBPF hooks in the packet path</text>
+
+  <rect x="35" y="85" width="1130" height="205" rx="24" fill="#f7f9fc" stroke="#b9c9dd" stroke-width="2" stroke-dasharray="9 8"/>
+  <text x="65" y="122" class="lane">Ingress</text>
+  <rect x="65" y="165" width="120" height="70" class="box" fill="#fff5d9" stroke="#e7aa32"/>
+  <text x="125" y="200" class="label">NIC</text>
+  <rect x="235" y="165" width="120" height="70" class="box" fill="#ffe9ed" stroke="#ef6a82"/>
+  <text x="295" y="200" class="label">XDP</text>
+  <rect x="405" y="165" width="150" height="70" class="box" fill="#eee9ff" stroke="#8667e8"/>
+  <text x="480" y="200" class="label">tc ingress</text>
+  <rect x="605" y="165" width="210" height="70" class="box" fill="#eaf7e9" stroke="#54ad5e"/>
+  <text x="710" y="200" class="label">Network stack</text>
+  <rect x="865" y="165" width="170" height="70" class="box" fill="#e9f2ff" stroke="#4b83dc"/>
+  <text x="950" y="190" class="label">socket /</text>
+  <text x="950" y="212" class="label">cgroup BPF</text>
+  <rect x="1080" y="165" width="60" height="70" class="box" fill="#f2f4f7" stroke="#7b8798"/>
+  <text x="1110" y="200" class="label">App</text>
+  <path d="M185 200 H235" class="arrow"/>
+  <path d="M355 200 H405" class="arrow"/>
+  <path d="M555 200 H605" class="arrow"/>
+  <path d="M815 200 H865" class="arrow"/>
+  <path d="M1035 200 H1080" class="arrow"/>
+  <text x="295" y="260" class="note">early receive path, before skb allocation</text>
+
+  <rect x="35" y="330" width="1130" height="205" rx="24" fill="#f7f9fc" stroke="#d2bfd6" stroke-width="2" stroke-dasharray="9 8"/>
+  <text x="65" y="367" class="lane">Egress</text>
+  <rect x="65" y="410" width="120" height="70" class="box" fill="#f2f4f7" stroke="#7b8798"/>
+  <text x="125" y="445" class="label">Application</text>
+  <rect x="235" y="410" width="180" height="70" class="box" fill="#e9f2ff" stroke="#4b83dc"/>
+  <text x="325" y="435" class="label">socket /</text>
+  <text x="325" y="457" class="label">cgroup BPF</text>
+  <rect x="465" y="410" width="220" height="70" class="box" fill="#eaf7e9" stroke="#54ad5e"/>
+  <text x="575" y="445" class="label">Network stack</text>
+  <rect x="735" y="410" width="150" height="70" class="box" fill="#eee9ff" stroke="#8667e8"/>
+  <text x="810" y="445" class="label">tc egress</text>
+  <rect x="935" y="410" width="160" height="70" class="box" fill="#fff5d9" stroke="#e7aa32"/>
+  <text x="1015" y="445" class="label">NIC</text>
+  <path d="M185 445 H235" class="arrow"/>
+  <path d="M415 445 H465" class="arrow"/>
+  <path d="M685 445 H735" class="arrow"/>
+  <path d="M885 445 H935" class="arrow"/>
+  <text x="810" y="510" class="note">last programmable point before driver transmission</text>
+</svg>
