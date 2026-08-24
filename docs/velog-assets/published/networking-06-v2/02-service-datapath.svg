@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="650" viewBox="0 0 1200 650">
+<defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#263238"/></marker></defs>
+<rect width="1200" height="650" fill="#fbfcfe"/>
+<text x="55" y="60" font-family="Segoe UI,sans-serif" font-size="30" font-weight="700" fill="#20262e">Kubernetes Service Datapath</text>
+<g font-family="Segoe UI,sans-serif">
+<rect x="45" y="95" width="1110" height="145" rx="22" fill="#fff6f2" stroke="#e58a62" stroke-width="2"/>
+<text x="75" y="130" font-size="19" font-weight="700" fill="#9a4525">kube-proxy: iptables</text>
+<rect x="75" y="157" width="150" height="52" rx="13" fill="#fff" stroke="#e6a083" stroke-width="2"/><text x="150" y="189" text-anchor="middle" font-size="17">Client packet</text>
+<rect x="275" y="157" width="160" height="52" rx="13" fill="#fff" stroke="#e6a083" stroke-width="2"/><text x="355" y="189" text-anchor="middle" font-size="17">Netfilter hook</text>
+<rect x="485" y="157" width="190" height="52" rx="13" fill="#fff" stroke="#e6a083" stroke-width="2"/><text x="580" y="189" text-anchor="middle" font-size="17">chain + rules</text>
+<rect x="725" y="157" width="150" height="52" rx="13" fill="#fff" stroke="#e6a083" stroke-width="2"/><text x="800" y="189" text-anchor="middle" font-size="17">DNAT</text>
+<rect x="925" y="157" width="150" height="52" rx="13" fill="#fff" stroke="#e6a083" stroke-width="2"/><text x="1000" y="189" text-anchor="middle" font-size="17">Backend Pod</text>
+<path d="M225 183 H265 M435 183 H475 M675 183 H715 M875 183 H915" stroke="#263238" stroke-width="2" marker-end="url(#a)"/>
+
+<rect x="45" y="260" width="1110" height="145" rx="22" fill="#f3f8ff" stroke="#638ed4" stroke-width="2"/>
+<text x="75" y="295" font-size="19" font-weight="700" fill="#2d5693">kube-proxy: nftables</text>
+<rect x="75" y="322" width="150" height="52" rx="13" fill="#fff" stroke="#82a5de" stroke-width="2"/><text x="150" y="354" text-anchor="middle" font-size="17">Client packet</text>
+<rect x="275" y="322" width="160" height="52" rx="13" fill="#fff" stroke="#82a5de" stroke-width="2"/><text x="355" y="354" text-anchor="middle" font-size="17">Netfilter hook</text>
+<rect x="485" y="322" width="190" height="52" rx="13" fill="#fff" stroke="#82a5de" stroke-width="2"/><text x="580" y="354" text-anchor="middle" font-size="17">set / map lookup</text>
+<rect x="725" y="322" width="150" height="52" rx="13" fill="#fff" stroke="#82a5de" stroke-width="2"/><text x="800" y="354" text-anchor="middle" font-size="17">DNAT</text>
+<rect x="925" y="322" width="150" height="52" rx="13" fill="#fff" stroke="#82a5de" stroke-width="2"/><text x="1000" y="354" text-anchor="middle" font-size="17">Backend Pod</text>
+<path d="M225 348 H265 M435 348 H475 M675 348 H715 M875 348 H915" stroke="#263238" stroke-width="2" marker-end="url(#a)"/>
+
+<rect x="45" y="425" width="1110" height="170" rx="22" fill="#f1fbf4" stroke="#5aa66b" stroke-width="2"/>
+<text x="75" y="460" font-size="19" font-weight="700" fill="#2d6a3a">Cilium: eBPF kube-proxy replacement</text>
+<rect x="75" y="495" width="150" height="62" rx="13" fill="#fff" stroke="#76b984" stroke-width="2"/><text x="150" y="520" text-anchor="middle" font-size="16">Packet or</text><text x="150" y="542" text-anchor="middle" font-size="16">socket event</text>
+<rect x="275" y="495" width="160" height="62" rx="13" fill="#fff" stroke="#76b984" stroke-width="2"/><text x="355" y="532" text-anchor="middle" font-size="17">eBPF program</text>
+<rect x="485" y="495" width="190" height="62" rx="13" fill="#fff" stroke="#76b984" stroke-width="2"/><text x="580" y="532" text-anchor="middle" font-size="17">BPF Service map</text>
+<rect x="725" y="495" width="150" height="62" rx="13" fill="#fff" stroke="#76b984" stroke-width="2"/><text x="800" y="532" text-anchor="middle" font-size="17">Forward</text>
+<rect x="925" y="495" width="150" height="62" rx="13" fill="#fff" stroke="#76b984" stroke-width="2"/><text x="1000" y="532" text-anchor="middle" font-size="17">Backend Pod</text>
+<path d="M225 526 H265 M435 526 H475 M675 526 H715 M875 526 H915" stroke="#263238" stroke-width="2" marker-end="url(#a)"/>
+</g></svg>
