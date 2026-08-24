@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="640" viewBox="0 0 1200 640">
+<defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#263238"/></marker></defs>
+<rect width="1200" height="640" fill="#fbfcfe"/>
+<text x="55" y="62" font-family="Segoe UI,sans-serif" font-size="30" font-weight="700" fill="#20262e">Service State Update: Control Path</text>
+<rect x="430" y="92" width="340" height="78" rx="18" fill="#fff" stroke="#8293aa" stroke-width="2"/>
+<text x="600" y="124" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="19" font-weight="700" fill="#344255">Kubernetes API</text>
+<text x="600" y="151" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="16" fill="#5a687a">Service / Endpoint change</text>
+<path d="M600 170 V215 M600 215 H210 V252 M600 215 H600 V252 M600 215 H990 V252" fill="none" stroke="#263238" stroke-width="2" marker-end="url(#a)"/>
+<g font-family="Segoe UI,sans-serif">
+<rect x="45" y="260" width="330" height="300" rx="22" fill="#fff6f2" stroke="#e58a62" stroke-width="2"/>
+<text x="210" y="306" text-anchor="middle" font-size="22" font-weight="700" fill="#9a4525">iptables</text>
+<rect x="85" y="345" width="250" height="72" rx="14" fill="#fff" stroke="#e6a083" stroke-width="2"/>
+<text x="210" y="374" text-anchor="middle" font-size="16">Recalculate affected</text><text x="210" y="398" text-anchor="middle" font-size="16">chains and rules</text>
+<path d="M210 417 V454" stroke="#263238" stroke-width="2" marker-end="url(#a)"/>
+<rect x="85" y="464" width="250" height="62" rx="14" fill="#fff" stroke="#e6a083" stroke-width="2"/>
+<text x="210" y="501" text-anchor="middle" font-size="16">Apply ruleset</text>
+
+<rect x="435" y="260" width="330" height="300" rx="22" fill="#f3f8ff" stroke="#638ed4" stroke-width="2"/>
+<text x="600" y="306" text-anchor="middle" font-size="22" font-weight="700" fill="#2d5693">nftables</text>
+<rect x="475" y="345" width="250" height="72" rx="14" fill="#fff" stroke="#82a5de" stroke-width="2"/>
+<text x="600" y="374" text-anchor="middle" font-size="16">Update changed</text><text x="600" y="398" text-anchor="middle" font-size="16">set / map element</text>
+<path d="M600 417 V454" stroke="#263238" stroke-width="2" marker-end="url(#a)"/>
+<rect x="475" y="464" width="250" height="62" rx="14" fill="#fff" stroke="#82a5de" stroke-width="2"/>
+<text x="600" y="501" text-anchor="middle" font-size="16">Atomic transaction</text>
+
+<rect x="825" y="260" width="330" height="300" rx="22" fill="#f1fbf4" stroke="#5aa66b" stroke-width="2"/>
+<text x="990" y="306" text-anchor="middle" font-size="22" font-weight="700" fill="#2d6a3a">Cilium eBPF</text>
+<rect x="865" y="345" width="250" height="72" rx="14" fill="#fff" stroke="#76b984" stroke-width="2"/>
+<text x="990" y="374" text-anchor="middle" font-size="16">Update changed</text><text x="990" y="398" text-anchor="middle" font-size="16">BPF map entry</text>
+<path d="M990 417 V454" stroke="#263238" stroke-width="2" marker-end="url(#a)"/>
+<rect x="865" y="464" width="250" height="62" rx="14" fill="#fff" stroke="#76b984" stroke-width="2"/>
+<text x="990" y="501" text-anchor="middle" font-size="16">Kernel datapath</text>
+</g></svg>
