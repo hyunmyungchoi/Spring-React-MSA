@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675">
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#1f2937"/>
+    </marker>
+    <style>
+      .title { font: 700 34px Arial, sans-serif; fill: #111827; }
+      .heading { font: 700 23px Arial, sans-serif; fill: #111827; }
+      .body { font: 18px Arial, sans-serif; fill: #374151; }
+      .small { font: 16px Arial, sans-serif; fill: #4b5563; }
+      .line { stroke: #1f2937; stroke-width: 2; fill: none; marker-end: url(#arrow); }
+      .optional { stroke: #64748b; stroke-width: 2; stroke-dasharray: 7 6; fill: none; marker-end: url(#arrow); }
+    </style>
+  </defs>
+  <rect width="1200" height="675" fill="#ffffff"/>
+  <text x="600" y="55" text-anchor="middle" class="title">Flannel, Calico and Cilium at a Glance</text>
+
+  <rect x="45" y="105" width="1110" height="145" rx="20" fill="#eef5ff" stroke="#4a83d8" stroke-width="2"/>
+  <text x="120" y="148" class="heading">Flannel</text>
+  <rect x="220" y="135" width="190" height="76" rx="12" fill="#ffffff" stroke="#9dbbe8" stroke-width="2"/>
+  <text x="315" y="168" text-anchor="middle" class="body">CNI + cni0 bridge</text>
+  <text x="315" y="192" text-anchor="middle" class="small">Pod attachment</text>
+  <rect x="505" y="135" width="190" height="76" rx="12" fill="#ffffff" stroke="#9dbbe8" stroke-width="2"/>
+  <text x="600" y="168" text-anchor="middle" class="body">flanneld</text>
+  <text x="600" y="192" text-anchor="middle" class="small">subnet management</text>
+  <rect x="790" y="135" width="280" height="76" rx="12" fill="#ffffff" stroke="#9dbbe8" stroke-width="2"/>
+  <text x="930" y="168" text-anchor="middle" class="body">VXLAN or host-gw</text>
+  <text x="930" y="192" text-anchor="middle" class="small">simple Layer 3 connectivity</text>
+  <path d="M410 173 H495" class="line"/>
+  <path d="M695 173 H780" class="line"/>
+
+  <rect x="45" y="270" width="1110" height="145" rx="20" fill="#eef9f0" stroke="#55a868" stroke-width="2"/>
+  <text x="120" y="313" class="heading">Calico</text>
+  <rect x="220" y="300" width="190" height="76" rx="12" fill="#ffffff" stroke="#9bcaa6" stroke-width="2"/>
+  <text x="315" y="333" text-anchor="middle" class="body">Calico CNI</text>
+  <text x="315" y="357" text-anchor="middle" class="small">workload endpoint</text>
+  <rect x="505" y="300" width="190" height="76" rx="12" fill="#ffffff" stroke="#9bcaa6" stroke-width="2"/>
+  <text x="600" y="326" text-anchor="middle" class="body">Felix</text>
+  <text x="600" y="348" text-anchor="middle" class="small">policy and routing</text>
+  <text x="600" y="368" text-anchor="middle" class="small">+ BIRD for BGP (optional)</text>
+  <rect x="790" y="300" width="280" height="76" rx="12" fill="#ffffff" stroke="#9bcaa6" stroke-width="2"/>
+  <text x="930" y="333" text-anchor="middle" class="body">BGP / VXLAN + policy</text>
+  <text x="930" y="357" text-anchor="middle" class="small">iptables, nftables or eBPF</text>
+  <path d="M410 338 H495" class="line"/>
+  <path d="M695 338 H780" class="line"/>
+
+  <rect x="45" y="435" width="1110" height="170" rx="20" fill="#f3efff" stroke="#8265d8" stroke-width="2"/>
+  <text x="120" y="478" class="heading">Cilium</text>
+  <rect x="220" y="465" width="190" height="76" rx="12" fill="#ffffff" stroke="#b7a7e8" stroke-width="2"/>
+  <text x="315" y="498" text-anchor="middle" class="body">Cilium CNI</text>
+  <text x="315" y="522" text-anchor="middle" class="small">endpoint handoff</text>
+  <rect x="505" y="465" width="190" height="76" rx="12" fill="#ffffff" stroke="#b7a7e8" stroke-width="2"/>
+  <text x="600" y="498" text-anchor="middle" class="body">Cilium Agent</text>
+  <text x="600" y="522" text-anchor="middle" class="small">identity and policy</text>
+  <rect x="790" y="450" width="280" height="70" rx="12" fill="#ffffff" stroke="#b7a7e8" stroke-width="2"/>
+  <text x="930" y="480" text-anchor="middle" class="body">eBPF datapath</text>
+  <text x="930" y="503" text-anchor="middle" class="small">optional kube-proxy replacement</text>
+  <rect x="790" y="535" width="280" height="50" rx="12" fill="#ffffff" stroke="#b7a7e8" stroke-width="2"/>
+  <text x="930" y="566" text-anchor="middle" class="body">Hubble observability (optional)</text>
+  <path d="M410 503 H495" class="line"/>
+  <path d="M695 485 H780" class="line"/>
+  <path d="M695 520 V560 H780" class="optional"/>
+
+  <text x="600" y="645" text-anchor="middle" class="small">Products are not ranked here. Routing mode, policy and operations determine the right choice.</text>
+</svg>
